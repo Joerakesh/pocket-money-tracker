@@ -4,7 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#101318" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <title>Pocket — Personal Finance</title>
     <style>
       :root {
@@ -554,9 +553,160 @@
           padding: 8px 9px;
         }
       }
+
+      /* Full-screen network loading state */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(9, 12, 17, 0.88);
+        backdrop-filter: blur(14px);
+        opacity: 1;
+        visibility: visible;
+        transition:
+          opacity 0.2s ease,
+          visibility 0.2s ease;
+      }
+      .loading-overlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .loading-panel {
+        width: min(430px, 100%);
+        padding: 30px 24px;
+        border: 1px solid #35454c;
+        border-radius: 24px;
+        background: linear-gradient(145deg, #202d36, #171d25);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        text-align: center;
+      }
+      .loading-mark {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 18px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: rgba(115, 224, 176, 0.13);
+        color: var(--green);
+        font-size: 28px;
+      }
+      .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(140, 230, 188, 0.2);
+        border-top-color: var(--green);
+        border-radius: 50%;
+        margin: 0 auto 18px;
+        animation: pocket-spin 0.8s linear infinite;
+      }
+      .loading-title {
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 5px;
+      }
+      .loading-subtitle {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 22px;
+      }
+      .loading-quote {
+        font-size: 16px;
+        line-height: 1.6;
+        font-weight: 650;
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .loading-book {
+        font-size: 12px;
+        color: var(--green);
+        margin-top: 10px;
+      }
+      .loading-dots {
+        display: inline-flex;
+        gap: 5px;
+        vertical-align: middle;
+        margin-left: 4px;
+      }
+      .loading-dots i {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pocket-pulse 1s infinite ease-in-out;
+      }
+      .loading-dots i:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .loading-dots i:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      button:disabled {
+        opacity: 0.58;
+        cursor: wait;
+        filter: saturate(0.65);
+      }
+      @keyframes pocket-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes pocket-pulse {
+        0%,
+        80%,
+        100% {
+          transform: scale(0.65);
+          opacity: 0.45;
+        }
+        40% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .loading-spinner,
+        .loading-dots i {
+          animation: none;
+        }
+        .loading-overlay {
+          transition: none;
+        }
+      }
     </style>
   </head>
   <body>
+    <div
+      class="loading-overlay"
+      id="loadingOverlay"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading your financial data"
+    >
+      <div class="loading-panel">
+        <div class="loading-mark">₹</div>
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <div class="loading-title">Taking care of your money</div>
+        <div class="loading-subtitle">
+          Syncing your ledger<span class="loading-dots" aria-hidden="true"
+            ><i></i><i></i><i></i
+          ></span>
+        </div>
+        <div class="loading-quote" id="loadingQuote">
+          A part of all you earn is yours to keep.
+        </div>
+        <div class="loading-book" id="loadingBook">
+          The Richest Man in Babylon — George S. Clason
+        </div>
+      </div>
+    </div>
     <main>
       <header class="top">
         <div>
@@ -922,14 +1072,119 @@
       };
       let accounts = [],
         previewRows = [];
+      const loadingQuotes = [
+        {
+          quote: "A part of all you earn is yours to keep.",
+          book: "The Richest Man in Babylon — George S. Clason",
+        },
+        {
+          quote:
+            "Beware of little expenses; a small leak will sink a great ship.",
+          book: "Poor Richard’s Almanack — Benjamin Franklin",
+        },
+        {
+          quote:
+            "Wealth consists not in having great possessions, but in having few wants.",
+          book: "The Enchiridion — Epictetus",
+        },
+        {
+          quote:
+            "Annual income twenty pounds, annual expenditure nineteen nineteen and six, result happiness.",
+          book: "David Copperfield — Charles Dickens",
+        },
+        {
+          quote: "Money is like muck, not good unless it be spread.",
+          book: "Essays: Of Riches — Francis Bacon",
+        },
+      ];
+      let pendingRequests = 0,
+        loadingHideTimer = null,
+        quoteTimer = null,
+        lastQuoteIndex = -1;
+      function rotateLoadingQuote() {
+        let next = Math.floor(Math.random() * loadingQuotes.length);
+        if (loadingQuotes.length > 1 && next === lastQuoteIndex)
+          next = (next + 1) % loadingQuotes.length;
+        lastQuoteIndex = next;
+        $("loadingQuote").textContent = "“" + loadingQuotes[next].quote + "”";
+        $("loadingBook").textContent = loadingQuotes[next].book;
+      }
+      function showLoading() {
+        clearTimeout(loadingHideTimer);
+        $("loadingOverlay").classList.remove("hidden");
+        if (!quoteTimer) {
+          rotateLoadingQuote();
+          quoteTimer = setInterval(rotateLoadingQuote, 4200);
+        }
+      }
+      function hideLoading() {
+        clearInterval(quoteTimer);
+        quoteTimer = null;
+        loadingHideTimer = setTimeout(() => {
+          $("loadingOverlay").classList.add("hidden");
+        }, 140);
+      }
       async function api(path, options = {}) {
-        const r = await fetch("/api" + path, options);
-        let j = {};
+        pendingRequests++;
+        showLoading();
         try {
-          j = await r.json();
-        } catch {}
-        if (!r.ok) throw Error(j.error || "Request failed");
-        return j;
+          const r = await fetch("/api" + path, options);
+          let j = {};
+          try {
+            j = await r.json();
+          } catch {}
+          if (!r.ok) throw Error(j.error || "Request failed");
+          return j;
+        } finally {
+          pendingRequests = Math.max(0, pendingRequests - 1);
+          if (pendingRequests === 0) hideLoading();
+        }
+      }
+      function guardForm(formId, handler) {
+        const form = $(formId);
+        form.addEventListener("submit", async (e) => {
+          if (form.dataset.busy === "1") {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+          }
+          form.dataset.busy = "1";
+          const btn =
+            e.submitter ||
+            form.querySelector('button[type="submit"],button:not([type])');
+          const original = btn?.textContent;
+          if (btn) {
+            btn.disabled = true;
+            btn.setAttribute("aria-busy", "true");
+            btn.textContent = "Working…";
+          }
+          try {
+            await handler(e);
+          } finally {
+            form.dataset.busy = "0";
+            if (btn) {
+              btn.disabled = false;
+              btn.removeAttribute("aria-busy");
+              btn.textContent = original;
+            }
+          }
+        });
+      }
+      async function withButtonLock(btn, task, label = "Working…") {
+        if (!btn || btn.dataset.busy === "1") return;
+        const original = btn.textContent;
+        btn.dataset.busy = "1";
+        btn.disabled = true;
+        btn.setAttribute("aria-busy", "true");
+        btn.textContent = label;
+        try {
+          return await task();
+        } finally {
+          btn.dataset.busy = "0";
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+          btn.textContent = original;
+        }
       }
       const send = (path, body, method = "POST") =>
         api(path, {
@@ -1116,18 +1371,25 @@
             .join("") || '<div class="empty">No transactions yet.</div>';
       }
       $("transactions").onclick = async (e) => {
-        const id = e.target.dataset.delete;
+        const btn = e.target.closest("[data-delete]");
+        const id = btn?.dataset.delete;
         if (!id) return;
         if (
           confirm(
             "Delete this transaction? Account balances and reports will recalculate.",
           )
         ) {
-          await api("/transactions/" + id, { method: "DELETE" });
-          await load();
+          await withButtonLock(
+            btn,
+            async () => {
+              await api("/transactions/" + id, { method: "DELETE" });
+              await load();
+            },
+            "Deleting…",
+          );
         }
       };
-      $("txForm").onsubmit = async (e) => {
+      guardForm("txForm", async (e) => {
         e.preventDefault();
         try {
           const body = {
@@ -1150,8 +1412,8 @@
         } catch (err) {
           msg("txStatus", err.message);
         }
-      };
-      $("settingsForm").onsubmit = async (e) => {
+      });
+      guardForm("settingsForm", async (e) => {
         e.preventDefault();
         try {
           await send(
@@ -1164,8 +1426,8 @@
         } catch (err) {
           msg("settingsStatus", err.message);
         }
-      };
-      $("accountForm").onsubmit = async (e) => {
+      });
+      guardForm("accountForm", async (e) => {
         e.preventDefault();
         try {
           await send("/accounts", {
@@ -1179,8 +1441,8 @@
         } catch (err) {
           msg("accountStatus", err.message);
         }
-      };
-      $("budgetForm").onsubmit = async (e) => {
+      });
+      guardForm("budgetForm", async (e) => {
         e.preventDefault();
         try {
           await send("/budgets", {
@@ -1192,8 +1454,8 @@
         } catch (err) {
           alert(err.message);
         }
-      };
-      $("goalForm").onsubmit = async (e) => {
+      });
+      guardForm("goalForm", async (e) => {
         e.preventDefault();
         try {
           await send("/goals", {
@@ -1206,8 +1468,8 @@
         } catch (err) {
           alert(err.message);
         }
-      };
-      $("recurringForm").onsubmit = async (e) => {
+      });
+      guardForm("recurringForm", async (e) => {
         e.preventDefault();
         try {
           await send("/recurring", {
@@ -1221,14 +1483,19 @@
         } catch (err) {
           alert(err.message);
         }
-      };
+      });
       $("monthFilter").onchange = () => renderTransactions(allTx);
-      $("refresh").onclick = () => load().catch((e) => alert(e.message));
+      $("refresh").onclick = () =>
+        withButtonLock(
+          $("refresh"),
+          () => load().catch((e) => alert(e.message)),
+          "Refreshing…",
+        );
       $("showSetup").onclick = () => {
         switchTab("more");
         $("payday").focus({ preventScroll: true });
       };
-      $("importForm").onsubmit = async (e) => {
+      guardForm("importForm", async (e) => {
         e.preventDefault();
         try {
           const text = await $("csvFile").files[0].text();
@@ -1258,30 +1525,35 @@
         } catch (err) {
           msg("importStatus", err.message);
         }
-      };
-      $("commitImport").onclick = async () => {
-        try {
-          const r = await send("/import/commit", {
-            rows: previewRows,
-            accountId: $("importAccount").value,
-          });
-          msg(
-            "importStatus",
-            `Added ${r.added}; skipped ${r.skipped}. Imported records need review.`,
-          );
-          previewRows = [];
-          $("importActions").classList.add("hidden");
-          await load();
-        } catch (err) {
-          msg("importStatus", err.message);
-        }
-      };
+      });
+      $("commitImport").onclick = () =>
+        withButtonLock(
+          $("commitImport"),
+          async () => {
+            try {
+              const r = await send("/import/commit", {
+                rows: previewRows,
+                accountId: $("importAccount").value,
+              });
+              msg(
+                "importStatus",
+                `Added ${r.added}; skipped ${r.skipped}. Imported records need review.`,
+              );
+              previewRows = [];
+              $("importActions").classList.add("hidden");
+              await load();
+            } catch (err) {
+              msg("importStatus", err.message);
+            }
+          },
+          "Importing…",
+        );
       switchTab("home");
       $("date").value = today();
       $("payday").value = new Date().toISOString().slice(0, 10);
       showTypes();
       load().catch((e) => {
-        $("heroSub").textContent = e.message;
+        $("heroSub").textContent = "Could not load data: " + e.message;
       });
     </script>
   </body>
