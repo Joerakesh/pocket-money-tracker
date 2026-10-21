@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101318" />
+    <title>Pocket — Personal Finance</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101318;
+        --panel: #191e26;
+        --panel2: #202733;
+        --line: #303846;
+        --ink: #f4f6fa;
+        --muted: #9ba6b5;
+        --green: #73e0b0;
+        --red: #ff8585;
+        --blue: #91b8ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          15px/1.5 Inter,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+      }
+      main {
+        max-width: 1120px;
+        margin: auto;
+        padding: 24px 16px 64px;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .brand {
+        font-weight: 850;
+        font-size: 24px;
+        letter-spacing: -0.04em;
+      }
+      .muted,
+      .hint {
+        color: var(--muted);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        min-width: 0;
+      }
+      .span12 {
+        grid-column: span 12;
+      }
+      .span8 {
+        grid-column: span 8;
+      }
+      .span6 {
+        grid-column: span 6;
+      }
+      .span4 {
+        grid-column: span 4;
+      }
+      .hero {
+        background: linear-gradient(135deg, #202d36, #1b242c);
+        border-color: #35454c;
+      }
+      .hero small {
+        color: #b9c8cf;
+      }
+      .big {
+        font-size: clamp(32px, 5vw, 52px);
+        font-weight: 850;
+        letter-spacing: -0.05em;
+        line-height: 1.15;
+        margin: 8px 0;
+      }
+      .green {
+        color: var(--green);
+      }
+      .red {
+        color: var(--red);
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 14px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 5px;
+      }
+      input,
+      select,
+      button {
+        font: inherit;
+        border: 1px solid var(--line);
+        background: #11161c;
+        color: var(--ink);
+        padding: 10px 12px;
+        border-radius: 9px;
+        width: 100%;
+        min-width: 0;
+      }
+      button {
+        cursor: pointer;
+        font-weight: 700;
+      }
+      button.primary {
+        background: var(--green);
+        color: #102019;
+        border-color: var(--green);
+      }
+      button.ghost {
+        background: var(--panel2);
+      }
+      button.danger {
+        color: var(--red);
+      }
+      .formgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .row > * {
+        flex: 1;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric {
+        padding: 12px;
+        background: var(--panel2);
+        border-radius: 12px;
+      }
+      .metric strong {
+        display: block;
+        font-size: 21px;
+        overflow-wrap: anywhere;
+      }
+      .metric span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .list {
+        display: grid;
+        gap: 8px;
+      }
+      .item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .item:last-child {
+        border: 0;
+      }
+      .item strong {
+        display: block;
+      }
+      .item small {
+        display: block;
+        color: var(--muted);
+      }
+      .amt {
+        white-space: nowrap;
+        font-weight: 750;
+      }
+      .pill {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #29333e;
+        color: #c7d2df;
+        font-size: 11px;
+      }
+      .bar {
+        height: 7px;
+        background: #303846;
+        border-radius: 99px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--green);
+      }
+      .hidden {
+        display: none !important;
+      }
+      .sectionhead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .sectionhead button {
+        width: auto;
+      }
+      .note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .checkbox input {
+        width: auto;
+      }
+      .status {
+        min-height: 20px;
+        color: var(--green);
+        font-size: 13px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .tabs button {
+        width: auto;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 12px 0;
+      }
+      @media (max-width: 760px) {
+        .span8,
+        .span6,
+        .span4 {
+          grid-column: span 12;
+        }
+        .metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .formgrid {
+          grid-template-columns: 1fr;
+        }
+        .full {
+          grid-column: auto;
+        }
+        .card {
+          padding: 15px;
+        }
+        main {
+          padding: 16px 12px 48px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="top">
+        <div>
+          <div class="brand">Pocket<span class="green">.</span></div>
+          <div class="muted">Your money, made clear.</div>
+        </div>
+        <div class="row" style="max-width: 330px">
+          <button class="ghost" id="refresh">Refresh</button
+          ><button class="ghost" id="showSetup">Settings</button>
+        </div>
+      </header>
+      <div class="layout">
+        <section class="card hero span8">
+          <small
+            >SAFE TO SPEND · AFTER RESERVE AND UNPAID BORROWED EXPENSES</small
+          >
+          <div class="big" id="perDay">₹— / day</div>
+          <div id="heroSub" class="muted">Loading your ledger…</div>
+        </section>
+        <section class="card span4">
+          <h2>Account snapshot</h2>
+          <div class="metrics">
+            <div class="metric">
+              <span>Total balances</span><strong id="total">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Owe friends</span><strong id="owe" class="red">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Owed to you</span
+              ><strong id="owed" class="green">₹—</strong>
+            </div>
+          </div>
+        </section>
+        <section class="card span8">
+          <h2>Add transaction</h2>
+          <form id="txForm" class="formgrid">
+            <div>
+              <label>Type</label
+              ><select id="type">
+                <option value="expense">Expense</option>
+                <option value="income">Income / allowance</option>
+                <option value="transfer">Transfer between my accounts</option>
+                <option value="lent">Lent money to friend</option>
+                <option value="borrowed_expense">
+                  Friend paid for my purchase
+                </option>
+                <option value="repayment">Repay a friend</option>
+                <option value="collection">Friend repaid me</option>
+                <option value="refund">Refund</option>
+              </select>
+            </div>
+            <div>
+              <label>Amount (₹)</label
+              ><input
+                id="amount"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+                placeholder="e.g. 80"
+              />
+            </div>
+            <div id="fromWrap">
+              <label>Account</label
+              ><select id="accountId" required></select>
+            </div>
+            <div id="toWrap" class="hidden">
+              <label>Transfer to</label
+              ><select id="toAccountId"></select>
+            </div>
+            <div id="personWrap" class="hidden">
+              <label>Friend / person</label
+              ><input id="person" placeholder="Name" />
+            </div>
+            <div>
+              <label>Category</label
+              ><select id="category">
+                <option>Food</option>
+                <option>Travel</option>
+                <option>College</option>
+                <option>Shopping</option>
+                <option>Subscriptions</option>
+                <option>Friends</option>
+                <option>Essentials</option>
+                <option>Health</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Date</label><input id="date" type="date" required />
+            </div>
+            <div>
+              <label>Note</label
+              ><input
+                id="note"
+                maxlength="200"
+                placeholder="What was this for?"
+              />
+            </div>
+            <div class="full">
+              <button class="primary" type="submit">Save transaction</button>
+              <div id="txStatus" class="status"></div>
+            </div>
+          </form>
+          <p class="note">
+            Transfers are not spending. Lending is tracked separately from
+            purchases. Imported transactions are flagged for review.
+          </p>
+        </section>
+        <section class="card span4">
+          <h2>Allowance settings</h2>
+          <form id="settingsForm" class="formgrid">
+            <div class="full">
+              <label>Next allowance date</label
+              ><input type="date" id="payday" required />
+            </div>
+            <div class="full">
+              <label>Emergency reserve (₹)</label
+              ><input
+                type="number"
+                id="reserve"
+                min="0"
+                step=".01"
+                value="500"
+              />
+            </div>
+            <div class="full">
+              <button class="primary">Save settings</button>
+              <div id="settingsStatus" class="status"></div>
+            </div>
+          </form>
+          <hr
+            style="border: 0; border-top: 1px solid var(--line); margin: 18px 0"
+          />
+          <h2>Add account</h2>
+          <form id="accountForm" class="formgrid">
+            <div>
+              <label>Account name</label
+              ><input id="accountName" required placeholder="Wallet / Bank" />
+            </div>
+            <div>
+              <label>Type</label
+              ><select id="accountKind">
+                <option value="cash">Cash</option>
+                <option value="bank">Bank</option>
+                <option value="upi">UPI</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="full">
+              <label>Opening balance (₹)</label
+              ><input
+                id="opening"
+                type="number"
+                step=".01"
+                value="0"
+                required
+              />
+            </div>
+            <div class="full">
+              <button class="ghost">Add account</button>
+              <div id="accountStatus" class="status"></div>
+            </div>
+          </form>
+        </section>
+        <section class="card span6">
+          <div class="sectionhead"><h2>Accounts</h2></div>
+          <div id="accounts" class="list"></div>
+        </section>
+        <section class="card span6">
+          <h2>This month</h2>
+          <div class="metrics">
+            <div class="metric">
+              <span>Spent net of refunds</span
+              ><strong id="monthSpent">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Income</span
+              ><strong id="monthIncome" class="green">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Spent today</span><strong id="todaySpent">₹—</strong>
+            </div>
+          </div>
+          <div id="categories" style="margin-top: 16px"></div>
+        </section>
+        <section class="card span6">
+          <h2>Budgets</h2>
+          <form id="budgetForm" class="formgrid">
+            <div>
+              <label>Category</label
+              ><input id="budgetCategory" required placeholder="Food" />
+            </div>
+            <div>
+              <label>Monthly limit (₹)</label
+              ><input
+                id="budgetAmount"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+              />
+            </div>
+            <div class="full">
+              <button class="ghost">Save category budget</button>
+            </div>
+          </form>
+          <div id="budgets" class="list" style="margin-top: 12px"></div>
+        </section>
+        <section class="card span6">
+          <h2>Savings goals</h2>
+          <form id="goalForm" class="formgrid">
+            <div>
+              <label>Goal name</label
+              ><input id="goalName" required placeholder="Emergency fund" />
+            </div>
+            <div>
+              <label>Target (₹)</label
+              ><input
+                id="goalTarget"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+              />
+            </div>
+            <div>
+              <label>Already saved (₹)</label
+              ><input
+                id="goalSaved"
+                type="number"
+                min="0"
+                step=".01"
+                value="0"
+              />
+            </div>
+            <div style="display: flex; align-items: end">
+              <button class="ghost">Add goal</button>
+            </div>
+          </form>
+          <div id="goals" class="list" style="margin-top: 12px"></div>
+        </section>
+        <section class="card span6">
+          <h2>Recurring expenses</h2>
+          <form id="recurringForm" class="formgrid">
+            <div>
+              <label>Name</label
+              ><input id="recName" required placeholder="Subscription" />
+            </div>
+            <div>
+              <label>Amount (₹)</label
+              ><input
+                id="recAmount"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+              />
+            </div>
+            <div>
+              <label>Due day of month</label
+              ><input
+                id="recDay"
+                type="number"
+                min="1"
+                max="31"
+                value="1"
+                required
+              />
+            </div>
+            <div>
+              <label>Category</label
+              ><input id="recCategory" value="Subscriptions" />
+            </div>
+            <div class="full">
+              <button class="ghost">Add recurring reminder</button>
+            </div>
+          </form>
+          <div id="recurring" class="list" style="margin-top: 12px"></div>
+        </section>
+        <section class="card span6">
+          <h2>Statement import</h2>
+          <p class="note">
+            Import preview is intentionally separate from saving. Review
+            imported transactions and confirm the correct account before
+            committing.
+          </p>
+          <form id="importForm">
+            <label>CSV statement</label
+            ><input id="csvFile" type="file" accept=".csv,text/csv" required />
+            <div style="margin-top: 10px">
+              <button class="ghost">Preview CSV</button>
+            </div>
+          </form>
+          <div id="importPreview" class="list" style="margin-top: 10px"></div>
+          <div id="importActions" class="hidden">
+            <label>Account to import into</label
+            ><select id="importAccount"></select
+            ><button class="primary" id="commitImport" style="margin-top: 8px">
+              Import previewed rows
+            </button>
+          </div>
+          <div id="importStatus" class="status"></div>
+        </section>
+        <section class="card span12">
+          <div class="sectionhead">
+            <h2>Recent transactions</h2>
+            <select id="monthFilter" style="max-width: 160px">
+              <option value="">All recent</option>
+            </select>
+          </div>
+          <div id="transactions" class="list" style="margin-top: 8px"></div>
+        </section>
+      </div>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const money = (n) =>
+        "₹" +
+        Number(n || 0).toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+          minimumFractionDigits: 0,
+        });
+      const today = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      let accounts = [],
+        previewRows = [];
+      async function api(path, options = {}) {
+        const r = await fetch("/api" + path, options);
+        let j = {};
+        try {
+          j = await r.json();
+        } catch {}
+        if (!r.ok) throw Error(j.error || "Request failed");
+        return j;
+      }
+      const send = (path, body, method = "POST") =>
+        api(path, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      function msg(id, text) {
+        $(id).textContent = text;
+      }
+      function esc(s) {
+        return String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function optionAccounts(selectId) {
+        $(selectId).innerHTML = accounts
+          .map(
+            (a) =>
+              `<option value="${a._id || a.id}">${esc(a.name)} · ${money(a.balance)}</option>`,
+          )
+          .join("");
+      }
+      function showTypes() {
+        const t = $("type").value;
+        $("toWrap").classList.toggle("hidden", t !== "transfer");
+        $("personWrap").classList.toggle(
+          "hidden",
+          !["lent", "borrowed_expense", "repayment", "collection"].includes(t),
+        );
+        $("fromWrap").classList.toggle("hidden", t === "borrowed_expense");
+        $("accountId").required = t !== "borrowed_expense";
+      }
+      $("type").onchange = showTypes;
+      async function load() {
+        const [s, a, txs, b, g, r, st] = await Promise.all([
+          api("/summary"),
+          api("/accounts"),
+          api("/transactions"),
+          api("/budgets"),
+          api("/goals"),
+          api("/recurring"),
+          api("/settings"),
+        ]);
+        accounts = a;
+        ["accountId", "toAccountId", "importAccount"].forEach(optionAccounts);
+        $("perDay").textContent = money(s.perDay) + " / day";
+        $("perDay").className = "big " + (s.perDay < 0 ? "red" : "green");
+        $("heroSub").textContent =
+          `${money(s.spendable)} safe to spend · ${s.days} day(s) until ${s.settings.payday}`;
+        $("total").textContent = money(s.totalBalance);
+        $("owe").textContent = money(s.owedToFriends);
+        $("owed").textContent = money(s.owedByFriends);
+        $("monthSpent").textContent = money(s.monthSpent);
+        $("monthIncome").textContent = money(s.monthIncome);
+        $("todaySpent").textContent = money(s.todaySpent);
+        $("payday").value = st.payday;
+        $("reserve").value = Number(st.reservePaise || 0) / 100;
+        $("accounts").innerHTML =
+          a
+            .map(
+              (x) =>
+                `<div class="item"><div><strong>${esc(x.name)}</strong><small>${esc(x.kind)}</small></div><span class="amt">${money(x.balance)}</span></div>`,
+            )
+            .join("") || '<div class="empty">No accounts</div>';
+        const cats = Object.entries(s.byCat || {}).sort((x, y) => y[1] - x[1]),
+          max = Math.max(1, ...cats.map((x) => x[1]));
+        $("categories").innerHTML =
+          cats
+            .map(
+              ([name, v]) =>
+                `<div style="margin-bottom:10px"><div class="row"><span>${esc(name)}</span><strong style="text-align:right">${money(v)}</strong></div><div class="bar"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i></div></div>`,
+            )
+            .join("") || '<div class="empty">No spending this month.</div>';
+        $("budgets").innerHTML =
+          b
+            .map((x) => {
+              const spent = Number(s.byCat?.[x.category] || 0),
+                pct = Math.min(100, (spent / x.amount) * 100);
+              return `<div class="item"><div style="flex:1"><strong>${esc(x.category)}</strong><small>${money(spent)} of ${money(x.amount)}</small><div class="bar"><i style="width:${pct}%"></i></div></div><span class="pill">${Math.round(pct)}%</span></div>`;
+            })
+            .join("") || '<div class="empty">No budgets yet.</div>';
+        $("goals").innerHTML =
+          g
+            .map(
+              (x) =>
+                `<div class="item"><div style="flex:1"><strong>${esc(x.name)}</strong><small>${money(x.saved)} of ${money(x.target)}</small><div class="bar"><i style="width:${Math.min(100, (x.saved / x.target) * 100)}%"></i></div></div></div>`,
+            )
+            .join("") || '<div class="empty">No savings goals yet.</div>';
+        $("recurring").innerHTML =
+          r
+            .map(
+              (x) =>
+                `<div class="item"><div><strong>${esc(x.name)}</strong><small>${esc(x.category)} · due day ${x.dueDay}</small></div><span class="amt">${money(Number(x.amountPaise || 0) / 100)}</span></div>`,
+            )
+            .join("") || '<div class="empty">No reminders yet.</div>';
+        const months = [...new Set(txs.map((t) => t.date.slice(0, 7)))];
+        const prev = $("monthFilter").value;
+        $("monthFilter").innerHTML =
+          '<option value="">All recent</option>' +
+          months.map((m) => `<option value="${m}">${m}</option>`).join("");
+        $("monthFilter").value = months.includes(prev) ? prev : "";
+        renderTransactions(txs);
+      }
+      let allTx = [];
+      function renderTransactions(txs) {
+        allTx = txs;
+        const m = $("monthFilter").value;
+        const filtered = txs.filter((t) => !m || t.date.startsWith(m));
+        $("transactions").innerHTML =
+          filtered
+            .map((t) => {
+              const signed = ["income", "collection", "refund"].includes(t.type)
+                ? "+"
+                : "−";
+              const label = t.type.replace("_", " ");
+              return `<div class="item"><div style="min-width:0"><strong>${esc(t.note || t.category || label)} ${t.needsReview ? '<span class="pill">Review import</span>' : ""}</strong><small>${esc(t.date)} · ${esc(t.category)} · ${esc(label)}${t.person ? " · " + esc(t.person) : ""}</small></div><div style="text-align:right"><div class="amt ${signed === "+" ? "green" : ""}">${signed}${money(Number(t.amount ?? (t.amountPaise || 0) / 100))}</div><button class="danger" style="width:auto;padding:2px 5px;font-size:11px" data-delete="${t._id}">Delete</button></div></div>`;
+            })
+            .join("") || '<div class="empty">No transactions yet.</div>';
+      }
+      $("transactions").onclick = async (e) => {
+        const id = e.target.dataset.delete;
+        if (!id) return;
+        if (
+          confirm(
+            "Delete this transaction? Account balances and reports will recalculate.",
+          )
+        ) {
+          await api("/transactions/" + id, { method: "DELETE" });
+          await load();
+        }
+      };
+      $("txForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const body = {
+            type: $("type").value,
+            amount: $("amount").value,
+            category: $("category").value,
+            note: $("note").value,
+            date: $("date").value,
+            accountId: $("accountId").value,
+            toAccountId: $("toAccountId").value,
+            person: $("person").value,
+          };
+          await send("/transactions", body);
+          e.target.reset();
+          $("date").value = today();
+          showTypes();
+          msg("txStatus", "Saved.");
+          await load();
+        } catch (err) {
+          msg("txStatus", err.message);
+        }
+      };
+      $("settingsForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await send(
+            "/settings",
+            { payday: $("payday").value, reserve: $("reserve").value },
+            "PUT",
+          );
+          msg("settingsStatus", "Saved.");
+          await load();
+        } catch (err) {
+          msg("settingsStatus", err.message);
+        }
+      };
+      $("accountForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await send("/accounts", {
+            name: $("accountName").value,
+            kind: $("accountKind").value,
+            openingBalance: $("opening").value,
+          });
+          e.target.reset();
+          msg("accountStatus", "Account added.");
+          await load();
+        } catch (err) {
+          msg("accountStatus", err.message);
+        }
+      };
+      $("budgetForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await send("/budgets", {
+            category: $("budgetCategory").value,
+            amount: $("budgetAmount").value,
+          });
+          e.target.reset();
+          await load();
+        } catch (err) {
+          alert(err.message);
+        }
+      };
+      $("goalForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await send("/goals", {
+            name: $("goalName").value,
+            target: $("goalTarget").value,
+            saved: $("goalSaved").value,
+          });
+          e.target.reset();
+          await load();
+        } catch (err) {
+          alert(err.message);
+        }
+      };
+      $("recurringForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await send("/recurring", {
+            name: $("recName").value,
+            amount: $("recAmount").value,
+            dueDay: $("recDay").value,
+            category: $("recCategory").value,
+          });
+          e.target.reset();
+          await load();
+        } catch (err) {
+          alert(err.message);
+        }
+      };
+      $("monthFilter").onchange = () => renderTransactions(allTx);
+      $("refresh").onclick = () => load().catch((e) => alert(e.message));
+      $("showSetup").onclick = () => $("payday").focus();
+      $("importForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const text = await $("csvFile").files[0].text();
+          const r = await api("/import/preview", {
+            method: "POST",
+            headers: { "Content-Type": "text/csv" },
+            body: text,
+          });
+          previewRows = r.rows;
+          $("importPreview").innerHTML =
+            `<div class="item"><strong>${r.count} rows detected</strong><span class="pill">Preview only</span></div>` +
+            r.rows
+              .slice(0, 8)
+              .map(
+                (x) =>
+                  `<div class="item"><div><strong>${esc(x.description)}</strong><small>${esc(x.date)} · ${esc(x.type)}</small></div><span class="amt">${money(x.amount)}</span></div>`,
+              )
+              .join("") +
+            (r.count > 8
+              ? `<div class="note">Showing first 8 of ${r.count}. All detected rows will be imported.</div>`
+              : "");
+          $("importActions").classList.remove("hidden");
+          msg(
+            "importStatus",
+            "Check the preview and choose the correct account before committing.",
+          );
+        } catch (err) {
+          msg("importStatus", err.message);
+        }
+      };
+      $("commitImport").onclick = async () => {
+        try {
+          const r = await send("/import/commit", {
+            rows: previewRows,
+            accountId: $("importAccount").value,
+          });
+          msg(
+            "importStatus",
+            `Added ${r.added}; skipped ${r.skipped}. Imported records need review.`,
+          );
+          previewRows = [];
+          $("importActions").classList.add("hidden");
+          await load();
+        } catch (err) {
+          msg("importStatus", err.message);
+        }
+      };
+      $("date").value = today();
+      $("payday").value = new Date().toISOString().slice(0, 10);
+      showTypes();
+      load().catch((e) => {
+        $("heroSub").textContent = e.message;
+      });
+    </script>
+  </body>
+</html>
