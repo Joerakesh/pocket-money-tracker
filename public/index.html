@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#101318" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <title>Pocket — Personal Finance</title>
     <style>
       :root {
@@ -279,6 +280,280 @@
           padding: 16px 12px 48px;
         }
       }
+
+      /* App-like navigation and focused dashboard */
+      :root {
+        --accent: #8ce6bc;
+        --accent-ink: #0c2018;
+        --nav-bg: rgba(18, 22, 29, 0.94);
+      }
+      body {
+        background: radial-gradient(
+          ellipse at 50% -20%,
+          #26323a 0%,
+          var(--bg) 46%
+        );
+        min-height: 100vh;
+      }
+      main {
+        max-width: 760px;
+        padding: 22px 16px 110px;
+      }
+      .top {
+        margin-bottom: 18px;
+      }
+      .brand {
+        font-size: 27px;
+        letter-spacing: -0.055em;
+      }
+      .top .muted {
+        font-size: 13px;
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .top-actions button {
+        width: auto;
+        padding: 9px 12px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 13px;
+        margin-top: 0;
+      }
+      .layout > [data-page] {
+        display: none;
+        grid-column: 1;
+      }
+      .layout > [data-page].page-active {
+        display: block;
+      }
+      .card {
+        border-radius: 20px;
+        padding: 19px;
+        background: linear-gradient(
+          160deg,
+          rgba(29, 35, 45, 0.98),
+          rgba(23, 28, 36, 0.98)
+        );
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.09);
+      }
+      .hero {
+        background: linear-gradient(135deg, #253d3a, #1c2b2d 72%);
+        border-color: #3d5c53;
+      }
+      .hero small {
+        letter-spacing: 0.08em;
+        font-size: 10px;
+        font-weight: 750;
+      }
+      .big {
+        font-size: clamp(34px, 8vw, 48px);
+      }
+      #heroSub {
+        font-size: 13px;
+      }
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 0 13px;
+      }
+      .quick-action {
+        border: 1px solid var(--line);
+        background: #202833;
+        border-radius: 14px;
+        padding: 12px 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 5px;
+        font-size: 12px;
+      }
+      .quick-action .qa-icon {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 11px;
+        background: #2b3742;
+        font-size: 18px;
+      }
+      .quick-action.active {
+        border-color: var(--green);
+        background: #21362f;
+      }
+      .quick-action.active .qa-icon {
+        background: var(--green);
+        color: #102019;
+      }
+      .card h2 {
+        font-size: 16px;
+        letter-spacing: -0.02em;
+      }
+      .metrics {
+        gap: 8px;
+      }
+      .metric {
+        border: 1px solid rgba(255, 255, 255, 0.035);
+        border-radius: 14px;
+        padding: 12px;
+      }
+      .metric strong {
+        font-size: clamp(17px, 4vw, 21px);
+      }
+      input,
+      select,
+      button {
+        border-radius: 12px;
+      }
+      input,
+      select {
+        padding: 12px;
+      }
+      button {
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      button:active {
+        transform: scale(0.985);
+      }
+      .primary {
+        box-shadow: 0 5px 16px rgba(115, 224, 176, 0.1);
+      }
+      .formgrid {
+        gap: 13px;
+      }
+      .note {
+        line-height: 1.5;
+      }
+      .bottom-nav {
+        position: fixed;
+        z-index: 50;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+        background: var(--nav-bg);
+        backdrop-filter: blur(18px);
+        border-top: 1px solid rgba(255, 255, 255, 0.09);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .nav-item {
+        background: transparent;
+        border: 0;
+        color: #8f9aaa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 3px;
+        padding: 5px 4px;
+        font-size: 10px;
+        font-weight: 650;
+        border-radius: 12px;
+      }
+      .nav-item .nav-icon {
+        font-size: 19px;
+        line-height: 1.2;
+      }
+      .nav-item.active {
+        color: var(--green);
+        background: rgba(115, 224, 176, 0.09);
+      }
+      .page-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 3px 2px 12px;
+      }
+      .page-heading h1 {
+        font-size: 23px;
+        letter-spacing: -0.045em;
+        margin: 0;
+      }
+      .page-heading p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .section-label {
+        margin: 5px 3px 10px;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        font-weight: 750;
+      }
+      #txForm {
+        margin-top: 4px;
+      }
+      #txForm .full button {
+        min-height: 48px;
+      }
+      #transactions .item {
+        align-items: center;
+      }
+      #transactions .item > div:first-child {
+        overflow-wrap: anywhere;
+      }
+      #transactions button {
+        width: auto;
+      }
+      #accounts .item {
+        align-items: center;
+      }
+      .empty {
+        font-size: 13px;
+      }
+      @media (min-width: 760px) {
+        main {
+          padding-top: 28px;
+        }
+        .bottom-nav {
+          left: 50%;
+          right: auto;
+          transform: translateX(-50%);
+          width: min(760px, 100%);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-bottom: 0;
+          border-radius: 18px 18px 0 0;
+        }
+      }
+      @media (max-width: 420px) {
+        main {
+          padding: 14px 11px 105px;
+        }
+        .card {
+          padding: 15px;
+          border-radius: 17px;
+        }
+        .quick-actions {
+          gap: 6px;
+        }
+        .quick-action {
+          font-size: 11px;
+          padding: 10px 3px;
+        }
+        .quick-action .qa-icon {
+          width: 30px;
+          height: 30px;
+        }
+        .metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .top-actions button {
+          font-size: 12px;
+          padding: 8px 9px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -286,22 +561,43 @@
       <header class="top">
         <div>
           <div class="brand">Pocket<span class="green">.</span></div>
-          <div class="muted">Your money, made clear.</div>
+          <div class="muted" id="greeting">Your money, made clear.</div>
         </div>
-        <div class="row" style="max-width: 330px">
-          <button class="ghost" id="refresh">Refresh</button
-          ><button class="ghost" id="showSetup">Settings</button>
+        <div class="top-actions">
+          <button class="ghost" id="refresh" aria-label="Refresh balances">
+            ↻</button
+          ><button class="ghost" id="showSetup">⚙</button>
         </div>
       </header>
+      <div class="page-heading" id="pageHeading">
+        <div>
+          <h1>Overview</h1>
+          <p>Your essentials at a glance</p>
+        </div>
+      </div>
+      <div class="quick-actions" id="quickActions" aria-label="Quick actions">
+        <button type="button" class="quick-action active" data-type="expense">
+          <span class="qa-icon">↘</span><span>Expense</span>
+        </button>
+        <button type="button" class="quick-action" data-type="income">
+          <span class="qa-icon">↗</span><span>Income</span>
+        </button>
+        <button type="button" class="quick-action" data-type="lent">
+          <span class="qa-icon">↗</span><span>Lend</span>
+        </button>
+        <button type="button" class="quick-action" data-type="repayment">
+          <span class="qa-icon">↙</span><span>Repay</span>
+        </button>
+      </div>
       <div class="layout">
-        <section class="card hero span8">
+        <section data-page="home" class="card hero span8">
           <small
             >SAFE TO SPEND · AFTER RESERVE AND UNPAID BORROWED EXPENSES</small
           >
           <div class="big" id="perDay">₹— / day</div>
           <div id="heroSub" class="muted">Loading your ledger…</div>
         </section>
-        <section class="card span4">
+        <section data-page="home" class="card span4">
           <h2>Account snapshot</h2>
           <div class="metrics">
             <div class="metric">
@@ -316,7 +612,7 @@
             </div>
           </div>
         </section>
-        <section class="card span8">
+        <section data-page="home" class="card span8">
           <h2>Add transaction</h2>
           <form id="txForm" class="formgrid">
             <div>
@@ -392,7 +688,7 @@
             purchases. Imported transactions are flagged for review.
           </p>
         </section>
-        <section class="card span4">
+        <section data-page="more" class="card span4">
           <h2>Allowance settings</h2>
           <form id="settingsForm" class="formgrid">
             <div class="full">
@@ -448,11 +744,11 @@
             </div>
           </form>
         </section>
-        <section class="card span6">
+        <section data-page="more" class="card span6">
           <div class="sectionhead"><h2>Accounts</h2></div>
           <div id="accounts" class="list"></div>
         </section>
-        <section class="card span6">
+        <section data-page="home" class="card span6">
           <h2>This month</h2>
           <div class="metrics">
             <div class="metric">
@@ -469,7 +765,7 @@
           </div>
           <div id="categories" style="margin-top: 16px"></div>
         </section>
-        <section class="card span6">
+        <section data-page="plan" class="card span6">
           <h2>Budgets</h2>
           <form id="budgetForm" class="formgrid">
             <div>
@@ -492,7 +788,7 @@
           </form>
           <div id="budgets" class="list" style="margin-top: 12px"></div>
         </section>
-        <section class="card span6">
+        <section data-page="plan" class="card span6">
           <h2>Savings goals</h2>
           <form id="goalForm" class="formgrid">
             <div>
@@ -525,7 +821,7 @@
           </form>
           <div id="goals" class="list" style="margin-top: 12px"></div>
         </section>
-        <section class="card span6">
+        <section data-page="plan" class="card span6">
           <h2>Recurring expenses</h2>
           <form id="recurringForm" class="formgrid">
             <div>
@@ -563,7 +859,7 @@
           </form>
           <div id="recurring" class="list" style="margin-top: 12px"></div>
         </section>
-        <section class="card span6">
+        <section data-page="activity" class="card span6">
           <h2>Statement import</h2>
           <p class="note">
             Import preview is intentionally separate from saving. Review
@@ -587,7 +883,7 @@
           </div>
           <div id="importStatus" class="status"></div>
         </section>
-        <section class="card span12">
+        <section data-page="activity" class="card span12">
           <div class="sectionhead">
             <h2>Recent transactions</h2>
             <select id="monthFilter" style="max-width: 160px">
@@ -597,6 +893,20 @@
           <div id="transactions" class="list" style="margin-top: 8px"></div>
         </section>
       </div>
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button type="button" class="nav-item active" data-tab="home">
+          <span class="nav-icon">⌂</span><span>Home</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="activity">
+          <span class="nav-icon">↕</span><span>Activity</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="plan">
+          <span class="nav-icon">◷</span><span>Plan</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="more">
+          <span class="nav-icon">•••</span><span>More</span>
+        </button>
+      </nav>
     </main>
     <script>
       const $ = (id) => document.getElementById(id);
@@ -627,6 +937,56 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
+
+      const pageMeta = {
+        home: { title: "Overview", sub: "Your essentials at a glance" },
+        activity: {
+          title: "Activity",
+          sub: "Transactions and statement imports",
+        },
+        plan: {
+          title: "Plan ahead",
+          sub: "Budgets, subscriptions and savings goals",
+        },
+        more: {
+          title: "Accounts & settings",
+          sub: "Balances, allowance and preferences",
+        },
+      };
+      function switchTab(tab) {
+        document
+          .querySelectorAll("[data-page]")
+          .forEach((el) =>
+            el.classList.toggle("page-active", el.dataset.page === tab),
+          );
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((el) =>
+            el.classList.toggle("active", el.dataset.tab === tab),
+          );
+        $("pageHeading").querySelector("h1").textContent = pageMeta[tab].title;
+        $("pageHeading").querySelector("p").textContent = pageMeta[tab].sub;
+        $("quickActions").classList.toggle("hidden", tab !== "home");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      document
+        .querySelectorAll(".nav-item")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => switchTab(btn.dataset.tab)),
+        );
+      document.querySelectorAll(".quick-action").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const type = btn.dataset.type;
+          $("type").value = type;
+          showTypes();
+          document
+            .querySelectorAll(".quick-action")
+            .forEach((x) => x.classList.toggle("active", x === btn));
+          $("txForm").scrollIntoView({ behavior: "smooth", block: "start" });
+          $("amount").focus({ preventScroll: true });
+        }),
+      );
+
       function msg(id, text) {
         $(id).textContent = text;
       }
@@ -661,7 +1021,14 @@
         $("fromWrap").classList.toggle("hidden", t === "borrowed_expense");
         $("accountId").required = t !== "borrowed_expense";
       }
-      $("type").onchange = showTypes;
+      $("type").onchange = () => {
+        showTypes();
+        document
+          .querySelectorAll(".quick-action")
+          .forEach((x) =>
+            x.classList.toggle("active", x.dataset.type === $("type").value),
+          );
+      };
       async function load() {
         const [s, a, txs, b, g, r, st] = await Promise.all([
           api("/summary"),
@@ -775,6 +1142,7 @@
           };
           await send("/transactions", body);
           e.target.reset();
+          switchTab("home");
           $("date").value = today();
           showTypes();
           msg("txStatus", "Saved.");
@@ -856,7 +1224,10 @@
       };
       $("monthFilter").onchange = () => renderTransactions(allTx);
       $("refresh").onclick = () => load().catch((e) => alert(e.message));
-      $("showSetup").onclick = () => $("payday").focus();
+      $("showSetup").onclick = () => {
+        switchTab("more");
+        $("payday").focus({ preventScroll: true });
+      };
       $("importForm").onsubmit = async (e) => {
         e.preventDefault();
         try {
@@ -905,6 +1276,7 @@
           msg("importStatus", err.message);
         }
       };
+      switchTab("home");
       $("date").value = today();
       $("payday").value = new Date().toISOString().slice(0, 10);
       showTypes();
