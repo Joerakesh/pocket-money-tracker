@@ -79,3 +79,8 @@ The importer supports common CSV headers but cannot reliably infer every bank's 
 ## Data safety
 
 Never upload `.env`, Atlas credentials, or an unredacted bank statement to a public repository. Keep private backups and test restore before trusting this for financial records.
+
+
+## Google Sheets sync
+
+See [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md) to configure Apps Script syncing, the monthly tabs, and dashboard. Keep the deployment secret in `.env`, never in frontend code or GitHub.

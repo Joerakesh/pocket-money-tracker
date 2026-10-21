@@ -51,6 +51,44 @@ const amountIn = (value) => {
 };
 const clean = (v, max = 160) => String(v || '').trim().slice(0, max);
 
+// Google Sheets sync is optional. A sync failure never rolls back a saved MongoDB transaction.
+async function syncToGoogleSheets(action, transaction, transactionId) {
+  const url = process.env.GOOGLE_SHEETS_WEB_APP_URL;
+  const secret = process.env.GOOGLE_SHEETS_SECRET;
+  if (!url || !secret) return;
+  try {
+    let accountName = '';
+    if (transaction && transaction.accountId) {
+      const account = await accounts.findOne({ _id: parseId(transaction.accountId) });
+      accountName = account?.name || '';
+    }
+    let toAccountName = '';
+    if (transaction && transaction.toAccountId) {
+      const account = await accounts.findOne({ _id: parseId(transaction.toAccountId) });
+      toAccountName = account?.name || '';
+    }
+    const payload = {
+      secret, action, transactionId: String(transactionId),
+      date: transaction?.date || '',
+      createdAt: transaction?.createdAt instanceof Date ? transaction.createdAt.toISOString() : new Date().toISOString(),
+      type: transaction?.type || '', amount: paiseToRupees(transaction?.amountPaise || 0),
+      category: transaction?.category || '', description: transaction?.note || transaction?.category || transaction?.type || '',
+      account: accountName, toAccount: toAccountName, person: transaction?.person || '',
+      notes: transaction?.note || '', status: transaction?.needsReview ? 'Needs review' : (transaction?.settled ? 'Settled' : 'Recorded'),
+      importSource: transaction?.importSource || ''
+    };
+    const response = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload), signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) throw new Error(`Google Sheets returned HTTP ${response.status}`);
+    const result = await response.json();
+    if (!result.ok) throw new Error(result.error || 'Google Sheets rejected the sync');
+  } catch (error) {
+    console.error('Google Sheets sync failed:', error.message);
+  }
+}
+
 async function getMainSettings() {
   return await settings.findOne({ _id: 'main' }) || {
     _id: 'main', payday: endOfMonth(), reservePaise: 50000, currency: 'INR'
@@ -167,6 +205,7 @@ app.post('/api/transactions', wrap(async (req, res) => {
     doc.settled = false;
   }
   const result = await tx.insertOne(doc);
+  await syncToGoogleSheets('upsert', doc, result.insertedId);
   res.status(201).json({ ok: true, id: String(result.insertedId) });
 }));
 
@@ -175,6 +214,7 @@ app.delete('/api/transactions/:id', wrap(async (req, res) => {
   const t = await tx.findOne({ _id: id });
   if (!t) throw bad('Transaction not found.', 404);
   await tx.deleteOne({ _id: id });
+  await syncToGoogleSheets('delete', t, id);
   res.json({ ok: true });
 }));
 
@@ -186,12 +226,16 @@ app.post('/api/transactions/:id/settle', wrap(async (req, res) => {
   const accountId = clean(req.body.accountId, 40);
   await accountById(accountId);
   const settlementType = original.type === 'borrowed_expense' ? 'repayment' : 'collection';
-  await tx.insertOne({
+  const settlement = {
     type: settlementType, amountPaise: original.amountPaise, date: today(),
     category: 'Friends', note: `Settlement: ${original.note || original.person}`,
     person: original.person, accountId, relatedTransactionId: String(original._id), createdAt: new Date()
-  });
+  };
+  const settledResult = await tx.insertOne(settlement);
+  await syncToGoogleSheets('upsert', settlement, settledResult.insertedId);
   await tx.updateOne({ _id: id }, { $set: { settled: true, settledAt: today() } });
+  const updatedOriginal = await tx.findOne({ _id: id });
+  await syncToGoogleSheets('upsert', updatedOriginal, id);
   res.json({ ok: true });
 }));
 
@@ -297,14 +341,25 @@ app.post('/api/import/commit', wrap(async (req, res) => {
     if (!row.importKey || !/^[a-f0-9]{64}$/.test(row.importKey)) { skipped++; continue; }
     const exists = await tx.findOne({ importKey: row.importKey });
     if (exists) { skipped++; continue; }
-    await tx.insertOne({
+    const imported = {
       importKey: row.importKey, importSource: 'csv', type: row.type === 'income' ? 'income' : 'expense',
       amountPaise: amountIn(row.amount), date: clean(row.date, 10), category: 'Needs review',
       note: clean(row.description, 200), accountId, needsReview: true, createdAt: new Date()
-    });
+    };
+    const importedResult = await tx.insertOne(imported);
+    await syncToGoogleSheets('upsert', imported, importedResult.insertedId);
     added++;
   }
   res.json({ added, skipped, reviewRequired: added });
+}));
+
+app.post('/api/sheets/sync-all', wrap(async (req, res) => {
+  if (!process.env.GOOGLE_SHEETS_WEB_APP_URL || !process.env.GOOGLE_SHEETS_SECRET) {
+    throw bad('Configure GOOGLE_SHEETS_WEB_APP_URL and GOOGLE_SHEETS_SECRET in .env first.', 400);
+  }
+  const all = await tx.find().sort({ date: 1, createdAt: 1 }).toArray();
+  for (const item of all) await syncToGoogleSheets('upsert', item, item._id);
+  res.json({ ok: true, attempted: all.length, message: 'Sync attempted. Check the server terminal for any Google Sheets sync errors.' });
 }));
 
 app.get('/api/summary', wrap(async (req, res) => {
