@@ -411,11 +411,18 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           const btn =
             e.submitter ||
             form.querySelector('button[type="submit"],button:not([type])');
-          const original = btn?.textContent;
+          const originalHTML = btn?.innerHTML;
+          const isTransactionButton = btn?.classList.contains("tx-submit");
           if (btn) {
             btn.disabled = true;
             btn.setAttribute("aria-busy", "true");
-            btn.textContent = "Working…";
+            if (isTransactionButton) {
+              btn.classList.add("is-loading");
+              const label = btn.querySelector(".submit-label");
+              if (label) label.textContent = "Saving…";
+            } else {
+              btn.textContent = "Working…";
+            }
           }
           try {
             await handler(e);
@@ -424,7 +431,12 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
             if (btn) {
               btn.disabled = false;
               btn.removeAttribute("aria-busy");
-              btn.textContent = original;
+              if (isTransactionButton) {
+                btn.classList.remove("is-loading");
+                btn.innerHTML = originalHTML;
+              } else {
+                btn.innerHTML = originalHTML;
+              }
             }
           }
         });
@@ -690,12 +702,6 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
       };
       guardForm("txForm", async (e) => {
         e.preventDefault();
-        const submitButton = e.target.querySelector('[type="submit"]');
-        const submitLabel = submitButton.querySelector(".submit-label");
-        if (submitButton.disabled) return;
-        submitButton.disabled = true;
-        submitButton.classList.add("is-loading");
-        submitLabel.textContent = "Saving…";
         try {
           const body = {
             type: $("type").value,
@@ -717,10 +723,6 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           await load();
         } catch (err) {
           msg("txStatus", err.message);
-        } finally {
-          submitButton.disabled = false;
-          submitButton.classList.remove("is-loading");
-          submitLabel.textContent = "Save transaction";
         }
       });
       guardForm("settingsForm", async (e) => {
@@ -760,11 +762,9 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
       $("floatingAdd").addEventListener("click", () => {
         selectTransactionType("expense");
         switchTab("transaction");
-        $("amount").focus({preventScroll:true});
       });
       document.querySelectorAll(".type-choice").forEach((btn) => btn.addEventListener("click", () => {
         selectTransactionType(btn.dataset.type);
-        $("amount").focus({preventScroll:true});
       }));
       const bankLogoSlugs = {"State Bank of India":"sbin","Indian Bank":"idib","Kotak Mahindra Bank":"kkbk","HDFC Bank":"hdfc","ICICI Bank":"icic","Axis Bank":"utib","Canara Bank":"cnrb","Bank of Baroda":"barb","Punjab National Bank":"punb","Union Bank of India":"ubin","IDFC FIRST Bank":"idfb","Federal Bank":"fdrl","Indian Overseas Bank":"ioba","South Indian Bank":"sibl","DBS Bank India":"dbss","RBL Bank":"ratn","Equitas Small Finance Bank":"esfb","Jana Small Finance Bank":"jsfb","Ujjivan Small Finance Bank":"ujvn","Tamilnad Mercantile Bank":"tmbl","City Union Bank":"ciub","Karur Vysya Bank":"kvbl"};
       function renderBankChoices() {
