@@ -114,11 +114,11 @@ async function accountBalances() {
   const ids = list.map(a => String(a._id));
   const [outgoing, incoming] = await Promise.all([
     tx.aggregate([
-      { $match: { accountId: { $in: ids } } },
+      { $match: { accountId: { $in: ids }, deletedAt: { $exists: false } } },
       { $group: { _id: { accountId: "$accountId", type: "$type" }, totalPaise: { $sum: "$amountPaise" } } }
     ]).toArray(),
     tx.aggregate([
-      { $match: { type: "transfer", toAccountId: { $in: ids } } },
+      { $match: { type: "transfer", toAccountId: { $in: ids }, deletedAt: { $exists: false } } },
       { $group: { _id: "$toAccountId", totalPaise: { $sum: "$amountPaise" } } }
     ]).toArray()
   ]);
@@ -174,7 +174,7 @@ async function getAccountExportData(id) {
   const account = await accounts.findOne({ _id: id });
   if (!account) throw bad('Account not found.', 404);
   const accountId = String(id);
-  const matched = await tx.find({ $or: [{ accountId }, { toAccountId: accountId }] }).sort({ date: 1, createdAt: 1 }).toArray();
+  const matched = await tx.find({ deletedAt: { $exists: false }, $or: [{ accountId }, { toAccountId: accountId }] }).sort({ date: 1, createdAt: 1 }).toArray();
   const byId = new Map(matched.map(row => [String(row._id), row]));
   // Include linked records (for example, a lend and its repayment) so the export
   // remains useful as a complete history and deletion does not leave broken links.
@@ -239,6 +239,7 @@ app.put('/api/settings', wrap(async (req, res) => {
 app.get('/api/transactions', wrap(async (req, res) => {
   const filter = {};
   if (req.query.month) filter.date = { $regex: `^${String(req.query.month).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}` };
+  filter.deletedAt = { $exists: false };
   const rows = await tx.find(filter).sort({ date: -1, createdAt: -1 }).limit(500).toArray();
   res.json(rows.map(t => ({ ...t, amount: paiseToRupees(t.amountPaise), _id: String(t._id) })));
 }));
@@ -285,10 +286,46 @@ app.post('/api/transactions', wrap(async (req, res) => {
 
 app.delete('/api/transactions/:id', wrap(async (req, res) => {
   const id = parseId(req.params.id);
-  const t = await tx.findOne({ _id: id });
+  const t = await tx.findOne({ _id: id, deletedAt: { $exists: false } });
   if (!t) throw bad('Transaction not found.', 404);
-  await tx.deleteOne({ _id: id });
+  await tx.updateOne({ _id: id, deletedAt: { $exists: false } }, { $set: { deletedAt: new Date(), deletedByAction: 'user' } });
   void syncToGoogleSheets('delete', t, id);
+  res.json({ ok: true, undoAvailable: true });
+}));
+
+app.put('/api/transactions/:id', wrap(async (req, res) => {
+  const id = parseId(req.params.id);
+  const original = await tx.findOne({ _id: id, deletedAt: { $exists: false } });
+  if (!original) throw bad('Transaction not found.', 404);
+  if (original.settled) throw bad('Settled transactions cannot be edited. Add a correcting transaction instead.');
+  const amountPaise = amountIn(req.body.amount);
+  const date = clean(req.body.date, 10);
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || Number.isNaN(Date.parse(date + 'T00:00:00'))) throw bad('Enter a valid transaction date.');
+  const category = clean(req.body.category || original.category || 'Other', 50);
+  const note = clean(req.body.note, 200);
+  const revision = {
+    amountPaise: original.amountPaise, date: original.date,
+    category: original.category, note: original.note || '',
+    changedAt: new Date()
+  };
+  await tx.updateOne({ _id: id }, {
+    $set: { amountPaise, date, category, note, updatedAt: new Date() },
+    $push: { revisions: { $each: [revision], $slice: -20 } }
+  });
+  const updated = await tx.findOne({ _id: id });
+  void syncToGoogleSheets('upsert', updated, id);
+  res.json({ ok: true, transaction: { ...updated, _id: String(updated._id), amount: paiseToRupees(updated.amountPaise) } });
+}));
+
+app.post('/api/transactions/:id/restore', wrap(async (req, res) => {
+  const id = parseId(req.params.id);
+  const result = await tx.updateOne(
+    { _id: id, deletedAt: { $exists: true } },
+    { $unset: { deletedAt: '', deletedByAction: '' }, $set: { restoredAt: new Date() } }
+  );
+  if (!result.modifiedCount) throw bad('Deleted transaction not found or already restored.', 404);
+  const restored = await tx.findOne({ _id: id });
+  void syncToGoogleSheets('upsert', restored, id);
   res.json({ ok: true });
 }));
 
@@ -440,8 +477,8 @@ app.get('/api/summary', wrap(async (req, res) => {
   const t = today(), month = t.slice(0, 7);
   const [st, monthRows, unpaidRows, balances] = await Promise.all([
     getMainSettings(),
-    tx.find({ date: { $gte: monthStart(t), $lte: endOfMonth(t) } }, { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } }).toArray(),
-    tx.find({ type: { $in: ['borrowed_expense', 'lent'] }, settled: { $ne: true } }, { projection: { type: 1, amountPaise: 1 } }).toArray(),
+    tx.find({ deletedAt: { $exists: false }, date: { $gte: monthStart(t), $lte: endOfMonth(t) } }, { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } }).toArray(),
+    tx.find({ deletedAt: { $exists: false }, type: { $in: ['borrowed_expense', 'lent'] }, settled: { $ne: true } }, { projection: { type: 1, amountPaise: 1 } }).toArray(),
     accountBalances()
   ]);
   let todaySpent = 0, monthSpent = 0, monthIncome = 0, owedToFriends = 0, owedByFriends = 0;
