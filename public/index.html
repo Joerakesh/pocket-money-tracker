@@ -20,6 +20,8 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
 @media(min-width:760px){main{padding-top:32px}.bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:min(620px,100%);border:1px solid rgba(255,255,255,.08);border-bottom:0;border-radius:20px 20px 0 0}}
 @media(max-width:420px){main{padding:16px 13px 105px}.card{padding:16px;border-radius:20px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.quick-actions{gap:4px}.quick-action{font-size:10px}.quick-action .qa-icon{width:43px;height:43px}.big{font-size:42px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.floating-add{position:fixed;z-index:60;right:max(20px,calc((100vw - 620px)/2 + 20px));bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 </style>
   </head>
   <body>
@@ -86,6 +88,10 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           >
           <div class="big" id="perDay">₹— / day</div>
           <div id="heroSub" class="muted">Loading your ledger…</div>
+        </section>
+        <section data-page="home" class="card span6">
+          <div class="sectionhead"><h2>Your accounts</h2><span class="pill" id="accountCount">0 accounts</span></div>
+          <div id="homeAccounts" class="bank-grid"></div>
         </section>
         <section data-page="home" class="card span4">
           <h2>Account snapshot</h2>
@@ -203,36 +209,8 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <hr
             style="border: 0; border-top: 1px solid var(--line); margin: 18px 0"
           />
-          <h2>Add account</h2>
-          <form id="accountForm" class="formgrid">
-            <div>
-              <label>Account name</label
-              ><input id="accountName" required placeholder="Wallet / Bank" />
-            </div>
-            <div>
-              <label>Type</label
-              ><select id="accountKind">
-                <option value="cash">Cash</option>
-                <option value="bank">Bank</option>
-                <option value="upi">UPI</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="full">
-              <label>Opening balance (₹)</label
-              ><input
-                id="opening"
-                type="number"
-                step=".01"
-                value="0"
-                required
-              />
-            </div>
-            <div class="full">
-              <button class="ghost">Add account</button>
-              <div id="accountStatus" class="status"></div>
-            </div>
-          </form>
+          <div class="sectionhead"><h2>Bank accounts</h2><button type="button" class="ghost" id="addBankInline">＋ Add</button></div>
+          <p class="note">Add your bank, cash wallet or UPI account. Balances are calculated from your opening balance and recorded transactions.</p>
         </section>
         <section data-page="more" class="card span6">
           <div class="sectionhead"><h2>Accounts</h2></div>
@@ -383,6 +361,30 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <div id="transactions" class="list" style="margin-top: 8px"></div>
         </section>
       </div>
+<dialog id="accountDialog" class="account-dialog" aria-labelledby="accountDialogTitle">
+        <form id="accountForm" class="dialog-panel">
+          <div class="sectionhead"><div><span class="section-label">NEW ACCOUNT</span><h2 id="accountDialogTitle">Add an account</h2></div><button type="button" class="icon-close" id="closeAccountDialog" aria-label="Close">×</button></div>
+          <p class="note">Choose your bank. We’ll use its identity on your wallet card.</p>
+          <label for="bankInstitution">Bank or provider</label>
+          <select id="bankInstitution" required>
+            <option value="">Choose a bank</option>
+            <optgroup label="Popular banks">
+              <option value="State Bank of India">State Bank of India (SBI)</option><option value="Indian Bank">Indian Bank</option><option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option><option value="HDFC Bank">HDFC Bank</option><option value="ICICI Bank">ICICI Bank</option><option value="Axis Bank">Axis Bank</option><option value="Canara Bank">Canara Bank</option><option value="Bank of Baroda">Bank of Baroda</option><option value="Punjab National Bank">Punjab National Bank</option><option value="Union Bank of India">Union Bank of India</option><option value="IDFC FIRST Bank">IDFC FIRST Bank</option><option value="Federal Bank">Federal Bank</option>
+            </optgroup>
+            <optgroup label="Tamil Nadu banks">
+              <option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank (TMB)</option><option value="City Union Bank">City Union Bank (CUB)</option><option value="Karur Vysya Bank">Karur Vysya Bank (KVB)</option><option value="Tamil Nadu State Apex Cooperative Bank">Tamil Nadu State Apex Cooperative Bank</option>
+            </optgroup>
+            <option value="Other Bank">Other bank</option><option value="Cash">Cash wallet</option><option value="UPI">UPI wallet</option>
+          </select>
+          <label for="accountName">Account label <span class="muted">(optional)</span></label><input id="accountName" placeholder="e.g. College expenses" maxlength="60"/>
+          <label for="opening">Current opening balance (₹)</label><input id="opening" type="number" min="0" step=".01" value="0" required inputmode="decimal"/>
+          <input id="accountKind" type="hidden" value="bank"/>
+          <div class="dialog-actions"><button type="button" class="ghost" id="cancelAccountDialog">Cancel</button><button class="primary" type="submit">Create account</button></div>
+          <div id="accountStatus" class="status" role="status" aria-live="polite"></div>
+        </form>
+      </dialog>
+      <button type="button" class="floating-add" id="floatingAdd" aria-label="Add transaction or account">＋</button>
+      
       <nav class="bottom-nav" aria-label="Main navigation">
         <button type="button" class="nav-item active" data-tab="home">
           <span class="nav-icon">⌂</span><span>Home</span>
@@ -648,13 +650,16 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         $("todaySpent").textContent = money(s.todaySpent);
         $("payday").value = st.payday;
         $("reserve").value = Number(st.reservePaise || 0) / 100;
-        $("accounts").innerHTML =
-          a
-            .map(
-              (x) =>
-                `<div class="item"><div><strong>${esc(x.name)}</strong><small>${esc(x.kind)}</small></div><span class="amt">${money(x.balance)}</span></div>`,
-            )
-            .join("") || '<div class="empty">No accounts</div>';
+        const accountMarkup = (x) => {
+          const bank = x.institution || x.name;
+          const domainMap = {"State Bank of India":"sbi.co.in","Indian Bank":"indianbank.in","Kotak Mahindra Bank":"kotak.com","HDFC Bank":"hdfcbank.com","ICICI Bank":"icicibank.com","Axis Bank":"axisbank.com","Canara Bank":"canarabank.com","Bank of Baroda":"bankofbaroda.in","Punjab National Bank":"pnbindia.in","Union Bank of India":"unionbankofindia.co.in","IDFC FIRST Bank":"idfcfirstbank.com","Federal Bank":"federalbank.co.in","Tamilnad Mercantile Bank":"tmb.in","City Union Bank":"cityunionbank.com","Karur Vysya Bank":"kvb.co.in"};
+          const domain = domainMap[bank];
+          const initials = bank.split(/\\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
+          return `<div class="bank-card"><div class="bank-logo">${domain ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=128" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${esc(initials)}'">` : esc(initials)}</div><div class="bank-meta"><strong>${esc(bank)}</strong><small>${esc(x.name)} · ${esc(x.kind)}</small></div><div class="bank-balance">${money(x.balance)}</div></div>`;
+        };
+        $("accounts").innerHTML = a.map(accountMarkup).join("") || '<div class="empty">No accounts yet.</div>';
+        $("homeAccounts").innerHTML = a.map(accountMarkup).join("") || '<div class="empty">No accounts yet. Tap + to add your first bank.</div>';
+        $("accountCount").textContent = a.length + (a.length === 1 ? " account" : " accounts");
         const cats = Object.entries(s.byCat || {}).sort((x, y) => y[1] - x[1]),
           max = Math.max(1, ...cats.map((x) => x[1]));
         $("categories").innerHTML =
@@ -770,18 +775,40 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
       guardForm("accountForm", async (e) => {
         e.preventDefault();
         try {
+          const institution = $("bankInstitution").value;
+          if (!institution) throw new Error("Choose a bank or account provider.");
+          const kind = institution === "Cash" ? "cash" : institution === "UPI" ? "upi" : institution === "Other Bank" ? "bank" : "bank";
           await send("/accounts", {
-            name: $("accountName").value,
-            kind: $("accountKind").value,
+            institution,
+            name: $("accountName").value.trim(),
+            kind,
             openingBalance: $("opening").value,
           });
           e.target.reset();
+          $("accountKind").value = "bank";
+          $("accountDialog").close();
           msg("accountStatus", "Account added.");
           await load();
         } catch (err) {
           msg("accountStatus", err.message);
         }
       });
+      const accountDialog = $("accountDialog");
+      const openAccountDialog = () => { accountDialog.showModal(); $("bankInstitution").focus(); };
+      $("floatingAdd").addEventListener("click", () => {
+        const choice = prompt("What would you like to add?\\n1. Transaction\\n2. Bank / account", "1");
+        if (choice === "2") openAccountDialog();
+        else if (choice === "1") { switchTab("home"); $("txForm").scrollIntoView({behavior:"smooth",block:"start"}); $("amount").focus({preventScroll:true}); }
+      });
+      $("addBankInline").addEventListener("click", openAccountDialog);
+      $("closeAccountDialog").addEventListener("click", () => accountDialog.close());
+      $("cancelAccountDialog").addEventListener("click", () => accountDialog.close());
+      $("bankInstitution").addEventListener("change", () => {
+        const value = $("bankInstitution").value;
+        $("accountKind").value = value === "Cash" ? "cash" : value === "UPI" ? "upi" : "bank";
+        $("accountName").placeholder = value === "Cash" ? "e.g. Pocket cash" : value === "UPI" ? "e.g. Google Pay" : "e.g. Savings account";
+      });
+      accountDialog.addEventListener("click", e => { if (e.target === accountDialog) accountDialog.close(); });
       guardForm("budgetForm", async (e) => {
         e.preventDefault();
         try {
