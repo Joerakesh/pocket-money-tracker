@@ -6,7 +6,7 @@ export const runtime="nodejs";
 export const dynamic="force-dynamic";
 type Ctx={params:Promise<{path:string[]}>};
 const json=(data:any,status=200)=>NextResponse.json(data,{status});
-const bodyJson=async(req:NextRequest)=>{try{return await req.json();}catch{return {};}};
+const bodyJson=async(req:NextRequest)=>{if((req.headers.get("content-type")||"").includes("text/csv"))return {};try{return await req.json();}catch{return {};}};
 const getSettings=async(c:any)=>await c.settings.findOne({_id:"main"})||{_id:"main",payday:endOfMonth(),reservePaise:50000,currency:"INR"};
 const csvLine=(line:string)=>{const out:string[]=[];let field="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&quoted&&line[i+1]==='"'){field+='"';i++;}else if(ch==='"')quoted=!quoted;else if(ch===","&&!quoted){out.push(field);field="";}else field+=ch;}out.push(field);return out;};
 

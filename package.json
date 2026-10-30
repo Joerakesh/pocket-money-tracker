@@ -2,16 +2,16 @@
   "name": "pocket-money-tracker",
   "version": "3.0.0",
   "private": true,
-  "description": "Personal finance tracker migrating to a unified Next.js application",
+  "description": "Private personal finance tracker built with Next.js and MongoDB",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "legacy:start": "node server.js",
-    "legacy:dev": "node --watch server.js",
     "typecheck": "tsc --noEmit"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "mongodb": "^6.12.0",
     "next": "^16.0.10",
