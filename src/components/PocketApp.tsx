@@ -8,6 +8,7 @@ import AccountsSection from "./accounts/AccountsSection";
 import ActivitySection from "./activity/ActivitySection";
 import PlanningSection from "./planning/PlanningSection";
 import DataManagementSection from "./settings/DataManagementSection";
+import { ui } from "./ui";
 
 type Account={id:string;_id?:string;name:string;institution?:string;kind?:string;balance:number};
 type Tx={_id:string;type:string;amount:number;date:string;category?:string;note?:string;person?:string;accountId?:string;toAccountId?:string;settled?:boolean};
@@ -37,15 +38,22 @@ export default function PocketApp(){
  const previewCsv=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();const file=(new FormData(e.currentTarget).get("csv") as File);if(!file)return;try{const res=await fetch("/api/import/preview",{method:"POST",headers:{"Content-Type":"text/csv"},body:await file.text()});const data=await res.json();if(!res.ok)throw new Error(data.error||"Preview failed");setImportRows(data.rows||[]);notify("CSV preview ready.");}catch(err){notify(err instanceof Error?err.message:"CSV preview failed.");}};
  const commitCsv=async(accountId:string)=>{try{const result=await api("/import/commit",post({rows:importRows,accountId}));notify("Imported "+result.added+" rows; "+result.skipped+" skipped.");setImportRows([]);await load();}catch(err){notify(err instanceof Error?err.message:"Import failed.");}};
  const [title,subtitle]=headings[tab];
- return <><main key={refreshKey}><AppHeader onRefresh={()=>setRefreshKey(x=>x+1)} onSettings={()=>setTab("more")}/><div className="page-heading" id="pageHeading"><div><h1>{title}</h1><p>{subtitle}</p></div></div>
- {error&&<div className="card status" role="alert">{error} <button type="button" onClick={()=>void load()}>Retry</button></div>}
- {notice&&<div className="card status" role="status">{notice}<button type="button" onClick={()=>setNotice("")}>×</button></div>}
- {busy&&!summary?<section className="card">Loading your financial data…</section>:<div className="layout">
- {tab==="home"&&<Overview summary={summary} accounts={accounts} transactions={transactions} onNavigate={(next,nextType)=>{setTab(next);if(nextType)setType(nextType);setEditing(null);}}/>}
- {tab==="transaction"&&<TransactionSection type={type} setType={setType} accounts={accounts} onSubmit={saveTx} editing={editing}/>}
- {tab==="accounts"&&<AccountsSection accounts={accounts} onSubmit={createAccount}/>}
- {tab==="activity"&&<ActivitySection transactions={visible} search={search} onSearch={setSearch} month={month} onMonth={setMonth} onEdit={(tx)=>{setEditing(tx);setType(tx.type);setTab("transaction");}} onDelete={removeTx}/>}
- {tab==="plan"&&<PlanningSection budgets={budgets} goals={goals} recurring={recurring} onSave={savePlan}/>}
- {tab==="more"&&<DataManagementSection settings={settings} onSave={saveSettings} onPreview={previewCsv} accounts={accounts} importRows={importRows} onCommit={commitCsv}/>}
- </div>}</main><BottomNavigation active={tab} onChange={(next)=>{setEditing(null);setTab(next);}}/><button type="button" className="floating-add" id="floatingAdd" aria-label="Add transaction" onClick={()=>{setEditing(null);setType("expense");setTab("transaction");}}>＋</button></>;
+ return <>
+  <main key={refreshKey} className="mx-auto max-w-[620px] px-[18px] pt-6 pb-[125px] min-[760px]:pt-8 max-[420px]:px-[13px] max-[420px]:pt-4 max-[360px]:px-[11px]">
+   <AppHeader onRefresh={()=>setRefreshKey(x=>x+1)} onSettings={()=>setTab("more")}/>
+   <div className="mx-0.5 mt-1 mb-4 flex min-h-[45px] items-end justify-between"><div><h1 className="text-[25px] font-[780] tracking-[-.06em]">{title}</h1><p className="mt-[3px] text-xs text-[#929bad]">{subtitle}</p></div></div>
+   {error&&<div className={`${ui.card} mb-[13px] text-xs text-[#ff7887] [overflow-wrap:anywhere]`} role="alert">{error} <button type="button" className={`${ui.ghost} ml-2 !w-auto !px-2.5 !py-1.5`} onClick={()=>void load()}>Retry</button></div>}
+   {notice&&<div className={`${ui.card} mb-[13px] text-xs text-[#b8f36b] [overflow-wrap:anywhere]`} role="status">{notice}<button type="button" aria-label="Dismiss" className={`${ui.ghost} ml-2 !w-auto !px-2.5 !py-1.5`} onClick={()=>setNotice("")}>×</button></div>}
+   {busy&&!summary?<section className={ui.card}>Loading your financial data…</section>:<div className="grid grid-cols-1 items-start gap-[13px] [&>*]:w-full [&>*]:min-w-0">
+    {tab==="home"&&<Overview summary={summary} accounts={accounts} transactions={transactions} onNavigate={(next,nextType)=>{setTab(next);if(nextType)setType(nextType);setEditing(null);}}/>}
+    {tab==="transaction"&&<TransactionSection type={type} setType={setType} accounts={accounts} onSubmit={saveTx} editing={editing}/>}
+    {tab==="accounts"&&<AccountsSection accounts={accounts} onSubmit={createAccount}/>}
+    {tab==="activity"&&<ActivitySection transactions={visible} search={search} onSearch={setSearch} month={month} onMonth={setMonth} onEdit={(tx)=>{setEditing(tx);setType(tx.type);setTab("transaction");}} onDelete={removeTx}/>}
+    {tab==="plan"&&<PlanningSection budgets={budgets} goals={goals} recurring={recurring} onSave={savePlan}/>}
+    {tab==="more"&&<DataManagementSection settings={settings} onSave={saveSettings} onPreview={previewCsv} accounts={accounts} importRows={importRows} onCommit={commitCsv}/>}
+   </div>}
+  </main>
+  <BottomNavigation active={tab} onChange={(next)=>{setEditing(null);setTab(next);}}/>
+  <button type="button" aria-label="Add transaction" onClick={()=>{setEditing(null);setType("expense");setTab("transaction");}} className="fixed right-[max(18px,calc((100vw_-_620px)/2_+_18px))] bottom-[calc(17px_+_env(safe-area-inset-bottom))] z-[60] grid size-[54px] cursor-pointer place-items-center rounded-full border-0 bg-[#b8f36b] p-0 text-[32px] leading-none text-[#101608] shadow-[0_10px_30px_rgba(0,0,0,.53),0_0_0_6px_rgba(184,243,107,.1)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#b8f36b]">＋</button>
+ </>;
 }
