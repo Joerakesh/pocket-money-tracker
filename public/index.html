@@ -61,6 +61,28 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
 .boot-progress{height:5px;background:#202a36;border-radius:99px;overflow:hidden;margin:26px auto 12px;max-width:280px}.boot-progress i{display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#8acb49,#d4ff9c);animation:boot-travel 1.35s ease-in-out infinite alternate}
 @keyframes boot-travel{from{transform:translateX(-15%)}to{transform:translateX(175%)}}
 .boot-error{display:none;margin:24px auto 0;padding:17px;border:1px solid #ff788744;border-radius:17px;background:#ff78870d;text-align:left}.boot-error strong{display:block;color:#ff9ba6;font-size:13px}.boot-error p{color:#aeb7c5;font-size:12px;line-height:1.5;margin:7px 0 14px;overflow-wrap:anywhere}.boot-error button{background:#b8f36b;color:#101608;border:0}.boot-status{font-size:11px;color:#b8f36b}
+
+/* UX foundation: visible focus, predictable controls, and accessible status feedback */
+:where(button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--green);outline-offset:3px}
+button:disabled{cursor:not-allowed}
+label{font-weight:650}
+input::placeholder{color:#758093;opacity:1}
+.status:empty{display:none}
+.toast-region{position:fixed;z-index:120;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(460px,calc(100% - 28px));pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid rgba(184,243,107,.28);border-radius:16px;background:#18212c;box-shadow:0 18px 55px #000b;color:var(--ink);pointer-events:auto}
+.toast-message{flex:1;font-size:12px}
+.toast button{width:auto;padding:8px 12px;background:var(--green);color:#101608;border:0}
+.edit-dialog{width:min(440px,calc(100% - 28px));border:1px solid var(--line);border-radius:22px;background:#111722;color:var(--ink);padding:0;box-shadow:0 28px 90px #000b}
+.edit-dialog::backdrop{background:#03060bcc;backdrop-filter:blur(6px)}
+.edit-dialog form{padding:22px;display:grid;gap:13px}
+.edit-dialog h2{margin:0}
+.activity-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,160px);gap:8px;margin:12px 0}
+.tx-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.tx-actions button{width:auto;padding:5px 9px;font-size:10px}
+.tx-edit{background:#222a38}
+@media(max-width:420px){.activity-filters{grid-template-columns:1fr}.toast-region{bottom:calc(94px + env(safe-area-inset-bottom))}}
+@media(forced-colors:active){button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid Highlight}}
+
 </style>
   </head>
   <body>
@@ -345,13 +367,28 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
         <section data-page="activity" class="card span12">
           <div class="sectionhead">
             <h2>Transactions</h2>
-            <select id="monthFilter" style="max-width: 160px">
-              <option value="">All recent</option>
-            </select>
+            
           </div>
-          <div id="transactions" class="list" style="margin-top: 8px"></div>
+          <div class="activity-filters">
+            <input id="transactionSearch" type="search" placeholder="Search notes, categories or people" aria-label="Search transactions" />
+            <select id="monthFilter" aria-label="Filter transactions by month" style="max-width:none"><option value="">All recent</option></select>
+          </div>
+          <div id="transactions" class="list" style="margin-top: 8px" aria-live="polite"></div>
         </section>
       </div>
+<dialog id="editTransactionDialog" class="edit-dialog" aria-labelledby="editTransactionTitle">
+  <form id="editTransactionForm">
+    <div class="sectionhead"><h2 id="editTransactionTitle">Correct transaction</h2><button type="button" class="icon-close" id="closeEditTransaction" aria-label="Close dialog">×</button></div>
+    <p class="note">Changes are recorded in the transaction's revision history. Transaction type and accounts remain unchanged.</p>
+    <div><label for="editAmount">Amount (₹)</label><input id="editAmount" type="number" min=".01" step=".01" inputmode="decimal" required /></div>
+    <div><label for="editDate">Date</label><input id="editDate" type="date" required /></div>
+    <div><label for="editCategory">Category</label><input id="editCategory" maxlength="50" required /></div>
+    <div><label for="editNote">Note</label><input id="editNote" maxlength="200" /></div>
+    <div id="editTransactionStatus" class="status" role="status" aria-live="polite"></div>
+    <div class="dialog-actions"><button type="button" class="ghost" id="cancelEditTransaction">Cancel</button><button type="submit" class="primary">Save correction</button></div>
+  </form>
+</dialog>
+<div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
 <button type="button" class="floating-add" id="floatingAdd" aria-label="Add transaction">＋</button>
       <nav class="bottom-nav" aria-label="Main navigation">
         <button type="button" class="nav-item active" data-tab="home"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span><span>Home</span></button>
@@ -675,7 +712,9 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
       function renderTransactions(txs) {
         allTx = txs;
         const m = $("monthFilter").value;
-        const filtered = txs.filter((t) => !m || t.date.startsWith(m));
+        const query = ($("transactionSearch")?.value || "").trim().toLowerCase();
+        const filtered = txs.filter((t) => (!m || t.date.startsWith(m)) &&
+          (!query || [t.note,t.category,t.person,t.type].some(v => String(v || "").toLowerCase().includes(query))));
         const chartCats = {};
         filtered.filter(t => ["expense","borrowed_expense"].includes(t.type)).forEach(t => {
           const cat = t.category || "Other";
@@ -689,29 +728,69 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
                 ? "+"
                 : "−";
               const label = t.type.replace("_", " ");
-              return `<div class="item"><div style="min-width:0"><strong>${esc(t.note || t.category || label)} ${t.needsReview ? '<span class="pill">Review import</span>' : ""}</strong><small>${esc(t.date)} · ${esc(t.category)} · ${esc(label)}${t.person ? " · " + esc(t.person) : ""}</small></div><div style="text-align:right"><div class="amt ${signed === "+" ? "green" : ""}">${signed}${money(Number(t.amount ?? (t.amountPaise || 0) / 100))}</div><button class="danger" style="width:auto;padding:2px 5px;font-size:11px" data-delete="${t._id}">Delete</button></div></div>`;
+              return `<div class="item"><div style="min-width:0"><strong>${esc(t.note || t.category || label)} ${t.needsReview ? '<span class="pill">Review import</span>' : ""}</strong><small>${esc(t.date)} · ${esc(t.category)} · ${esc(label)}${t.person ? " · " + esc(t.person) : ""}</small></div><div style="text-align:right"><div class="amt ${signed === "+" ? "green" : ""}">${signed}${money(Number(t.amount ?? (t.amountPaise || 0) / 100))}</div><div class="tx-actions"><button type="button" class="tx-edit" data-edit="${t._id}" aria-label="Edit transaction ${esc(t.note || t.category || label)}">Edit</button><button type="button" class="danger" data-delete="${t._id}" aria-label="Delete transaction ${esc(t.note || t.category || label)}">Delete</button></div></div></div>`;
             })
             .join("") || '<div class="empty">No transactions yet.</div>';
       }
+      let pendingUndoId = null, toastTimer = null, editingTransactionId = null;
+      function showUndoToast(id) {
+        pendingUndoId = id;
+        $("toastRegion").innerHTML = '<div class="toast"><span class="toast-message">Transaction moved to Recently deleted. Balances were recalculated.</span><button type="button" id="undoDelete">Undo</button></div>';
+        $("undoDelete").onclick = async () => {
+          const undo = $("undoDelete");
+          await withButtonLock(undo, async () => {
+            await api("/transactions/" + encodeURIComponent(id) + "/restore", { method: "POST" });
+            clearTimeout(toastTimer); pendingUndoId = null; $("toastRegion").innerHTML = "";
+            await load();
+          }, "Restoring…");
+        };
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { pendingUndoId = null; $("toastRegion").innerHTML = ""; }, 12000);
+      }
+      function openTransactionEditor(t) {
+        editingTransactionId = t._id;
+        $("editAmount").value = Number(t.amount ?? (t.amountPaise || 0) / 100).toFixed(2);
+        $("editDate").value = t.date || today();
+        $("editCategory").value = t.category || "Other";
+        $("editNote").value = t.note || "";
+        $("editTransactionStatus").textContent = "";
+        $("editTransactionDialog").showModal();
+        $("editAmount").focus();
+      }
+      $("closeEditTransaction").onclick = $("cancelEditTransaction").onclick = () => $("editTransactionDialog").close();
       $("transactions").onclick = async (e) => {
+        const edit = e.target.closest("[data-edit]");
+        if (edit) {
+          const record = allTx.find(t => t._id === edit.dataset.edit);
+          if (record) openTransactionEditor(record);
+          return;
+        }
         const btn = e.target.closest("[data-delete]");
         const id = btn?.dataset.delete;
         if (!id) return;
-        if (
-          confirm(
-            "Delete this transaction? Account balances and reports will recalculate.",
-          )
-        ) {
-          await withButtonLock(
-            btn,
-            async () => {
-              await api("/transactions/" + id, { method: "DELETE" });
-              await load();
-            },
-            "Deleting…",
-          );
-        }
+        if (!confirm("Move this transaction to Recently deleted? You can undo this action for a short time. Balances and reports will recalculate.")) return;
+        await withButtonLock(btn, async () => {
+          await api("/transactions/" + encodeURIComponent(id), { method: "DELETE" });
+          await load();
+          showUndoToast(id);
+        }, "Moving…");
       };
+      guardForm("editTransactionForm", async (e) => {
+        e.preventDefault();
+        if (!editingTransactionId) return;
+        try {
+          await send("/transactions/" + encodeURIComponent(editingTransactionId), {
+            amount: $("editAmount").value, date: $("editDate").value,
+            category: $("editCategory").value, note: $("editNote").value
+          }, "PUT");
+          $("editTransactionDialog").close();
+          await load();
+          $("toastRegion").innerHTML = '<div class="toast"><span class="toast-message">Correction saved. Previous values are retained in revision history.</span></div>';
+          setTimeout(() => { $("toastRegion").innerHTML = ""; }, 5000);
+        } catch (err) {
+          $("editTransactionStatus").textContent = err.message;
+        }
+      });
       guardForm("txForm", async (e) => {
         e.preventDefault();
         try {
@@ -941,6 +1020,7 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
         }
       });
       $("monthFilter").onchange = () => renderTransactions(allTx);
+      $("transactionSearch").oninput = () => renderTransactions(allTx);
       $("refresh").onclick = () =>
         withButtonLock(
           $("refresh"),
