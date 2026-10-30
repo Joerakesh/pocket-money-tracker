@@ -845,7 +845,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
             return;
           }
           button.textContent = "Removing…";
-          await api("/accounts/" + encodeURIComponent(id), { method: "DELETE" });
+          await api("/accounts/" + encodeURIComponent(id), { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transactionIds: data.transactions.map(t => t._id) }) });
           await load();
           alert("Account removed. " + count + " transaction(s) were deleted after the backup export.");
         } catch (err) {
