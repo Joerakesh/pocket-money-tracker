@@ -39,9 +39,19 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
 .skeleton{background:linear-gradient(90deg,#202938 25%,#2a3444 40%,#202938 65%);background-size:300% 100%;animation:skeleton-wave 1.35s ease infinite;border-radius:10px}
 @keyframes skeleton-wave{to{background-position:-150% 0}}
 @media(prefers-reduced-motion:reduce){.skeleton{animation:none}}
+
+#bootScreen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 0%,#1b2b32 0%,#0b1018 48%,#070a10 100%);transition:opacity .28s ease,visibility .28s ease}
+#bootScreen.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.boot-inner{width:min(100%,480px);text-align:center}.boot-brand{font-size:29px;font-weight:850;letter-spacing:-.075em}
+.boot-mark{width:62px;height:62px;margin:0 auto 22px;border-radius:21px;display:grid;place-items:center;background:linear-gradient(145deg,#d0ff8b,#9bdc4b);color:#14200c;font-size:30px;box-shadow:0 12px 45px #b8f36b24}
+.boot-title{font-size:23px;font-weight:760;letter-spacing:-.045em;margin:28px 0 7px}.boot-copy{font-size:13px;line-height:1.6;color:#9ca8b8;max-width:340px;margin:0 auto}
+.boot-progress{height:5px;background:#202a36;border-radius:99px;overflow:hidden;margin:26px auto 12px;max-width:280px}.boot-progress i{display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#8acb49,#d4ff9c);animation:boot-travel 1.35s ease-in-out infinite alternate}
+@keyframes boot-travel{from{transform:translateX(-15%)}to{transform:translateX(175%)}}
+.boot-error{display:none;margin:24px auto 0;padding:17px;border:1px solid #ff788744;border-radius:17px;background:#ff78870d;text-align:left}.boot-error strong{display:block;color:#ff9ba6;font-size:13px}.boot-error p{color:#aeb7c5;font-size:12px;line-height:1.5;margin:7px 0 14px;overflow-wrap:anywhere}.boot-error button{background:#b8f36b;color:#101608;border:0}.boot-status{font-size:11px;color:#b8f36b}
 </style>
   </head>
   <body>
+    <section id="bootScreen" role="status" aria-live="polite" aria-busy="true"><div class="boot-inner"><div class="boot-mark">₹</div><div class="boot-brand">Pocket<span class="green">.</span></div><h1 class="boot-title" id="bootTitle">Preparing your money dashboard</h1><p class="boot-copy" id="bootCopy">Securely connecting to your ledger and syncing your accounts, transactions and plans.</p><div class="boot-progress"><i></i></div><div class="boot-status" id="bootStatus">Connecting to your database…</div><div class="boot-error" id="bootError"><strong>We couldn’t reach your financial data</strong><p id="bootErrorMessage">Check your connection and try again.</p><button type="button" id="retryLoad">Retry connection</button></div></div></section>
     <main>
       <header class="top">
         <div>
@@ -348,6 +358,32 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
     </main>
     <script>
       const $ = (id) => document.getElementById(id);
+      const API_ROOT = "/api";
+      async function api(path, options = {}) {
+        let response;
+        try {
+          response = await fetch(API_ROOT + path, { ...options, cache: "no-store", headers: { Accept: "application/json", ...(options.headers || {}) } });
+        } catch {
+          throw new Error("Cannot reach Pocket's backend. Check that the server is running and deployed correctly.");
+        }
+        const raw = await response.text();
+        let data;
+        try { data = raw ? JSON.parse(raw) : null; }
+        catch { throw new Error("The backend returned an invalid response. Check the API deployment and server logs."); }
+        if (!response.ok) throw new Error(data?.error || data?.message || `Backend request failed (HTTP ${response.status}).`);
+        return data;
+      }
+      function setBootState(state, message = "") {
+        const screen = $("bootScreen"), errorBox = $("bootError");
+        if (state === "ready") { screen.classList.add("is-hidden"); screen.setAttribute("aria-busy", "false"); return; }
+        screen.classList.remove("is-hidden"); screen.setAttribute("aria-busy", "true");
+        errorBox.style.display = state === "error" ? "block" : "none";
+        $("bootTitle").textContent = state === "error" ? "Your data is still safe" : "Preparing your money dashboard";
+        $("bootCopy").textContent = state === "error" ? "Pocket has paused the dashboard instead of showing incomplete or misleading balances." : "Securely connecting to your ledger and syncing your accounts, transactions and plans.";
+        $("bootStatus").textContent = state === "error" ? "Connection needs attention" : "Syncing accounts, transactions and plans…";
+        if (state === "error") $("bootErrorMessage").textContent = message;
+      }
+
       const money = (n) =>
         "₹" +
         Number(n || 0).toLocaleString("en-IN", {
@@ -518,6 +554,8 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
         document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
       }
       async function load() {
+        setBootState("loading");
+        try {
         const [s, txs, b, g, r] = await Promise.all([
           api("/summary"),
           api("/transactions"),
@@ -549,10 +587,10 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Export & remove</button>' : '';
           return '<div class="bank-card"><div class="bank-card-info"><div class="bank-logo">'+logo+'</div><div class="bank-meta"><strong>'+esc(bank)+'</strong><small>'+esc(x.name)+' · '+esc(x.kind)+'</small></div></div><div class="bank-card-actions"><div class="bank-balance">'+money(x.balance)+'</div>'+remove+'</div></div>';
         };
-        $("accounts").innerHTML = a.map(x => accountMarkup(x, true)).join("") || '<div class="account-empty">No accounts yet. Add your first bank above.</div>';
-        $("homeAccounts").innerHTML = a.map(x => accountMarkup(x, false)).join("") || '<div class="account-empty">No accounts yet. Add an account from Accounts.</div>';
-        $("accountCount").textContent = a.length + (a.length === 1 ? " account" : " accounts");
-        $("manageAccountCount").textContent = a.length + (a.length === 1 ? " account" : " accounts");
+        $("accounts").innerHTML = accounts.map(x => accountMarkup(x, true)).join("") || '<div class="account-empty">No accounts yet. Add your first bank above.</div>';
+        $("homeAccounts").innerHTML = accounts.map(x => accountMarkup(x, false)).join("") || '<div class="account-empty">No accounts yet. Add an account from Accounts.</div>';
+        $("accountCount").textContent = accounts.length + (accounts.length === 1 ? " account" : " accounts");
+        $("manageAccountCount").textContent = accounts.length + (accounts.length === 1 ? " account" : " accounts");
         const cats = Object.entries(s.byCat || {}).sort((x, y) => y[1] - x[1]),
           max = Math.max(1, ...cats.map((x) => x[1]));
         renderActivityChart(cats);
@@ -592,6 +630,11 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           months.map((m) => `<option value="${m}">${m}</option>`).join("");
         $("monthFilter").value = months.includes(prev) ? prev : "";
         renderTransactions(txs);
+        setBootState("ready");
+        } catch (error) {
+          setBootState("error", error instanceof Error ? error.message : "Unknown backend error.");
+          throw error;
+        }
       }
       let allTx = [];
       function renderTransactions(txs) {
@@ -905,9 +948,8 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
       $("payday").value = new Date().toISOString().slice(0, 10);
       selectTransactionType("expense");
       renderCategoryChoices();
-      load().catch((e) => {
-        $("heroSub").textContent = "Could not load data: " + e.message;
-      });
+      $("retryLoad").addEventListener("click", () => load().catch(() => {}));
+      load().catch(() => {});
     </script>
   </body>
 </html>
