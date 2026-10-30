@@ -1,7 +1,7 @@
-import PocketApp from "@/components/pocket-app";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
+// Keep the original mobile-first interface as the source of truth while the
+// native React migration is brought to full feature parity.
 export default function HomePage() {
-  return <PocketApp />;
+  redirect("/index.html");
 }

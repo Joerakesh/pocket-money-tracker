@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#0b0f18" />
+    <title>Pocket — Personal Finance</title>
+    <style>
+:root{color-scheme:dark;--bg:#080b11;--panel:#131823;--panel2:#1b2230;--line:rgba(255,255,255,.075);--ink:#f5f7fb;--muted:#929bad;--green:#b8f36b;--red:#ff7887;--blue:#9d8bff;--accent:#b8f36b;--accent-ink:#101608;--nav-bg:rgba(11,15,23,.9);font-synthesis:none}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -18%,#202a40 0%,#0b0f18 40%,var(--bg) 78%);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:620px;margin:auto;padding:24px 18px 125px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:28px}.brand{font-size:25px;font-weight:800;letter-spacing:-.07em}.muted,.hint{color:var(--muted)}.top .muted{font-size:12px;margin-top:1px}.top-actions{display:flex;gap:8px}.top-actions button{width:42px;height:42px;padding:0;border-radius:50%;font-size:18px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;margin-top:0}.layout>[data-page]{display:none;grid-column:1}.layout>[data-page].page-active{display:block}
+.card{min-width:0;padding:19px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(24,30,43,.96),rgba(17,22,33,.98));box-shadow:0 12px 34px rgba(0,0,0,.14)}.hero{position:relative;overflow:hidden;background:radial-gradient(circle at 100% 0%,rgba(184,243,107,.12),transparent 42%),linear-gradient(145deg,#1b2930,#17202a 65%,#171d29);border-color:rgba(184,243,107,.17);padding:25px 22px}.hero:after{content:"";position:absolute;width:190px;height:190px;border:1px solid rgba(184,243,107,.08);border-radius:50%;right:-82px;bottom:-122px;box-shadow:0 0 0 18px rgba(184,243,107,.025),0 0 0 38px rgba(184,243,107,.02)}.hero small{color:#b6c2b0;letter-spacing:.09em;font-size:9px;font-weight:800}.big{font-size:clamp(38px,10vw,54px);font-weight:780;letter-spacing:-.065em;line-height:1.08;margin:13px 0 8px}.green{color:var(--green)}.red{color:var(--red)}#heroSub{font-size:12px;color:#b0bac9}
+h2{font-size:16px;letter-spacing:-.035em;margin:0 0 14px}.page-heading{display:flex;align-items:end;justify-content:space-between;margin:4px 2px 16px}.page-heading h1{margin:0;font-size:25px;letter-spacing:-.06em}.page-heading p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px}.quick-action{border:1px solid transparent;background:transparent;border-radius:16px;padding:8px 3px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;font-size:11px;color:#d5dbe5}.quick-action .qa-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#252d3a;font-size:21px;color:#f3f5fa}.quick-action.active{color:var(--green)}.quick-action.active .qa-icon{background:var(--green);color:#101608;box-shadow:0 5px 18px rgba(184,243,107,.15)}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{padding:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.035);border-radius:17px;min-width:0}.metric strong{display:block;font-size:20px;letter-spacing:-.045em;overflow-wrap:anywhere;margin-top:4px}.metric span{font-size:11px;color:var(--muted)}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,select,button{font:inherit;min-width:0;border:1px solid var(--line);background:#0f141e;color:var(--ink);padding:12px 13px;border-radius:13px;width:100%}input,select{outline:none}input:focus,select:focus{border-color:rgba(184,243,107,.55);box-shadow:0 0 0 3px rgba(184,243,107,.08)}button{cursor:pointer;font-weight:700;transition:transform .16s ease,border-color .16s ease,background .16s ease}button:active{transform:scale(.98)}button.primary{background:var(--green);color:var(--accent-ink);border-color:var(--green)}button.ghost{background:#222a38}button.danger{color:var(--red)}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.full{grid-column:1/-1}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.list{display:grid;gap:0}.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.item strong{display:block;font-size:13px}.item small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.amt{white-space:nowrap;font-weight:750;font-size:13px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#293341;color:#d0d8e6;font-size:10px}.bar{height:6px;background:#303847;border-radius:99px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#91d957,var(--green));border-radius:99px}.hidden{display:none!important}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.sectionhead button{width:auto}.section-label{margin:5px 3px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:750}.note{font-size:11px;color:var(--muted);line-height:1.55}.status{min-height:20px;color:var(--green);font-size:12px}.empty{color:var(--muted);padding:14px 0;font-size:12px}.checkbox{display:flex;align-items:center;gap:8px}.checkbox input{width:auto}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.tabs button{width:auto}
+.bottom-nav{position:fixed;z-index:50;bottom:calc(20px + env(safe-area-inset-bottom));left:auto;right:82px;transform:none;width:min(390px,calc(100% - 94px));min-height:66px;padding:6px 9px;background:rgba(24,30,42,.82);backdrop-filter:blur(28px) saturate(1.6);-webkit-backdrop-filter:blur(28px) saturate(1.6);border:1px solid rgba(255,255,255,.14);border-radius:24px;box-shadow:0 14px 42px #0008;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.nav-item{background:transparent;border:0;color:#8791a1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:6px 3px;font-size:10px;font-weight:650;border-radius:16px;min-height:52px}.nav-item .nav-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:10px;background:rgba(255,255,255,.055);color:#aeb8c8;transition:background .16s ease,color .16s ease,transform .16s ease}.nav-item .nav-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.nav-item.active{color:var(--green);background:transparent}.nav-item.active .nav-icon{background:rgba(184,243,107,.15);color:var(--green);transform:translateY(-1px)}
+button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-spin{to{transform:rotate(360deg)}}@keyframes pocket-pulse{0%,80%,100%{transform:scale(.65);opacity:.45}40%{transform:scale(1);opacity:1}}
+@media(min-width:760px){main{padding-top:32px}.bottom-nav{left:auto;right:calc(max(18px, (100vw - 620px)/2 + 18px) + 66px);transform:none;width:min(390px,calc(100% - 102px))}}
+@media(max-width:420px){main{padding:16px 13px 125px}.card{padding:16px;border-radius:20px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.quick-actions{gap:4px}.quick-action{font-size:10px}.quick-action .qa-icon{width:43px;height:43px}.big{font-size:42px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.quick-add-option{display:flex;align-items:center;gap:13px;text-align:left;background:#1b2432;border-radius:16px;padding:14px}.quick-add-option>span:first-child{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#293545;color:var(--green);font-size:20px}.quick-add-option>span:nth-child(2){flex:1}.quick-add-option strong,.quick-add-option small{display:block}.quick-add-option small{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}.quick-add-option>b{font-size:22px;color:var(--muted)}.floating-add{position:fixed;z-index:60;right:max(18px,calc((100vw - 620px)/2 + 18px));bottom:calc(17px + env(safe-area-inset-bottom));width:54px;height:54px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+
+.transaction-launch{display:flex;align-items:center;gap:14px;cursor:pointer;min-height:82px;border-color:rgba(184,243,107,.2);background:linear-gradient(120deg,#1b2930,#171d29)}.launch-icon{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:grid;place-items:center;background:var(--green);color:#101608;font-size:26px}.launch-copy{flex:1;min-width:0}.launch-copy strong,.launch-copy span{display:block}.launch-copy span{font-size:11px;color:var(--muted);margin-top:3px}.launch-arrow{font-size:25px;color:var(--muted)}.transaction-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.type-choice{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;background:#1b2230;padding:12px 5px;border-radius:15px;font-size:11px}.type-choice span{font-size:20px}.type-choice.active{background:var(--green);color:#101608;border-color:var(--green)}.account-create-form{margin-top:16px}.bank-card{position:relative}.bank-card-info{display:flex;align-items:center;gap:13px;flex:1;min-width:0}.bank-card-actions{display:flex;align-items:center;gap:10px}.account-remove{width:auto;padding:7px 10px;font-size:10px;color:var(--red);background:transparent;border-color:rgba(255,120,135,.2)}.account-empty{padding:20px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:12px}
+.account-remove{min-width:100px}.account-remove:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.activity-chart{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:22px;align-items:center;padding:18px 4px}
+.pie-chart{width:min(210px,100%);aspect-ratio:1;border-radius:50%;position:relative;margin:auto}
+.pie-chart:after{content:"";position:absolute;inset:24%;border-radius:50%;background:#171d28;border:1px solid var(--line)}
+.pie-legend{display:grid;gap:10px;min-width:0}.pie-legend-row{display:flex;align-items:center;gap:9px;font-size:12px;min-width:0}.pie-dot{width:10px;height:10px;border-radius:3px;flex:0 0 10px}.pie-legend-row strong{margin-left:auto;white-space:nowrap}
+.category-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.category-choice{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 10px;border-radius:13px;background:#1b2230;border:1px solid var(--line);color:var(--ink);font-size:11px;text-align:left}
+.category-choice .category-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:#293545;font-size:16px;flex:0 0 29px}
+.category-choice.active{border-color:var(--green);background:rgba(184,243,107,.12);color:var(--green)}
+.tx-submit{display:flex;align-items:center;justify-content:center;gap:9px;min-height:46px}
+.submit-spinner{display:none;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pocket-spin .7s linear infinite}
+.tx-submit.is-loading .submit-spinner{display:inline-block}
+.tx-submit.is-loading{pointer-events:none}
+.bank-picker{position:relative;min-width:0}.tx-account-picker{position:relative;min-width:0}.tx-account-picker .bank-picker-trigger{width:100%;min-height:48px;padding:8px 10px;background:#171e2a}.tx-account-picker .bank-choice-logo{width:32px;height:32px;flex:0 0 32px;border-radius:9px}.tx-account-picker .bank-choice-logo img{padding:3px}.tx-account-picker .bank-picker-menu{grid-template-columns:1fr;max-height:230px}.tx-account-picker .bank-choice{min-height:48px}
+.bank-picker-trigger{display:flex;align-items:center;gap:12px;text-align:left;min-height:60px;background:#171e2a;border:1px solid var(--line);border-radius:15px}
+.bank-picker-label{flex:1}.bank-picker-chevron{font-size:18px;color:var(--muted)}
+.bank-picker-menu{position:absolute;z-index:80;top:calc(100% + 7px);left:0;right:0;max-height:280px;overflow:auto;padding:7px;background:#121925;border:1px solid rgba(255,255,255,.12);border-radius:17px;box-shadow:0 18px 45px #000b;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.bank-picker-menu.hidden{display:none!important}
+.bank-choice{min-height:56px;display:flex;align-items:center;gap:9px;padding:8px;background:#1b2432;border:1px solid transparent;border-radius:12px;color:#e7ebf2;font-size:11px;text-align:left}.bank-choice:focus-visible,.bank-picker-trigger:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.bank-choice-logo{width:36px;height:36px;border-radius:11px;background:#fff;display:grid;place-items:center;overflow:hidden}
+.bank-choice img{width:100%;height:100%;object-fit:contain;padding:4px}
+.bank-choice.active{border-color:var(--green);background:rgba(184,243,107,.1);color:var(--green)}
+.bank-logo{position:relative;background:#fff;color:#15233b}.bank-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;background:#fff}
+@media(max-width:520px){.activity-chart{grid-template-columns:1fr;gap:15px}.pie-chart{width:170px}.category-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.skeleton{background:linear-gradient(90deg,#202938 25%,#2a3444 40%,#202938 65%);background-size:300% 100%;animation:skeleton-wave 1.35s ease infinite;border-radius:10px}
+@keyframes skeleton-wave{to{background-position:-150% 0}}
+@media(prefers-reduced-motion:reduce){.skeleton{animation:none}}
+
+#bootScreen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 0%,#1b2b32 0%,#0b1018 48%,#070a10 100%);transition:opacity .28s ease,visibility .28s ease}
+#bootScreen.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.boot-inner{width:min(100%,480px);text-align:center}.boot-brand{font-size:29px;font-weight:850;letter-spacing:-.075em}
+.boot-mark{width:62px;height:62px;margin:0 auto 22px;border-radius:21px;display:grid;place-items:center;background:linear-gradient(145deg,#d0ff8b,#9bdc4b);color:#14200c;font-size:30px;box-shadow:0 12px 45px #b8f36b24}
+.boot-title{font-size:23px;font-weight:760;letter-spacing:-.045em;margin:28px 0 7px}.boot-copy{font-size:13px;line-height:1.6;color:#9ca8b8;max-width:340px;margin:0 auto}
+.boot-progress{height:5px;background:#202a36;border-radius:99px;overflow:hidden;margin:26px auto 12px;max-width:280px}.boot-progress i{display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#8acb49,#d4ff9c);animation:boot-travel 1.35s ease-in-out infinite alternate}
+@keyframes boot-travel{from{transform:translateX(-15%)}to{transform:translateX(175%)}}
+.boot-error{display:none;margin:24px auto 0;padding:17px;border:1px solid #ff788744;border-radius:17px;background:#ff78870d;text-align:left}.boot-error strong{display:block;color:#ff9ba6;font-size:13px}.boot-error p{color:#aeb7c5;font-size:12px;line-height:1.5;margin:7px 0 14px;overflow-wrap:anywhere}.boot-error button{background:#b8f36b;color:#101608;border:0}.boot-status{font-size:11px;color:#b8f36b}
+
+/* UX foundation: visible focus, predictable controls, and accessible status feedback */
+:where(button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--green);outline-offset:3px}
+button:disabled{cursor:not-allowed}
+label{font-weight:650}
+input::placeholder{color:#758093;opacity:1}
+.status:empty{display:none}
+.toast-region{position:fixed;z-index:120;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(460px,calc(100% - 28px));pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid rgba(184,243,107,.28);border-radius:16px;background:#18212c;box-shadow:0 18px 55px #000b;color:var(--ink);pointer-events:auto}
+.toast-message{flex:1;font-size:12px}
+.toast button{width:auto;padding:8px 12px;background:var(--green);color:#101608;border:0}
+.edit-dialog{width:min(440px,calc(100% - 28px));border:1px solid var(--line);border-radius:22px;background:#111722;color:var(--ink);padding:0;box-shadow:0 28px 90px #000b}
+.edit-dialog::backdrop{background:#03060bcc;backdrop-filter:blur(6px)}
+.edit-dialog form{padding:22px;display:grid;gap:13px}
+.edit-dialog h2{margin:0}
+.activity-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,160px);gap:8px;margin:12px 0}
+.tx-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.tx-actions button{width:auto;padding:5px 9px;font-size:10px}
+.tx-edit{background:#222a38}
+@media(max-width:420px){.activity-filters{grid-template-columns:1fr}.toast-region{bottom:calc(94px + env(safe-area-inset-bottom))}}
+@media(forced-colors:active){button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid Highlight}}
+
+</style>
+  </head>
+  <body>
+    <section id="bootScreen" role="status" aria-live="polite" aria-busy="true"><div class="boot-inner"><div class="boot-mark">₹</div><div class="boot-brand">Pocket<span class="green">.</span></div><h1 class="boot-title" id="bootTitle">Preparing your money dashboard</h1><p class="boot-copy" id="bootCopy">Securely connecting to your ledger and syncing your accounts, transactions and plans.</p><div class="boot-progress"><i></i></div><div class="boot-status" id="bootStatus">Connecting to your database…</div><div class="boot-error" id="bootError"><strong>We couldn’t reach your financial data</strong><p id="bootErrorMessage">Check your connection and try again.</p><button type="button" id="retryLoad">Retry connection</button></div></div></section>
+    <main>
+      <header class="top">
+        <div>
+          <div class="brand">Pocket<span class="green">.</span></div>
+          <div class="muted" id="greeting">Your money, made clear.</div>
+        </div>
+        <div class="top-actions">
+          <button class="ghost" id="refresh" aria-label="Refresh balances">
+            ↻</button
+          ><button class="ghost" id="showSetup">⚙</button>
+        </div>
+      </header>
+      <div class="page-heading" id="pageHeading">
+        <div>
+          <h1>Overview</h1>
+          <p>Your essentials at a glance</p>
+        </div>
+      </div>
+      <div class="layout">
+        <section data-page="home" class="card hero span8">
+          <small
+            >SAFE TO SPEND · AFTER RESERVE AND UNPAID BORROWED EXPENSES</small
+          >
+          <div class="big" id="perDay">₹— / day</div>
+          <div id="heroSub" class="muted">Loading your ledger…</div>
+        </section>
+        <section data-page="home" class="card span6">
+          <div class="sectionhead"><h2>Your accounts</h2><span class="pill" id="accountCount">0 accounts</span></div>
+          <div id="homeAccounts" class="bank-grid"><div class="bank-card"><div class="skeleton" style="width:46px;height:46px"></div><div style="flex:1"><div class="skeleton" style="height:12px;width:55%;margin-bottom:9px"></div><div class="skeleton" style="height:9px;width:35%"></div></div><div class="skeleton" style="height:16px;width:70px"></div></div></div>
+        </section>
+        <section data-page="home" class="card span4">
+          <h2>Account snapshot</h2>
+          <div class="metrics">
+            <div class="metric">
+              <span>Total balances</span><strong id="total">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Owe friends</span><strong id="owe" class="red">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Owed to you</span
+              ><strong id="owed" class="green">₹—</strong>
+            </div>
+          </div>
+        </section>
+        
+
+        <section data-page="transaction" class="card span12"><div class="sectionhead"><div><span class="section-label">NEW ENTRY</span><h2>Choose a transaction</h2></div></div><div class="transaction-types" role="group" aria-label="Transaction type"><button type="button" class="type-choice active" data-type="expense"><span>↘</span>Expense</button><button type="button" class="type-choice" data-type="income"><span>↗</span>Income</button><button type="button" class="type-choice" data-type="transfer"><span>⇄</span>Transfer</button><button type="button" class="type-choice" data-type="lent"><span>↗</span>Lend</button><button type="button" class="type-choice" data-type="repayment"><span>↙</span>Repay</button><button type="button" class="type-choice" data-type="borrowed_expense"><span>↙</span>Paid for me</button><button type="button" class="type-choice" data-type="collection"><span>↗</span>Collected</button><button type="button" class="type-choice" data-type="refund"><span>↶</span>Refund</button></div><input type="hidden" id="type" value="expense"></section>
+<section data-page="transaction" class="card span8">
+          <h2>Add transaction</h2>
+          <form id="txForm" class="formgrid">
+            <div>
+              <label>Amount (₹)</label
+              ><input
+                id="amount"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+                placeholder="e.g. 80"
+              />
+            </div>
+            <div id="fromWrap">
+              <label>Account</label
+              ><select id="accountId" required></select>
+            </div>
+            <div id="toWrap" class="hidden">
+              <label>Transfer to</label
+              ><select id="toAccountId"></select>
+            </div>
+            <div id="personWrap" class="hidden">
+              <label>Friend / person</label
+              ><input id="person" placeholder="Name" />
+            </div>
+            <div class="full">
+              <label>Category</label>
+              <div id="categoryChoices" class="category-choices" role="group" aria-label="Choose category"></div>
+              <input id="category" type="hidden" value="Food">
+            </div>
+            <div>
+              <label>Date</label><input id="date" type="date" required />
+            </div>
+            <div>
+              <label>Note</label
+              ><input
+                id="note"
+                maxlength="200"
+                placeholder="What was this for?"
+              />
+            </div>
+            <div class="full">
+              <button class="primary tx-submit" type="submit"><span class="submit-label">Save transaction</span><span class="submit-spinner" aria-hidden="true"></span></button>
+              <div id="txStatus" class="status"></div>
+            </div>
+          </form>
+          <p class="note">
+            Transfers are not spending. Lending is tracked separately from
+            purchases. Imported transactions are flagged for review.
+          </p>
+        </section><section data-page="more" class="card span4">
+          <h2>Allowance settings</h2>
+          <form id="settingsForm" class="formgrid">
+            <div class="full">
+              <label>Next allowance date</label
+              ><input type="date" id="payday" required />
+            </div>
+            <div class="full">
+              <label>Emergency reserve (₹)</label
+              ><input
+                type="number"
+                id="reserve"
+                min="0"
+                step=".01"
+                value="500"
+              />
+            </div>
+            <div class="full">
+              <button class="primary">Save settings</button>
+              <div id="settingsStatus" class="status"></div>
+            </div>
+          </form>
+                  </section>
+        <section data-page="home" class="card span6">
+          <h2>This month</h2>
+          <div class="metrics">
+            <div class="metric">
+              <span>Spent net of refunds</span
+              ><strong id="monthSpent">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Income</span
+              ><strong id="monthIncome" class="green">₹—</strong>
+            </div>
+            <div class="metric">
+              <span>Spent today</span><strong id="todaySpent">₹—</strong>
+            </div>
+          </div>
+          <div id="categories" style="margin-top: 16px"></div>
+        </section>
+        <section data-page="plan" class="card span6">
+          <h2>Budgets</h2>
+          <form id="budgetForm" class="formgrid">
+            <div>
+              <label>Category</label
+              ><input id="budgetCategory" required placeholder="Food" />
+            </div>
+            <div>
+              <label>Monthly limit (₹)</label
+              ><input
+                id="budgetAmount"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+              />
+            </div>
+            <div class="full">
+              <button class="ghost">Save category budget</button>
+            </div>
+          </form>
+          <div id="budgets" class="list" style="margin-top: 12px"></div>
+        </section>
+        <section data-page="plan" class="card span6">
+          <h2>Savings goals</h2>
+          <form id="goalForm" class="formgrid">
+            <div>
+              <label>Goal name</label
+              ><input id="goalName" required placeholder="Emergency fund" />
+            </div>
+            <div>
+              <label>Target (₹)</label
+              ><input
+                id="goalTarget"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+              />
+            </div>
+            <div>
+              <label>Already saved (₹)</label
+              ><input
+                id="goalSaved"
+                type="number"
+                min="0"
+                step=".01"
+                value="0"
+              />
+            </div>
+            <div style="display: flex; align-items: end">
+              <button class="ghost">Add goal</button>
+            </div>
+          </form>
+          <div id="goals" class="list" style="margin-top: 12px"></div>
+        </section>
+        <section data-page="plan" class="card span6">
+          <h2>Recurring expenses</h2>
+          <form id="recurringForm" class="formgrid">
+            <div>
+              <label>Name</label
+              ><input id="recName" required placeholder="Subscription" />
+            </div>
+            <div>
+              <label>Amount (₹)</label
+              ><input
+                id="recAmount"
+                type="number"
+                min=".01"
+                step=".01"
+                required
+              />
+            </div>
+            <div>
+              <label>Due day of month</label
+              ><input
+                id="recDay"
+                type="number"
+                min="1"
+                max="31"
+                value="1"
+                required
+              />
+            </div>
+            <div>
+              <label>Category</label
+              ><input id="recCategory" value="Subscriptions" />
+            </div>
+            <div class="full">
+              <button class="ghost">Add recurring reminder</button>
+            </div>
+          </form>
+          <div id="recurring" class="list" style="margin-top: 12px"></div>
+        </section>
+        <section data-page="accounts" class="card span12">
+          <div class="sectionhead"><div><span class="section-label">WALLET SETTINGS</span><h2>Manage accounts</h2></div><span class="pill" id="manageAccountCount">0 accounts</span></div>
+          <p class="note">Add or remove your bank accounts, cash wallets and UPI accounts. Accounts with transaction history cannot be deleted, protecting your ledger.</p>
+          <form id="accountForm" class="formgrid account-create-form">
+            <div class="full"><label>Choose bank or provider</label><div id="bankChoices" class="bank-picker"></div><select id="bankInstitution" required style="display:none"><option value="">Choose a bank</option>
+              <optgroup label="Popular banks"><option value="State Bank of India">State Bank of India (SBI)</option><option value="Indian Bank">Indian Bank</option><option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option><option value="HDFC Bank">HDFC Bank</option><option value="ICICI Bank">ICICI Bank</option><option value="Axis Bank">Axis Bank</option><option value="Canara Bank">Canara Bank</option><option value="Bank of Baroda">Bank of Baroda</option><option value="Punjab National Bank">Punjab National Bank</option><option value="Union Bank of India">Union Bank of India</option><option value="IDFC FIRST Bank">IDFC FIRST Bank</option><option value="Federal Bank">Federal Bank</option><option value="Indian Overseas Bank">Indian Overseas Bank (IOB)</option><option value="South Indian Bank">South Indian Bank</option><option value="DBS Bank India">DBS Bank India</option><option value="RBL Bank">RBL Bank</option><option value="Equitas Small Finance Bank">Equitas Small Finance Bank</option><option value="Jana Small Finance Bank">Jana Small Finance Bank</option><option value="Ujjivan Small Finance Bank">Ujjivan Small Finance Bank</option></optgroup>
+              <optgroup label="Tamil Nadu banks"><option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank (TMB)</option><option value="City Union Bank">City Union Bank (CUB)</option><option value="Karur Vysya Bank">Karur Vysya Bank (KVB)</option><option value="Tamil Nadu State Apex Cooperative Bank">Tamil Nadu State Apex Cooperative Bank</option></optgroup>
+              <option value="Other Bank">Other Bank</option><option value="Cash">Cash wallet</option><option value="UPI">UPI wallet</option>
+            </select></div>
+            <div><label for="accountName">Account nickname <span class="muted">(optional)</span></label><input id="accountName" maxlength="60" placeholder="e.g. Personal savings"></div>
+            <div><label for="opening">Opening balance (₹)</label><input id="opening" type="number" min="0" step=".01" value="0" required inputmode="decimal"></div>
+            <input id="accountKind" type="hidden" value="bank">
+            <div class="full"><button class="primary" type="submit">＋ Create account</button><div id="accountStatus" class="status" role="status" aria-live="polite"></div></div>
+          </form>
+        </section>
+        <section data-page="accounts" class="card span12"><h2>Your accounts</h2><div id="accounts" class="bank-grid"></div></section>
+        <section data-page="more" class="card span12">
+          <div class="sectionhead"><div><span class="section-label">DATA MANAGEMENT</span><h2>Import bank statement</h2></div></div>
+          <p class="note">
+            Import preview is intentionally separate from saving. Review
+            imported transactions and confirm the correct account before
+            committing.
+          </p>
+          <form id="importForm">
+            <label>CSV statement</label
+            ><input id="csvFile" type="file" accept=".csv,text/csv" required />
+            <div style="margin-top: 10px">
+              <button class="ghost">Preview CSV</button>
+            </div>
+          </form>
+          <div id="importPreview" class="list" style="margin-top: 10px"></div>
+          <div id="importActions" class="hidden">
+            <label>Account to import into</label
+            ><select id="importAccount"></select
+            ><button class="primary" id="commitImport" style="margin-top: 8px">
+              Import previewed rows
+            </button>
+          </div>
+          <div id="importStatus" class="status"></div>
+        </section>
+        <section data-page="activity" class="card span12">
+          <div class="sectionhead"><div><span class="section-label">SPENDING INSIGHTS</span><h2>Spending breakdown</h2></div></div>
+          <div id="activityChart" class="activity-chart"></div>
+        </section>
+        <section data-page="activity" class="card span12">
+          <div class="sectionhead">
+            <h2>Transactions</h2>
+            
+          </div>
+          <div class="activity-filters">
+            <input id="transactionSearch" type="search" placeholder="Search notes, categories or people" aria-label="Search transactions" />
+            <select id="monthFilter" aria-label="Filter transactions by month" style="max-width:none"><option value="">All recent</option></select>
+          </div>
+          <div id="transactions" class="list" style="margin-top: 8px" aria-live="polite"></div>
+        </section>
+      </div>
+<dialog id="editTransactionDialog" class="edit-dialog" aria-labelledby="editTransactionTitle">
+  <form id="editTransactionForm">
+    <div class="sectionhead"><h2 id="editTransactionTitle">Correct transaction</h2><button type="button" class="icon-close" id="closeEditTransaction" aria-label="Close dialog">×</button></div>
+    <p class="note">Changes are recorded in the transaction's revision history. Transaction type and accounts remain unchanged.</p>
+    <div><label for="editAmount">Amount (₹)</label><input id="editAmount" type="number" min=".01" step=".01" inputmode="decimal" required /></div>
+    <div><label for="editDate">Date</label><input id="editDate" type="date" required /></div>
+    <div><label for="editCategory">Category</label><input id="editCategory" maxlength="50" required /></div>
+    <div><label for="editNote">Note</label><input id="editNote" maxlength="200" /></div>
+    <div id="editTransactionStatus" class="status" role="status" aria-live="polite"></div>
+    <div class="dialog-actions"><button type="button" class="ghost" id="cancelEditTransaction">Cancel</button><button type="submit" class="primary">Save correction</button></div>
+  </form>
+</dialog>
+<div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+<button type="button" class="floating-add" id="floatingAdd" aria-label="Add transaction">＋</button>
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button type="button" class="nav-item active" data-tab="home"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span><span>Home</span></button>
+        <button type="button" class="nav-item" data-tab="activity"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-7"/><path d="M15 6h4v4"/></svg></span><span>Activity</span></button>
+        <button type="button" class="nav-item" data-tab="accounts"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span><span>Accounts</span></button>
+        <button type="button" class="nav-item" data-tab="plan"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span>Plan</span></button>
+      </nav>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const API_ROOT = "/api";
+      async function api(path, options = {}) {
+        let response;
+        try {
+          response = await fetch(API_ROOT + path, { ...options, cache: "no-store", headers: { Accept: "application/json", ...(options.headers || {}) } });
+        } catch {
+          throw new Error("Cannot reach Pocket's backend. Check that the server is running and deployed correctly.");
+        }
+        const raw = await response.text();
+        let data;
+        try { data = raw ? JSON.parse(raw) : null; }
+        catch { throw new Error("The backend returned an invalid response. Check the API deployment and server logs."); }
+        if (!response.ok) throw new Error(data?.error || data?.message || `Backend request failed (HTTP ${response.status}).`);
+        return data;
+      }
+      function setBootState(state, message = "") {
+        const screen = $("bootScreen"), errorBox = $("bootError");
+        if (state === "ready") { screen.classList.add("is-hidden"); screen.setAttribute("aria-busy", "false"); return; }
+        screen.classList.remove("is-hidden"); screen.setAttribute("aria-busy", "true");
+        errorBox.style.display = state === "error" ? "block" : "none";
+        $("bootTitle").textContent = state === "error" ? "Your data is still safe" : "Preparing your money dashboard";
+        $("bootCopy").textContent = state === "error" ? "Pocket has paused the dashboard instead of showing incomplete or misleading balances." : "Securely connecting to your ledger and syncing your accounts, transactions and plans.";
+        $("bootStatus").textContent = state === "error" ? "Connection needs attention" : "Syncing accounts, transactions and plans…";
+        if (state === "error") $("bootErrorMessage").textContent = message;
+      }
+
+      const money = (n) =>
+        "₹" +
+        Number(n || 0).toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+          minimumFractionDigits: 0,
+        });
+      const today = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      let accounts = [], previewRows = [];
+      function guardForm(formId, handler) {
+        const form = $(formId);
+        form.addEventListener("submit", async (e) => {
+          if (form.dataset.busy === "1") {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+          }
+          form.dataset.busy = "1";
+          const btn =
+            e.submitter ||
+            form.querySelector('button[type="submit"],button:not([type])');
+          const originalHTML = btn?.innerHTML;
+          const isTransactionButton = btn?.classList.contains("tx-submit");
+          if (btn) {
+            btn.disabled = true;
+            btn.setAttribute("aria-busy", "true");
+            if (isTransactionButton) {
+              btn.classList.add("is-loading");
+              const label = btn.querySelector(".submit-label");
+              if (label) label.textContent = "Saving…";
+            } else {
+              btn.textContent = "Working…";
+            }
+          }
+          try {
+            await handler(e);
+          } finally {
+            form.dataset.busy = "0";
+            if (btn) {
+              btn.disabled = false;
+              btn.removeAttribute("aria-busy");
+              if (isTransactionButton) {
+                btn.classList.remove("is-loading");
+                btn.innerHTML = originalHTML;
+              } else {
+                btn.innerHTML = originalHTML;
+              }
+            }
+          }
+        });
+      }
+      async function withButtonLock(btn, task, label = "Working…") {
+        if (!btn || btn.dataset.busy === "1") return;
+        const original = btn.textContent;
+        btn.dataset.busy = "1";
+        btn.disabled = true;
+        btn.setAttribute("aria-busy", "true");
+        btn.textContent = label;
+        try {
+          return await task();
+        } finally {
+          btn.dataset.busy = "0";
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+          btn.textContent = original;
+        }
+      }
+      const send = (path, body, method = "POST") =>
+        api(path, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+      const pageMeta = {
+        home: { title: "Overview", sub: "Your essentials at a glance" },
+        transaction: { title: "New transaction", sub: "Record money in and out" },
+        accounts: { title: "Accounts", sub: "Manage your banks and wallets" },
+        activity: {
+          title: "Activity",
+          sub: "Your transactions and spending breakdown",
+        },
+        plan: {
+          title: "Plan ahead",
+          sub: "Budgets, subscriptions and savings goals",
+        },
+        more: {
+          title: "Settings",
+          sub: "Allowance, imports and data management",
+        },
+      };
+      function switchTab(tab) {
+        document
+          .querySelectorAll("[data-page]")
+          .forEach((el) =>
+            el.classList.toggle("page-active", el.dataset.page === tab),
+          );
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((el) =>
+            el.classList.toggle("active", el.dataset.tab === tab),
+          );
+        $("pageHeading").querySelector("h1").textContent = pageMeta[tab].title;
+        $("pageHeading").querySelector("p").textContent = pageMeta[tab].sub;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      document
+        .querySelectorAll(".nav-item")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => switchTab(btn.dataset.tab)),
+        );
+
+
+      function msg(id, text) {
+        $(id).textContent = text;
+      }
+      function esc(s) {
+        return String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      const categorySets = {
+        expense: [["Food & Dining","🍜"],["Transport","🚌"],["Shopping","🛍️"],["Education","🎓"],["Bills & Utilities","🧾"],["Subscriptions","📱"],["Health & Personal Care","🧴"],["Entertainment","🎬"],["Groceries","🛒"],["Travel","✈️"],["Family & Friends","🤝"],["Other","✦"]],
+        income: [["Salary","💼"],["Allowance","💸"],["Freelance","🧑‍💻"],["Business","🏪"],["Interest","📈"],["Cashback & Rewards","🎁"],["Gift","🎀"],["Scholarship","🎓"],["Refund","↩️"],["Other Income","✦"]],
+        transfer: [["Transfer","⇄"]], lent: [["Money Lent","🤝"]], repayment: [["Repayment Received","↙️"]], borrowed_expense: [["Paid for Me","🫱"]], collection: [["Money Collected","💰"]], refund: [["Refund","↩️"]]
+      };
+      let categoryOptions = categorySets.expense;
+      function renderCategoryChoices() {
+        categoryOptions = categorySets[$("type").value] || categorySets.expense;
+        $("categoryChoices").innerHTML = categoryOptions.map(([name,icon]) =>
+          '<button type="button" class="category-choice" data-category="'+esc(name)+'"><span class="category-icon">'+icon+'</span><span>'+esc(name)+'</span></button>'
+        ).join("");
+        $("categoryChoices").querySelectorAll("[data-category]").forEach(btn => btn.addEventListener("click", () => {
+          $("category").value = btn.dataset.category;
+          $("categoryChoices").querySelectorAll(".category-choice").forEach(x => x.classList.toggle("active", x === btn));
+        }));
+        const current = $("category").value;
+        const selected = categoryOptions.some(([name]) => name === current) ? current : categoryOptions[0][0];
+        $("category").value = selected;
+        $("categoryChoices").querySelector('[data-category="'+selected+'"]')?.classList.add("active");
+      }
+      const chartPalette = ["#b8f36b","#75c8ff","#b69cff","#ffb86b","#ff7f9b","#62dbc0","#f4df79","#9ba8bd","#d28bff"];
+      function renderActivityChart(entries) {
+        const cleanEntries = entries.filter(([,value]) => Number(value) > 0);
+        const total = cleanEntries.reduce((sum,[,value]) => sum + Number(value),0);
+        if (!total) { $("activityChart").innerHTML = '<div class="empty">No expenses recorded for this period yet.</div>'; return; }
+        let cursor = 0;
+        const stops = cleanEntries.map(([,value],i) => {
+          const start = cursor; cursor += Number(value) / total * 360;
+          return chartPalette[i % chartPalette.length]+' '+start+'deg '+cursor+'deg';
+        });
+        const pie = 'conic-gradient('+stops.join(',')+')';
+        $("activityChart").innerHTML = '<div class="pie-chart" role="img" aria-label="Spending breakdown, total '+esc(money(total))+'" style="background:'+pie+'"></div><div class="pie-legend">'+cleanEntries.map(([name,value],i)=>'<div class="pie-legend-row"><span class="pie-dot" style="background:'+chartPalette[i%chartPalette.length]+'"></span><span>'+esc(name)+'</span><strong>'+esc(money(value))+'</strong></div>').join('')+'<div class="item"><strong>Total expenses</strong><strong>'+esc(money(total))+'</strong></div></div>';
+      }
+      function optionAccounts(selectId) {
+        $(selectId).innerHTML = accounts.map((a) => `<option value="${a._id || a.id}">${esc(a.name)} · ${money(a.balance)}</option>`).join("");
+        if (selectId === "accountId" || selectId === "toAccountId") renderTransactionAccountPicker(selectId);
+      }
+      function renderTransactionAccountPicker(selectId) {
+        const select = $(selectId), target = $(selectId === "accountId" ? "accountPicker" : "toAccountPicker");
+        if (!select || !target) return;
+        const bankLogo = (institution) => {
+          const slug = bankLogoSlugs[institution];
+          const url = slug ? "https://cdn.jsdelivr.net/gh/praveenpuglia/indian-banks/assets/logos/" + slug + "/symbol.svg" : "";
+          const fallback = institution === "Cash" ? "₹" : institution === "UPI" ? "↗" : esc(String(institution || "Wallet").split(/\\s+/).map(x => x[0]).slice(0,3).join(""));
+          return '<span class="bank-choice-logo">' + (url ? '<img src="' + url + '" alt="" loading="eager" decoding="async" onerror="this.remove()">' : fallback) + '</span>';
+        };
+        const selected = accounts.find(a => String(a._id || a.id) === select.value);
+        target.innerHTML = '<button type="button" class="bank-picker-trigger" aria-haspopup="listbox" aria-expanded="false">' + (selected ? bankLogo(selected.institution || selected.name) : '<span class="bank-choice-logo">＋</span>') + '<span class="bank-picker-label">' + esc(selected ? selected.name + " · " + money(selected.balance) : "Choose account") + '</span><span class="bank-picker-chevron">⌄</span></button>' +
+          '<div class="bank-picker-menu hidden" role="listbox" aria-label="Choose account">' + accounts.map(a => '<button type="button" role="option" aria-selected="' + (String(a._id || a.id) === select.value) + '" class="bank-choice" data-account="' + esc(a._id || a.id) + '">' + bankLogo(a.institution || a.name) + '<span>' + esc(a.name) + '<small style="display:block;color:var(--muted);font-size:10px;margin-top:2px">' + esc(a.institution || a.kind || "Account") + ' · ' + money(a.balance) + '</small></span></button>').join("") + '</div>';
+        const trigger = target.querySelector(".bank-picker-trigger"), menu = target.querySelector(".bank-picker-menu");
+        trigger.addEventListener("click", () => { const open = menu.classList.toggle("hidden") === false; trigger.setAttribute("aria-expanded", String(open)); });
+        menu.querySelectorAll("[data-account]").forEach(btn => btn.addEventListener("click", () => { select.value = btn.dataset.account; select.dispatchEvent(new Event("change", { bubbles: true })); renderTransactionAccountPicker(selectId); }));
+      }
+      function showTypes() {
+        const t = $("type").value;
+        $("toWrap").classList.toggle("hidden", t !== "transfer");
+        $("personWrap").classList.toggle(
+          "hidden",
+          !["lent", "borrowed_expense", "repayment", "collection"].includes(t),
+        );
+        $("fromWrap").classList.toggle("hidden", t === "borrowed_expense");
+        $("accountId").required = t !== "borrowed_expense";
+      }
+      function selectTransactionType(type) {
+        $("type").value = type;
+        showTypes();
+        renderCategoryChoices();
+        document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
+      }
+      async function load() {
+        setBootState("loading");
+        try {
+        const [s, txs, b, g, r] = await Promise.all([
+          api("/summary"),
+          api("/transactions"),
+          api("/budgets"),
+          api("/goals"),
+          api("/recurring"),
+        ]);
+        const st = s.settings;
+        accounts = s.accounts || [];
+        ["accountId", "toAccountId", "importAccount"].forEach(optionAccounts);
+        $("perDay").textContent = money(s.perDay) + " / day";
+        $("perDay").className = "big " + (s.perDay < 0 ? "red" : "green");
+        $("heroSub").textContent =
+          `${money(s.spendable)} safe to spend · ${s.days} day(s) until ${s.settings.payday}`;
+        $("total").textContent = money(s.totalBalance);
+        $("owe").textContent = money(s.owedToFriends);
+        $("owed").textContent = money(s.owedByFriends);
+        $("monthSpent").textContent = money(s.monthSpent);
+        $("monthIncome").textContent = money(s.monthIncome);
+        $("todaySpent").textContent = money(s.todaySpent);
+        $("payday").value = st.payday;
+        $("reserve").value = Number(st.reservePaise || 0) / 100;
+        const accountMarkup = (x, removable) => {
+          const bank = x.institution || x.name;
+          const initials = bank.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
+          const bankSlugMap = {"State Bank of India":"sbin","Indian Bank":"idib","Kotak Mahindra Bank":"kkbk","HDFC Bank":"hdfc","ICICI Bank":"icic","Axis Bank":"utib","Canara Bank":"cnrb","Bank of Baroda":"barb","Punjab National Bank":"punb","Union Bank of India":"ubin","IDFC FIRST Bank":"idfb","Federal Bank":"fdrl","Indian Overseas Bank":"ioba","South Indian Bank":"sibl","DBS Bank India":"dbss","RBL Bank":"ratn","Equitas Small Finance Bank":"esfb","Jana Small Finance Bank":"jsfb","Ujjivan Small Finance Bank":"ujvn","Tamilnad Mercantile Bank":"tmbl","City Union Bank":"ciub","Karur Vysya Bank":"kvbl"};
+          const slug = bankSlugMap[bank];
+          const logo = '<span class="bank-logo-fallback">'+esc(initials)+'</span>'+(slug ? '<img src="https://cdn.jsdelivr.net/gh/praveenpuglia/indian-banks/assets/logos/'+slug+'/symbol.svg" alt="'+esc(bank)+' logo" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">' : '');
+          const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Export & remove</button>' : '';
+          return '<div class="bank-card"><div class="bank-card-info"><div class="bank-logo">'+logo+'</div><div class="bank-meta"><strong>'+esc(bank)+'</strong><small>'+esc(x.name)+' · '+esc(x.kind)+'</small></div></div><div class="bank-card-actions"><div class="bank-balance">'+money(x.balance)+'</div>'+remove+'</div></div>';
+        };
+        $("accounts").innerHTML = accounts.map(x => accountMarkup(x, true)).join("") || '<div class="account-empty">No accounts yet. Add your first bank above.</div>';
+        $("homeAccounts").innerHTML = accounts.map(x => accountMarkup(x, false)).join("") || '<div class="account-empty">No accounts yet. Add an account from Accounts.</div>';
+        $("accountCount").textContent = accounts.length + (accounts.length === 1 ? " account" : " accounts");
+        $("manageAccountCount").textContent = accounts.length + (accounts.length === 1 ? " account" : " accounts");
+        const cats = Object.entries(s.byCat || {}).sort((x, y) => y[1] - x[1]),
+          max = Math.max(1, ...cats.map((x) => x[1]));
+        renderActivityChart(cats);
+        $("categories").innerHTML =
+          cats
+            .map(
+              ([name, v]) =>
+                `<div style="margin-bottom:10px"><div class="row"><span>${esc(name)}</span><strong style="text-align:right">${money(v)}</strong></div><div class="bar"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i></div></div>`,
+            )
+            .join("") || '<div class="empty">No spending this month.</div>';
+        $("budgets").innerHTML =
+          b
+            .map((x) => {
+              const spent = Number(s.byCat?.[x.category] || 0),
+                pct = Math.min(100, (spent / x.amount) * 100);
+              return `<div class="item"><div style="flex:1"><strong>${esc(x.category)}</strong><small>${money(spent)} of ${money(x.amount)}</small><div class="bar"><i style="width:${pct}%"></i></div></div><span class="pill">${Math.round(pct)}%</span></div>`;
+            })
+            .join("") || '<div class="empty">No budgets yet.</div>';
+        $("goals").innerHTML =
+          g
+            .map(
+              (x) =>
+                `<div class="item"><div style="flex:1"><strong>${esc(x.name)}</strong><small>${money(x.saved)} of ${money(x.target)}</small><div class="bar"><i style="width:${Math.min(100, (x.saved / x.target) * 100)}%"></i></div></div></div>`,
+            )
+            .join("") || '<div class="empty">No savings goals yet.</div>';
+        $("recurring").innerHTML =
+          r
+            .map(
+              (x) =>
+                `<div class="item"><div><strong>${esc(x.name)}</strong><small>${esc(x.category)} · due day ${x.dueDay}</small></div><span class="amt">${money(Number(x.amountPaise || 0) / 100)}</span></div>`,
+            )
+            .join("") || '<div class="empty">No reminders yet.</div>';
+        const months = [...new Set(txs.map((t) => t.date.slice(0, 7)))];
+        const prev = $("monthFilter").value;
+        $("monthFilter").innerHTML =
+          '<option value="">All recent</option>' +
+          months.map((m) => `<option value="${m}">${m}</option>`).join("");
+        $("monthFilter").value = months.includes(prev) ? prev : "";
+        renderTransactions(txs);
+        setBootState("ready");
+        } catch (error) {
+          setBootState("error", error instanceof Error ? error.message : "Unknown backend error.");
+          throw error;
+        }
+      }
+      let allTx = [];
+      function renderTransactions(txs) {
+        allTx = txs;
+        const m = $("monthFilter").value;
+        const query = ($("transactionSearch")?.value || "").trim().toLowerCase();
+        const filtered = txs.filter((t) => (!m || t.date.startsWith(m)) &&
+          (!query || [t.note,t.category,t.person,t.type].some(v => String(v || "").toLowerCase().includes(query))));
+        const chartCats = {};
+        filtered.filter(t => ["expense","borrowed_expense"].includes(t.type)).forEach(t => {
+          const cat = t.category || "Other";
+          chartCats[cat] = (chartCats[cat] || 0) + Number(t.amount ?? (t.amountPaise || 0) / 100);
+        });
+        renderActivityChart(Object.entries(chartCats).sort((a,b)=>b[1]-a[1]));
+        $("transactions").innerHTML =
+          filtered
+            .map((t) => {
+              const signed = ["income", "collection", "refund"].includes(t.type)
+                ? "+"
+                : "−";
+              const label = t.type.replace("_", " ");
+              return `<div class="item"><div style="min-width:0"><strong>${esc(t.note || t.category || label)} ${t.needsReview ? '<span class="pill">Review import</span>' : ""}</strong><small>${esc(t.date)} · ${esc(t.category)} · ${esc(label)}${t.person ? " · " + esc(t.person) : ""}</small></div><div style="text-align:right"><div class="amt ${signed === "+" ? "green" : ""}">${signed}${money(Number(t.amount ?? (t.amountPaise || 0) / 100))}</div><div class="tx-actions"><button type="button" class="tx-edit" data-edit="${t._id}" aria-label="Edit transaction ${esc(t.note || t.category || label)}">Edit</button><button type="button" class="danger" data-delete="${t._id}" aria-label="Delete transaction ${esc(t.note || t.category || label)}">Delete</button></div></div></div>`;
+            })
+            .join("") || '<div class="empty">No transactions yet.</div>';
+      }
+      let pendingUndoId = null, toastTimer = null, editingTransactionId = null;
+      function showUndoToast(id) {
+        pendingUndoId = id;
+        $("toastRegion").innerHTML = '<div class="toast"><span class="toast-message">Transaction moved to Recently deleted. Balances were recalculated.</span><button type="button" id="undoDelete">Undo</button></div>';
+        $("undoDelete").onclick = async () => {
+          const undo = $("undoDelete");
+          await withButtonLock(undo, async () => {
+            await api("/transactions/" + encodeURIComponent(id) + "/restore", { method: "POST" });
+            clearTimeout(toastTimer); pendingUndoId = null; $("toastRegion").innerHTML = "";
+            await load();
+          }, "Restoring…");
+        };
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { pendingUndoId = null; $("toastRegion").innerHTML = ""; }, 12000);
+      }
+      function openTransactionEditor(t) {
+        editingTransactionId = t._id;
+        $("editAmount").value = Number(t.amount ?? (t.amountPaise || 0) / 100).toFixed(2);
+        $("editDate").value = t.date || today();
+        $("editCategory").value = t.category || "Other";
+        $("editNote").value = t.note || "";
+        $("editTransactionStatus").textContent = "";
+        $("editTransactionDialog").showModal();
+        $("editAmount").focus();
+      }
+      $("closeEditTransaction").onclick = $("cancelEditTransaction").onclick = () => $("editTransactionDialog").close();
+      $("transactions").onclick = async (e) => {
+        const edit = e.target.closest("[data-edit]");
+        if (edit) {
+          const record = allTx.find(t => t._id === edit.dataset.edit);
+          if (record) openTransactionEditor(record);
+          return;
+        }
+        const btn = e.target.closest("[data-delete]");
+        const id = btn?.dataset.delete;
+        if (!id) return;
+        if (!confirm("Move this transaction to Recently deleted? You can undo this action for a short time. Balances and reports will recalculate.")) return;
+        await withButtonLock(btn, async () => {
+          await api("/transactions/" + encodeURIComponent(id), { method: "DELETE" });
+          await load();
+          showUndoToast(id);
+        }, "Moving…");
+      };
+      guardForm("editTransactionForm", async (e) => {
+        e.preventDefault();
+        if (!editingTransactionId) return;
+        try {
+          await send("/transactions/" + encodeURIComponent(editingTransactionId), {
+            amount: $("editAmount").value, date: $("editDate").value,
+            category: $("editCategory").value, note: $("editNote").value
+          }, "PUT");
+          $("editTransactionDialog").close();
+          await load();
+          $("toastRegion").innerHTML = '<div class="toast"><span class="toast-message">Correction saved. Previous values are retained in revision history.</span></div>';
+          setTimeout(() => { $("toastRegion").innerHTML = ""; }, 5000);
+        } catch (err) {
+          $("editTransactionStatus").textContent = err.message;
+        }
+      });
+      guardForm("txForm", async (e) => {
+        e.preventDefault();
+        try {
+          const body = {
+            type: $("type").value,
+            amount: $("amount").value,
+            category: $("category").value,
+            note: $("note").value,
+            date: $("date").value,
+            accountId: $("accountId").value,
+            toAccountId: $("toAccountId").value,
+            person: $("person").value,
+          };
+          await send("/transactions", body);
+          e.target.reset();
+          selectTransactionType("expense");
+          renderCategoryChoices();
+          switchTab("home");
+          $("date").value = today();
+          msg("txStatus", "Saved.");
+          await load();
+        } catch (err) {
+          msg("txStatus", err.message);
+        }
+      });
+      guardForm("settingsForm", async (e) => {
+        e.preventDefault();
+        try {
+          await send(
+            "/settings",
+            { payday: $("payday").value, reserve: $("reserve").value },
+            "PUT",
+          );
+          msg("settingsStatus", "Saved.");
+          await load();
+        } catch (err) {
+          msg("settingsStatus", err.message);
+        }
+      });
+      guardForm("accountForm", async (e) => {
+        e.preventDefault();
+        try {
+          const institution = $("bankInstitution").value;
+          if (!institution) throw new Error("Choose a bank or account provider.");
+          const kind = institution === "Cash" ? "cash" : institution === "UPI" ? "upi" : institution === "Other Bank" ? "bank" : "bank";
+          await send("/accounts", {
+            institution,
+            name: $("accountName").value.trim(),
+            kind,
+            openingBalance: $("opening").value,
+          });
+          e.target.reset();
+          $("accountKind").value = "bank";
+          msg("accountStatus", "Account created successfully.");
+          await load();
+        } catch (err) {
+          msg("accountStatus", err.message);
+        }
+      });
+      $("floatingAdd").addEventListener("click", () => {
+        selectTransactionType("expense");
+        switchTab("transaction");
+      });
+      document.querySelectorAll(".type-choice").forEach((btn) => btn.addEventListener("click", () => {
+        selectTransactionType(btn.dataset.type);
+      }));
+      const bankLogoSlugs = {"State Bank of India":"sbin","Indian Bank":"idib","Kotak Mahindra Bank":"kkbk","HDFC Bank":"hdfc","ICICI Bank":"icic","Axis Bank":"utib","Canara Bank":"cnrb","Bank of Baroda":"barb","Punjab National Bank":"punb","Union Bank of India":"ubin","IDFC FIRST Bank":"idfb","Federal Bank":"fdrl","Indian Overseas Bank":"ioba","South Indian Bank":"sibl","DBS Bank India":"dbss","RBL Bank":"ratn","Equitas Small Finance Bank":"esfb","Jana Small Finance Bank":"jsfb","Ujjivan Small Finance Bank":"ujvn","Tamilnad Mercantile Bank":"tmbl","City Union Bank":"ciub","Karur Vysya Bank":"kvbl"};
+      function renderBankChoices() {
+        const select = $("bankInstitution");
+        const opts = [...select.options].filter(o => o.value);
+        const logo = (value) => {
+          const slug = bankLogoSlugs[value];
+          const url = slug ? "https://cdn.jsdelivr.net/gh/praveenpuglia/indian-banks/assets/logos/"+slug+"/symbol.svg" : "";
+          const fallback = value === "Cash" ? "₹" : value === "UPI" ? "↗" : value === "Other Bank" ? "+" : esc(value.split(/\\s+/).map(x=>x[0]).slice(0,3).join(""));
+          return '<span class="bank-choice-logo">'+(url?'<img src="'+url+'" alt="" loading="eager" decoding="async" onerror="this.remove()">':fallback)+'</span>';
+        };
+        const selected = opts.find(o => o.value === select.value);
+        $("bankChoices").innerHTML =
+          '<button type="button" class="bank-picker-trigger" id="bankPickerTrigger" aria-haspopup="listbox" aria-expanded="false">'+
+            (selected ? logo(selected.value) : '<span class="bank-choice-logo">＋</span>')+
+            '<span class="bank-picker-label">'+esc(selected ? selected.textContent : "Choose bank or wallet")+'</span><span class="bank-picker-chevron">⌄</span></button>'+
+          '<div class="bank-picker-menu hidden" id="bankPickerMenu" role="listbox" aria-label="Bank and wallet options">'+
+            opts.map(o=>'<button type="button" role="option" aria-selected="'+(o.value===select.value)+'" class="bank-choice" data-bank="'+esc(o.value)+'">'+logo(o.value)+'<span>'+esc(o.textContent)+'</span></button>').join("")+
+          '</div>';
+        $("bankPickerTrigger").addEventListener("click", () => {
+          const menu=$("bankPickerMenu"), open=menu.classList.toggle("hidden")===false;
+          $("bankPickerTrigger").setAttribute("aria-expanded",String(open));
+        });
+        $("bankPickerMenu").querySelectorAll("[data-bank]").forEach(btn => btn.addEventListener("click", () => {
+          select.value=btn.dataset.bank;
+          select.dispatchEvent(new Event("change"));
+          renderBankChoices();
+        }));
+        $("bankPickerMenu").querySelectorAll("img").forEach(img => { const warm=new Image(); warm.src=img.src; });
+      }
+      renderBankChoices();
+      $("bankInstitution").addEventListener("change", () => {
+        const value = $("bankInstitution").value;
+        $("accountKind").value = value === "Cash" ? "cash" : value === "UPI" ? "upi" : "bank";
+        $("accountName").placeholder = value === "Cash" ? "e.g. Pocket cash" : value === "UPI" ? "e.g. Google Pay" : "e.g. Savings account";
+      });
+      function downloadExportFile(filename, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
+      function csvCell(value) {
+        let text = value == null ? "" : String(value);
+        if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      let xlsxLoader = null;
+      function loadXlsx() {
+        if (window.XLSX) return Promise.resolve(window.XLSX);
+        if (!xlsxLoader) xlsxLoader = new Promise((resolve,reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+          script.onload = () => resolve(window.XLSX);
+          script.onerror = () => { xlsxLoader = null; reject(new Error("Excel export could not load. Check your internet connection; no account data was deleted.")); };
+          document.head.appendChild(script);
+        });
+        return xlsxLoader;
+      }
+      async function exportAccountFiles(data) {
+        const XLSX = await loadXlsx();
+        const safeName = String(data.account.institution || data.account.name || "account")
+          .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "account";
+        const stem = "pocket-" + safeName + "-backup-" + today();
+        const columns = [
+          ["Transaction ID", "_id"], ["Date", "date"], ["Type", "type"],
+          ["Amount (INR)", "amount"], ["Amount (paise)", "amountPaise"],
+          ["Category", "category"], ["Note", "note"], ["Account ID", "accountId"],
+          ["To Account ID", "toAccountId"], ["Person", "person"], ["Settled", "settled"],
+          ["Needs Review", "needsReview"], ["Related Transaction ID", "relatedTransactionId"],
+          ["Created At", "createdAt"], ["Import Source", "importSource"]
+        ];
+        const rows = data.transactions.map(t => Object.fromEntries(columns.map(([label,key]) => [label, t[key] ?? ""])));
+        const csv = [columns.map(([label]) => csvCell(label)).join(","), ...rows.map(row => columns.map(([label]) => csvCell(row[label])).join(","))].join("\r\n");
+        downloadExportFile(stem + ".json", JSON.stringify(data, null, 2), "application/json;charset=utf-8");
+        downloadExportFile(stem + ".csv", "\uFEFF" + csv, "text/csv;charset=utf-8");
+        const workbook = XLSX.utils.book_new();
+        const accountRows = Object.entries(data.account).map(([key,value]) => ({ Field: key, Value: value instanceof Object ? JSON.stringify(value) : value }));
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(accountRows), "Account");
+        const sheetRows = rows.length ? rows : [Object.fromEntries(columns.map(([label]) => [label, ""]))];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sheetRows), "Transactions");
+        XLSX.writeFile(workbook, stem + ".xlsx", { compression: true });
+      }
+      $("accounts").addEventListener("click", async (e) => {
+        const button = e.target.closest("[data-remove-account]");
+        if (!button) return;
+        const id = button.dataset.removeAccount;
+        button.disabled = true;
+        const original = button.textContent;
+        button.textContent = "Preparing backup…";
+        try {
+          const data = await api("/accounts/" + encodeURIComponent(id) + "/export");
+          await exportAccountFiles(data);
+          const count = data.transactionCount;
+          const confirmed = confirm(
+            "Three backup files (JSON, CSV and Excel) have been prepared for " +
+            (data.account.institution || data.account.name) + ".\\n\\n" +
+            count + " transaction(s) will be permanently deleted with this account.\\n\\n" +
+            "Continue only after confirming the files were downloaded."
+          );
+          if (!confirmed) {
+            alert("Account kept. Your backup files were still exported.");
+            button.disabled = false;
+            button.textContent = original;
+            return;
+          }
+          button.textContent = "Removing…";
+          await api("/accounts/" + encodeURIComponent(id), { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transactionIds: data.transactions.map(t => t._id) }) });
+          await load();
+          alert("Account removed. " + count + " transaction(s) were deleted after the backup export.");
+        } catch (err) {
+          alert(err.message + "\\n\\nThe account was not intentionally removed if export failed.");
+          button.disabled = false;
+          button.textContent = original;
+        }
+      });
+      guardForm("budgetForm", async (e) => {
+        e.preventDefault();
+        try {
+          await send("/budgets", {
+            category: $("budgetCategory").value,
+            amount: $("budgetAmount").value,
+          });
+          e.target.reset();
+          await load();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      guardForm("goalForm", async (e) => {
+        e.preventDefault();
+        try {
+          await send("/goals", {
+            name: $("goalName").value,
+            target: $("goalTarget").value,
+            saved: $("goalSaved").value,
+          });
+          e.target.reset();
+          await load();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      guardForm("recurringForm", async (e) => {
+        e.preventDefault();
+        try {
+          await send("/recurring", {
+            name: $("recName").value,
+            amount: $("recAmount").value,
+            dueDay: $("recDay").value,
+            category: $("recCategory").value,
+          });
+          e.target.reset();
+          await load();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      $("monthFilter").onchange = () => renderTransactions(allTx);
+      $("transactionSearch").oninput = () => renderTransactions(allTx);
+      $("refresh").onclick = () =>
+        withButtonLock(
+          $("refresh"),
+          () => load().catch((e) => alert(e.message)),
+          "Refreshing…",
+        );
+      $("showSetup").onclick = () => {
+        switchTab("more");
+        $("payday").focus({ preventScroll: true });
+      };
+      guardForm("importForm", async (e) => {
+        e.preventDefault();
+        try {
+          const text = await $("csvFile").files[0].text();
+          const r = await api("/import/preview", {
+            method: "POST",
+            headers: { "Content-Type": "text/csv" },
+            body: text,
+          });
+          previewRows = r.rows;
+          $("importPreview").innerHTML =
+            `<div class="item"><strong>${r.count} rows detected</strong><span class="pill">Preview only</span></div>` +
+            r.rows
+              .slice(0, 8)
+              .map(
+                (x) =>
+                  `<div class="item"><div><strong>${esc(x.description)}</strong><small>${esc(x.date)} · ${esc(x.type)}</small></div><span class="amt">${money(x.amount)}</span></div>`,
+              )
+              .join("") +
+            (r.count > 8
+              ? `<div class="note">Showing first 8 of ${r.count}. All detected rows will be imported.</div>`
+              : "");
+          $("importActions").classList.remove("hidden");
+          msg(
+            "importStatus",
+            "Check the preview and choose the correct account before committing.",
+          );
+        } catch (err) {
+          msg("importStatus", err.message);
+        }
+      });
+      $("commitImport").onclick = () =>
+        withButtonLock(
+          $("commitImport"),
+          async () => {
+            try {
+              const r = await send("/import/commit", {
+                rows: previewRows,
+                accountId: $("importAccount").value,
+              });
+              msg(
+                "importStatus",
+                `Added ${r.added}; skipped ${r.skipped}. Imported records need review.`,
+              );
+              previewRows = [];
+              $("importActions").classList.add("hidden");
+              await load();
+            } catch (err) {
+              msg("importStatus", err.message);
+            }
+          },
+          "Importing…",
+        );
+      switchTab("home");
+      $("date").value = today();
+      $("payday").value = new Date().toISOString().slice(0, 10);
+      selectTransactionType("expense");
+      renderCategoryChoices();
+      $("retryLoad").addEventListener("click", () => load().catch(() => {}));
+      load().catch(() => {});
+    </script>
+  </body>
+</html>
