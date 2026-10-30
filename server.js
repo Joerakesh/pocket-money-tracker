@@ -147,8 +147,12 @@ app.post('/api/accounts', wrap(async (req, res) => {
   const institution = clean(req.body.institution || '', 80);
   const label = clean(req.body.name || '', 60);
   const kind = clean(req.body.kind || (institution === 'Cash' ? 'cash' : institution === 'UPI' ? 'upi' : 'bank'), 30);
-  const name = label || institution || 'Account';
+  let name = label || institution || 'Account';
   if (!name) throw bad('Account name is required.');
+  if (!label) {
+    const existing = await accounts.countDocuments({ institution });
+    if (existing) name = `${institution} · ${existing + 1}`;
+  }
   const openingPaise = Math.round(Number(req.body.openingBalance || 0) * 100);
   if (!Number.isSafeInteger(openingPaise) || openingPaise < 0) throw bad('Opening balance is invalid.');
   const result = await accounts.insertOne({ name, institution, kind, openingPaise, createdAt: new Date() });
