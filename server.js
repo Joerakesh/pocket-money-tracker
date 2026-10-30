@@ -206,7 +206,12 @@ app.get('/api/accounts/:id/export', wrap(async (req, res) => {
 app.delete('/api/accounts/:id', wrap(async (req, res) => {
   const id = parseId(req.params.id);
   const data = await getAccountExportData(id);
-  const ids = data.transactions.map(row => parseId(row._id));
+  const exportedIds = Array.isArray(req.body?.transactionIds) ? req.body.transactionIds.map(String).sort() : null;
+  const currentIds = data.transactions.map(row => row._id).sort();
+  if (!exportedIds || exportedIds.length !== currentIds.length || exportedIds.some((value, index) => value !== currentIds[index])) {
+    throw bad('The account transaction history changed after export. Download a fresh backup before deleting.', 409);
+  }
+  const ids = exportedIds.map(parseId);
   if (ids.length) await tx.deleteMany({ _id: { $in: ids } });
   await accounts.deleteOne({ _id: id });
   res.json({ ok: true, deletedTransactions: ids.length, deletedAccount: data.account.name });
