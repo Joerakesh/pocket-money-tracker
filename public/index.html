@@ -37,8 +37,12 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
 .submit-spinner{display:none;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pocket-spin .7s linear infinite}
 .tx-submit.is-loading .submit-spinner{display:inline-block}
 .tx-submit.is-loading{pointer-events:none}
-.bank-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.bank-choice{min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:9px 5px;background:#171e2a;border:1px solid var(--line);border-radius:16px;color:#e7ebf2;font-size:10px;text-align:center}
+.bank-picker{position:relative}
+.bank-picker-trigger{display:flex;align-items:center;gap:12px;text-align:left;min-height:60px;background:#171e2a;border:1px solid var(--line);border-radius:15px}
+.bank-picker-label{flex:1}.bank-picker-chevron{font-size:18px;color:var(--muted)}
+.bank-picker-menu{position:absolute;z-index:80;top:calc(100% + 7px);left:0;right:0;max-height:280px;overflow:auto;padding:7px;background:#121925;border:1px solid rgba(255,255,255,.12);border-radius:17px;box-shadow:0 18px 45px #000b;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.bank-picker-menu.hidden{display:none!important}
+.bank-choice{min-height:56px;display:flex;align-items:center;gap:9px;padding:8px;background:#1b2432;border:1px solid transparent;border-radius:12px;color:#e7ebf2;font-size:11px;text-align:left}.bank-choice:focus-visible,.bank-picker-trigger:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .bank-choice-logo{width:36px;height:36px;border-radius:11px;background:#fff;display:grid;place-items:center;overflow:hidden}
 .bank-choice img{width:100%;height:100%;object-fit:contain;padding:4px}
 .bank-choice.active{border-color:var(--green);background:rgba(184,243,107,.1);color:var(--green)}
@@ -298,7 +302,7 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           <div class="sectionhead"><div><span class="section-label">WALLET SETTINGS</span><h2>Manage accounts</h2></div><span class="pill" id="manageAccountCount">0 accounts</span></div>
           <p class="note">Add or remove your bank accounts, cash wallets and UPI accounts. Accounts with transaction history cannot be deleted, protecting your ledger.</p>
           <form id="accountForm" class="formgrid account-create-form">
-            <div class="full"><label>Choose bank or provider</label><div id="bankChoices" class="bank-choice-grid" role="group" aria-label="Choose bank"></div><select id="bankInstitution" required style="display:none"><option value="">Choose a bank</option>
+            <div class="full"><label>Choose bank or provider</label><div id="bankChoices" class="bank-picker"></div><select id="bankInstitution" required style="display:none"><option value="">Choose a bank</option>
               <optgroup label="Popular banks"><option value="State Bank of India">State Bank of India (SBI)</option><option value="Indian Bank">Indian Bank</option><option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option><option value="HDFC Bank">HDFC Bank</option><option value="ICICI Bank">ICICI Bank</option><option value="Axis Bank">Axis Bank</option><option value="Canara Bank">Canara Bank</option><option value="Bank of Baroda">Bank of Baroda</option><option value="Punjab National Bank">Punjab National Bank</option><option value="Union Bank of India">Union Bank of India</option><option value="IDFC FIRST Bank">IDFC FIRST Bank</option><option value="Federal Bank">Federal Bank</option><option value="Indian Overseas Bank">Indian Overseas Bank (IOB)</option><option value="South Indian Bank">South Indian Bank</option><option value="DBS Bank India">DBS Bank India</option><option value="RBL Bank">RBL Bank</option><option value="Equitas Small Finance Bank">Equitas Small Finance Bank</option><option value="Jana Small Finance Bank">Jana Small Finance Bank</option><option value="Ujjivan Small Finance Bank">Ujjivan Small Finance Bank</option></optgroup>
               <optgroup label="Tamil Nadu banks"><option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank (TMB)</option><option value="City Union Bank">City Union Bank (CUB)</option><option value="Karur Vysya Bank">Karur Vysya Bank (KVB)</option><option value="Tamil Nadu State Apex Cooperative Bank">Tamil Nadu State Apex Cooperative Bank</option></optgroup>
               <option value="Other Bank">Other Bank</option><option value="Cash">Cash wallet</option><option value="UPI">UPI wallet</option>
@@ -770,22 +774,33 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
       function renderBankChoices() {
         const select = $("bankInstitution");
         const opts = [...select.options].filter(o => o.value);
-        $("bankChoices").innerHTML = opts.map(o => {
-          const slug = bankLogoSlugs[o.value];
+        const logo = (value) => {
+          const slug = bankLogoSlugs[value];
           const url = slug ? "https://cdn.jsdelivr.net/gh/praveenpuglia/indian-banks/assets/logos/"+slug+"/symbol.svg" : "";
-          const fallback = o.value === "Cash" ? "₹" : o.value === "UPI" ? "↗" : o.value === "Other Bank" ? "+" : esc(o.value.split(/\\s+/).map(x=>x[0]).slice(0,3).join(""));
-          return '<button type="button" class="bank-choice" data-bank="'+esc(o.value)+'"><span class="bank-choice-logo">'+(url?'<img src="'+url+'" alt="" loading="eager" decoding="async" onerror="this.remove()">':fallback)+'</span><span>'+esc(o.textContent)+'</span></button>';
-        }).join("");
-        $("bankChoices").querySelectorAll("[data-bank]").forEach(btn => btn.addEventListener("click", () => {
-          select.value = btn.dataset.bank;
-          $("bankChoices").querySelectorAll(".bank-choice").forEach(x => x.classList.toggle("active",x===btn));
+          const fallback = value === "Cash" ? "₹" : value === "UPI" ? "↗" : value === "Other Bank" ? "+" : esc(value.split(/\\s+/).map(x=>x[0]).slice(0,3).join(""));
+          return '<span class="bank-choice-logo">'+(url?'<img src="'+url+'" alt="" loading="eager" decoding="async" onerror="this.remove()">':fallback)+'</span>';
+        };
+        const selected = opts.find(o => o.value === select.value);
+        $("bankChoices").innerHTML =
+          '<button type="button" class="bank-picker-trigger" id="bankPickerTrigger" aria-haspopup="listbox" aria-expanded="false">'+
+            (selected ? logo(selected.value) : '<span class="bank-choice-logo">＋</span>')+
+            '<span class="bank-picker-label">'+esc(selected ? selected.textContent : "Choose bank or wallet")+'</span><span class="bank-picker-chevron">⌄</span></button>'+
+          '<div class="bank-picker-menu hidden" id="bankPickerMenu" role="listbox" aria-label="Bank and wallet options">'+
+            opts.map(o=>'<button type="button" role="option" aria-selected="'+(o.value===select.value)+'" class="bank-choice" data-bank="'+esc(o.value)+'">'+logo(o.value)+'<span>'+esc(o.textContent)+'</span></button>').join("")+
+          '</div>';
+        $("bankPickerTrigger").addEventListener("click", () => {
+          const menu=$("bankPickerMenu"), open=menu.classList.toggle("hidden")===false;
+          $("bankPickerTrigger").setAttribute("aria-expanded",String(open));
+        });
+        $("bankPickerMenu").querySelectorAll("[data-bank]").forEach(btn => btn.addEventListener("click", () => {
+          select.value=btn.dataset.bank;
           select.dispatchEvent(new Event("change"));
+          renderBankChoices();
         }));
-        $("bankChoices").querySelectorAll("img").forEach(img => { const warm = new Image(); warm.src = img.src; });
+        $("bankPickerMenu").querySelectorAll("img").forEach(img => { const warm=new Image(); warm.src=img.src; });
       }
       renderBankChoices();
       $("bankInstitution").addEventListener("change", () => {
-        $("bankChoices").querySelectorAll(".bank-choice").forEach(x => x.classList.toggle("active",x.dataset.bank === $("bankInstitution").value));
         const value = $("bankInstitution").value;
         $("accountKind").value = value === "Cash" ? "cash" : value === "UPI" ? "upi" : "bank";
         $("accountName").placeholder = value === "Cash" ? "e.g. Pocket cash" : value === "UPI" ? "e.g. Google Pay" : "e.g. Savings account";
