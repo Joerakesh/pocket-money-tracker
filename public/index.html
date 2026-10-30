@@ -15,13 +15,15 @@ h2{font-size:16px;letter-spacing:-.035em;margin:0 0 14px}.page-heading{display:f
 .quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px}.quick-action{border:1px solid transparent;background:transparent;border-radius:16px;padding:8px 3px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;font-size:11px;color:#d5dbe5}.quick-action .qa-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#252d3a;font-size:21px;color:#f3f5fa}.quick-action.active{color:var(--green)}.quick-action.active .qa-icon{background:var(--green);color:#101608;box-shadow:0 5px 18px rgba(184,243,107,.15)}
 .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{padding:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.035);border-radius:17px;min-width:0}.metric strong{display:block;font-size:20px;letter-spacing:-.045em;overflow-wrap:anywhere;margin-top:4px}.metric span{font-size:11px;color:var(--muted)}
 label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,select,button{font:inherit;min-width:0;border:1px solid var(--line);background:#0f141e;color:var(--ink);padding:12px 13px;border-radius:13px;width:100%}input,select{outline:none}input:focus,select:focus{border-color:rgba(184,243,107,.55);box-shadow:0 0 0 3px rgba(184,243,107,.08)}button{cursor:pointer;font-weight:700;transition:transform .16s ease,border-color .16s ease,background .16s ease}button:active{transform:scale(.98)}button.primary{background:var(--green);color:var(--accent-ink);border-color:var(--green)}button.ghost{background:#222a38}button.danger{color:var(--red)}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.full{grid-column:1/-1}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.list{display:grid;gap:0}.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.item strong{display:block;font-size:13px}.item small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.amt{white-space:nowrap;font-weight:750;font-size:13px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#293341;color:#d0d8e6;font-size:10px}.bar{height:6px;background:#303847;border-radius:99px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#91d957,var(--green));border-radius:99px}.hidden{display:none!important}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.sectionhead button{width:auto}.section-label{margin:5px 3px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:750}.note{font-size:11px;color:var(--muted);line-height:1.55}.status{min-height:20px;color:var(--green);font-size:12px}.empty{color:var(--muted);padding:14px 0;font-size:12px}.checkbox{display:flex;align-items:center;gap:8px}.checkbox input{width:auto}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.tabs button{width:auto}
-.bottom-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));background:var(--nav-bg);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.nav-item{background:transparent;border:0;color:#8791a1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:7px 4px;font-size:10px;font-weight:650;border-radius:13px}.nav-item .nav-icon{font-size:19px;line-height:1.2}.nav-item.active{color:var(--green);background:rgba(184,243,107,.09)}
+.bottom-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));background:var(--nav-bg);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.nav-item{background:transparent;border:0;color:#8791a1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:7px 4px;font-size:10px;font-weight:650;border-radius:13px}.nav-item .nav-icon{font-size:19px;line-height:1.2}.nav-item.active{color:var(--green);background:rgba(184,243,107,.09)}
 .loading-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(7,10,15,.88);backdrop-filter:blur(14px);opacity:1;visibility:visible;transition:opacity .2s ease,visibility .2s ease}.loading-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}.loading-panel{width:min(430px,100%);padding:30px 24px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#202938,#141a25);box-shadow:0 24px 80px rgba(0,0,0,.4);text-align:center}.loading-mark{width:58px;height:58px;margin:0 auto 18px;border-radius:18px;display:grid;place-items:center;background:rgba(184,243,107,.13);color:var(--green);font-size:28px}.loading-spinner{width:24px;height:24px;border:3px solid rgba(184,243,107,.2);border-top-color:var(--green);border-radius:50%;margin:0 auto 18px;animation:pocket-spin .8s linear infinite}.loading-title{font-size:19px;font-weight:800;letter-spacing:-.03em;margin-bottom:5px}.loading-subtitle{font-size:13px;color:var(--muted);margin-bottom:22px}.loading-quote{font-size:16px;line-height:1.6;font-weight:650;min-height:76px;display:flex;align-items:center;justify-content:center}.loading-book{font-size:12px;color:var(--green);margin-top:10px}.loading-dots{display:inline-flex;gap:5px;vertical-align:middle;margin-left:4px}.loading-dots i{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pocket-pulse 1s infinite ease-in-out}.loading-dots i:nth-child(2){animation-delay:.15s}.loading-dots i:nth-child(3){animation-delay:.3s}button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-spin{to{transform:rotate(360deg)}}@keyframes pocket-pulse{0%,80%,100%{transform:scale(.65);opacity:.45}40%{transform:scale(1);opacity:1}}
 @media(min-width:760px){main{padding-top:32px}.bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:min(620px,100%);border:1px solid rgba(255,255,255,.08);border-bottom:0;border-radius:20px 20px 0 0}}
 @media(max-width:420px){main{padding:16px 13px 105px}.card{padding:16px;border-radius:20px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.quick-actions{gap:4px}.quick-action{font-size:10px}.quick-action .qa-icon{width:43px;height:43px}.big{font-size:42px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 .bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.quick-add-option{display:flex;align-items:center;gap:13px;text-align:left;background:#1b2432;border-radius:16px;padding:14px}.quick-add-option>span:first-child{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#293545;color:var(--green);font-size:20px}.quick-add-option>span:nth-child(2){flex:1}.quick-add-option strong,.quick-add-option small{display:block}.quick-add-option small{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}.quick-add-option>b{font-size:22px;color:var(--muted)}.floating-add{position:fixed;z-index:60;right:max(20px,calc((100vw - 620px)/2 + 20px));bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+
+.transaction-launch{display:flex;align-items:center;gap:14px;cursor:pointer;min-height:82px;border-color:rgba(184,243,107,.2);background:linear-gradient(120deg,#1b2930,#171d29)}.launch-icon{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:grid;place-items:center;background:var(--green);color:#101608;font-size:26px}.launch-copy{flex:1;min-width:0}.launch-copy strong,.launch-copy span{display:block}.launch-copy span{font-size:11px;color:var(--muted);margin-top:3px}.launch-arrow{font-size:25px;color:var(--muted)}.transaction-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.type-choice{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;background:#1b2230;padding:12px 5px;border-radius:15px;font-size:11px}.type-choice span{font-size:20px}.type-choice.active{background:var(--green);color:#101608;border-color:var(--green)}.account-create-form{margin-top:16px}.bank-card{position:relative}.bank-card-info{display:flex;align-items:center;gap:13px;flex:1;min-width:0}.bank-card-actions{display:flex;align-items:center;gap:10px}.account-remove{width:auto;padding:7px 10px;font-size:10px;color:var(--red);background:transparent;border-color:rgba(255,120,135,.2)}.account-empty{padding:20px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:12px}
 </style>
   </head>
   <body>
@@ -67,20 +69,6 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <p>Your essentials at a glance</p>
         </div>
       </div>
-      <div class="quick-actions" id="quickActions" aria-label="Quick actions">
-        <button type="button" class="quick-action active" data-type="expense">
-          <span class="qa-icon">↘</span><span>Expense</span>
-        </button>
-        <button type="button" class="quick-action" data-type="income">
-          <span class="qa-icon">↗</span><span>Income</span>
-        </button>
-        <button type="button" class="quick-action" data-type="lent">
-          <span class="qa-icon">↗</span><span>Lend</span>
-        </button>
-        <button type="button" class="quick-action" data-type="repayment">
-          <span class="qa-icon">↙</span><span>Repay</span>
-        </button>
-      </div>
       <div class="layout">
         <section data-page="home" class="card hero span8">
           <small
@@ -108,7 +96,10 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
             </div>
           </div>
         </section>
-        <section data-page="home" class="card span8">
+        <section data-page="home" class="card transaction-launch" id="transactionLaunch" role="button" tabindex="0" aria-label="Add a transaction"><div class="launch-icon">＋</div><div class="launch-copy"><strong>Add transaction</strong><span>Record income, expenses, lending or repayments</span></div><span class="launch-arrow">›</span></section>
+
+        <section data-page="transaction" class="card span12"><div class="sectionhead"><div><span class="section-label">NEW ENTRY</span><h2>What are you recording?</h2></div><span class="pill">Quick entry</span></div><div class="transaction-types" role="group" aria-label="Transaction type"><button type="button" class="type-choice active" data-type="expense"><span>↘</span>Expense</button><button type="button" class="type-choice" data-type="income"><span>↗</span>Income</button><button type="button" class="type-choice" data-type="lent"><span>↗</span>Lend</button><button type="button" class="type-choice" data-type="repayment"><span>↙</span>Repay</button></div></section>
+<section data-page="transaction" class="card span8">
           <h2>Add transaction</h2>
           <form id="txForm" class="formgrid">
             <div>
@@ -183,8 +174,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
             Transfers are not spending. Lending is tracked separately from
             purchases. Imported transactions are flagged for review.
           </p>
-        </section>
-        <section data-page="more" class="card span4">
+        </section><section data-page="more" class="card span4">
           <h2>Allowance settings</h2>
           <form id="settingsForm" class="formgrid">
             <div class="full">
@@ -206,16 +196,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
               <div id="settingsStatus" class="status"></div>
             </div>
           </form>
-          <hr
-            style="border: 0; border-top: 1px solid var(--line); margin: 18px 0"
-          />
-          <div class="sectionhead"><h2>Bank accounts</h2><button type="button" class="ghost" id="addBankInline">＋ Add</button></div>
-          <p class="note">Add your bank, cash wallet or UPI account. Balances are calculated from your opening balance and recorded transactions.</p>
-        </section>
-        <section data-page="more" class="card span6">
-          <div class="sectionhead"><h2>Accounts</h2></div>
-          <div id="accounts" class="list"></div>
-        </section>
+                  </section>
         <section data-page="home" class="card span6">
           <h2>This month</h2>
           <div class="metrics">
@@ -327,6 +308,22 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           </form>
           <div id="recurring" class="list" style="margin-top: 12px"></div>
         </section>
+        <section data-page="accounts" class="card span12">
+          <div class="sectionhead"><div><span class="section-label">WALLET SETTINGS</span><h2>Manage accounts</h2></div><span class="pill" id="manageAccountCount">0 accounts</span></div>
+          <p class="note">Add or remove your bank accounts, cash wallets and UPI accounts. Accounts with transaction history cannot be deleted, protecting your ledger.</p>
+          <form id="accountForm" class="formgrid account-create-form">
+            <div class="full"><label for="bankInstitution">Bank or provider</label><select id="bankInstitution" required><option value="">Choose a bank</option>
+              <optgroup label="Popular banks"><option value="State Bank of India">State Bank of India (SBI)</option><option value="Indian Bank">Indian Bank</option><option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option><option value="HDFC Bank">HDFC Bank</option><option value="ICICI Bank">ICICI Bank</option><option value="Axis Bank">Axis Bank</option><option value="Canara Bank">Canara Bank</option><option value="Bank of Baroda">Bank of Baroda</option><option value="Punjab National Bank">Punjab National Bank</option><option value="Union Bank of India">Union Bank of India</option><option value="IDFC FIRST Bank">IDFC FIRST Bank</option><option value="Federal Bank">Federal Bank</option><option value="Indian Overseas Bank">Indian Overseas Bank (IOB)</option><option value="South Indian Bank">South Indian Bank</option><option value="DBS Bank India">DBS Bank India</option><option value="RBL Bank">RBL Bank</option><option value="Equitas Small Finance Bank">Equitas Small Finance Bank</option><option value="Jana Small Finance Bank">Jana Small Finance Bank</option><option value="Ujjivan Small Finance Bank">Ujjivan Small Finance Bank</option></optgroup>
+              <optgroup label="Tamil Nadu banks"><option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank (TMB)</option><option value="City Union Bank">City Union Bank (CUB)</option><option value="Karur Vysya Bank">Karur Vysya Bank (KVB)</option><option value="Tamil Nadu State Apex Cooperative Bank">Tamil Nadu State Apex Cooperative Bank</option></optgroup>
+              <option value="Other Bank">Other Bank</option><option value="Cash">Cash wallet</option><option value="UPI">UPI wallet</option>
+            </select></div>
+            <div><label for="accountName">Account nickname <span class="muted">(optional)</span></label><input id="accountName" maxlength="60" placeholder="e.g. Personal savings"></div>
+            <div><label for="opening">Opening balance (₹)</label><input id="opening" type="number" min="0" step=".01" value="0" required inputmode="decimal"></div>
+            <input id="accountKind" type="hidden" value="bank">
+            <div class="full"><button class="primary" type="submit">＋ Create account</button><div id="accountStatus" class="status" role="status" aria-live="polite"></div></div>
+          </form>
+        </section>
+        <section data-page="accounts" class="card span12"><h2>Your accounts</h2><div id="accounts" class="bank-grid"></div></section>
         <section data-page="activity" class="card span6">
           <h2>Statement import</h2>
           <p class="note">
@@ -361,41 +358,12 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <div id="transactions" class="list" style="margin-top: 8px"></div>
         </section>
       </div>
-<dialog id="accountDialog" class="account-dialog" aria-labelledby="accountDialogTitle">
-        <form id="accountForm" class="dialog-panel">
-          <div class="sectionhead"><div><span class="section-label">NEW ACCOUNT</span><h2 id="accountDialogTitle">Add an account</h2></div><button type="button" class="icon-close" id="closeAccountDialog" aria-label="Close">×</button></div>
-          <p class="note">Choose your bank. We’ll use its identity on your wallet card.</p>
-          <label for="bankInstitution">Bank or provider</label>
-          <select id="bankInstitution" required>
-            <option value="">Choose a bank</option>
-            <optgroup label="Popular banks">
-              <option value="State Bank of India">State Bank of India (SBI)</option><option value="Indian Bank">Indian Bank</option><option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option><option value="HDFC Bank">HDFC Bank</option><option value="ICICI Bank">ICICI Bank</option><option value="Axis Bank">Axis Bank</option><option value="Canara Bank">Canara Bank</option><option value="Bank of Baroda">Bank of Baroda</option><option value="Punjab National Bank">Punjab National Bank</option><option value="Union Bank of India">Union Bank of India</option><option value="IDFC FIRST Bank">IDFC FIRST Bank</option><option value="Federal Bank">Federal Bank</option><option value="Indian Overseas Bank">Indian Overseas Bank (IOB)</option><option value="South Indian Bank">South Indian Bank</option><option value="DBS Bank India">DBS Bank India</option><option value="RBL Bank">RBL Bank</option><option value="Equitas Small Finance Bank">Equitas Small Finance Bank</option><option value="Jana Small Finance Bank">Jana Small Finance Bank</option><option value="Ujjivan Small Finance Bank">Ujjivan Small Finance Bank</option>
-            </optgroup>
-            <optgroup label="Tamil Nadu banks">
-              <option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank (TMB)</option><option value="City Union Bank">City Union Bank (CUB)</option><option value="Karur Vysya Bank">Karur Vysya Bank (KVB)</option><option value="Tamil Nadu State Apex Cooperative Bank">Tamil Nadu State Apex Cooperative Bank</option>
-            </optgroup>
-            <option value="Other Bank">Other bank</option><option value="Cash">Cash wallet</option><option value="UPI">UPI wallet</option>
-          </select>
-          <label for="accountName">Account label <span class="muted">(optional)</span></label><input id="accountName" placeholder="e.g. College expenses" maxlength="60"/>
-          <label for="opening">Current opening balance (₹)</label><input id="opening" type="number" min="0" step=".01" value="0" required inputmode="decimal"/>
-          <input id="accountKind" type="hidden" value="bank"/>
-          <div class="dialog-actions"><button type="button" class="ghost" id="cancelAccountDialog">Cancel</button><button class="primary" type="submit">Create account</button></div>
-          <div id="accountStatus" class="status" role="status" aria-live="polite"></div>
-        </form>
-      </dialog>
-      <dialog id="quickAddDialog" class="account-dialog" aria-label="Create new">
-        <div class="dialog-panel">
-          <div class="sectionhead"><div><span class="section-label">QUICK ACTION</span><h2>What would you like to add?</h2></div><button type="button" class="icon-close" id="closeQuickAdd" aria-label="Close">×</button></div>
-          <button type="button" class="quick-add-option" id="quickAddExpense"><span>↘</span><span><strong>New transaction</strong><small>Expense, income, transfer or repayment</small></span><b>›</b></button>
-          <button type="button" class="quick-add-option" id="quickAddBank"><span>▤</span><span><strong>Bank or wallet</strong><small>Add an account and opening balance</small></span><b>›</b></button>
-        </div>
-      </dialog>
-      <button type="button" class="floating-add" id="floatingAdd" aria-label="Add new item">＋</button>
-      
+<button type="button" class="floating-add" id="floatingAdd" aria-label="Add transaction">＋</button>
       <nav class="bottom-nav" aria-label="Main navigation">
         <button type="button" class="nav-item active" data-tab="home">
           <span class="nav-icon">⌂</span><span>Home</span>
         </button>
+        <button type="button" class="nav-item" data-tab="accounts"><span class="nav-icon">▤</span><span>Accounts</span></button>
         <button type="button" class="nav-item" data-tab="activity">
           <span class="nav-icon">↕</span><span>Activity</span>
         </button>
@@ -544,6 +512,8 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
 
       const pageMeta = {
         home: { title: "Overview", sub: "Your essentials at a glance" },
+        transaction: { title: "New transaction", sub: "Record money in and out" },
+        accounts: { title: "Accounts", sub: "Manage your banks and wallets" },
         activity: {
           title: "Activity",
           sub: "Transactions and statement imports",
@@ -570,7 +540,6 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           );
         $("pageHeading").querySelector("h1").textContent = pageMeta[tab].title;
         $("pageHeading").querySelector("p").textContent = pageMeta[tab].sub;
-        $("quickActions").classList.toggle("hidden", tab !== "home");
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
       document
@@ -578,18 +547,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         .forEach((btn) =>
           btn.addEventListener("click", () => switchTab(btn.dataset.tab)),
         );
-      document.querySelectorAll(".quick-action").forEach((btn) =>
-        btn.addEventListener("click", () => {
-          const type = btn.dataset.type;
-          $("type").value = type;
-          showTypes();
-          document
-            .querySelectorAll(".quick-action")
-            .forEach((x) => x.classList.toggle("active", x === btn));
-          $("txForm").scrollIntoView({ behavior: "smooth", block: "start" });
-          $("amount").focus({ preventScroll: true });
-        }),
-      );
+
 
       function msg(id, text) {
         $(id).textContent = text;
@@ -657,16 +615,19 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         $("todaySpent").textContent = money(s.todaySpent);
         $("payday").value = st.payday;
         $("reserve").value = Number(st.reservePaise || 0) / 100;
-        const accountMarkup = (x) => {
+        const accountMarkup = (x, removable) => {
           const bank = x.institution || x.name;
           const domainMap = {"State Bank of India":"sbi.co.in","Indian Bank":"indianbank.in","Kotak Mahindra Bank":"kotak.com","HDFC Bank":"hdfcbank.com","ICICI Bank":"icicibank.com","Axis Bank":"axisbank.com","Canara Bank":"canarabank.com","Bank of Baroda":"bankofbaroda.in","Punjab National Bank":"pnbindia.in","Union Bank of India":"unionbankofindia.co.in","IDFC FIRST Bank":"idfcfirstbank.com","Federal Bank":"federalbank.co.in","Indian Overseas Bank":"iob.in","South Indian Bank":"southindianbank.com","DBS Bank India":"dbs.com","RBL Bank":"rblbank.com","Equitas Small Finance Bank":"equitasbank.com","Jana Small Finance Bank":"janabank.com","Ujjivan Small Finance Bank":"ujjivansfb.in","Tamilnad Mercantile Bank":"tmb.in","City Union Bank":"cityunionbank.com","Karur Vysya Bank":"kvb.co.in"};
           const domain = domainMap[bank];
           const initials = bank.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
-          return `<div class="bank-card"><div class="bank-logo">${domain ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=128" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='${esc(initials)}'">` : esc(initials)}</div><div class="bank-meta"><strong>${esc(bank)}</strong><small>${esc(x.name)} · ${esc(x.kind)}</small></div><div class="bank-balance">${money(x.balance)}</div></div>`;
+          const logo = domain ? '<img src="https://www.google.com/s2/favicons?domain='+domain+'&sz=128" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent=\\''+esc(initials)+'\\'">' : esc(initials);
+          const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Remove</button>' : '';
+          return '<div class="bank-card"><div class="bank-card-info"><div class="bank-logo">'+logo+'</div><div class="bank-meta"><strong>'+esc(bank)+'</strong><small>'+esc(x.name)+' · '+esc(x.kind)+'</small></div></div><div class="bank-card-actions"><div class="bank-balance">'+money(x.balance)+'</div>'+remove+'</div></div>';
         };
-        $("accounts").innerHTML = a.map(accountMarkup).join("") || '<div class="empty">No accounts yet.</div>';
-        $("homeAccounts").innerHTML = a.map(accountMarkup).join("") || '<div class="empty">No accounts yet. Tap + to add your first bank.</div>';
+        $("accounts").innerHTML = a.map(x => accountMarkup(x, true)).join("") || '<div class="account-empty">No accounts yet. Add your first bank above.</div>';
+        $("homeAccounts").innerHTML = a.map(x => accountMarkup(x, false)).join("") || '<div class="account-empty">No accounts yet. Add an account from Accounts.</div>';
         $("accountCount").textContent = a.length + (a.length === 1 ? " account" : " accounts");
+        $("manageAccountCount").textContent = a.length + (a.length === 1 ? " account" : " accounts");
         const cats = Object.entries(s.byCat || {}).sort((x, y) => y[1] - x[1]),
           max = Math.max(1, ...cats.map((x) => x[1]));
         $("categories").innerHTML =
@@ -793,34 +754,40 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           });
           e.target.reset();
           $("accountKind").value = "bank";
-          $("accountDialog").close();
-          msg("accountStatus", "Account added.");
+          msg("accountStatus", "Account created successfully.");
           await load();
         } catch (err) {
           msg("accountStatus", err.message);
         }
       });
-      const accountDialog = $("accountDialog");
-      const openAccountDialog = () => { accountDialog.showModal(); $("bankInstitution").focus(); };
-      const quickAddDialog = $("quickAddDialog");
-      $("floatingAdd").addEventListener("click", () => quickAddDialog.showModal());
-      $("closeQuickAdd").addEventListener("click", () => quickAddDialog.close());
-      $("quickAddExpense").addEventListener("click", () => {
-        quickAddDialog.close(); switchTab("home");
-        $("txForm").scrollIntoView({behavior:"smooth",block:"start"});
+      $("floatingAdd").addEventListener("click", () => {
+        $("type").value = "expense";
+        showTypes();
+        document.querySelectorAll(".type-choice").forEach((b) => b.classList.toggle("active", b.dataset.type === "expense"));
+        switchTab("transaction");
         $("amount").focus({preventScroll:true});
       });
-      $("quickAddBank").addEventListener("click", () => { quickAddDialog.close(); openAccountDialog(); });
-      quickAddDialog.addEventListener("click", e => { if (e.target === quickAddDialog) quickAddDialog.close(); });
-      $("addBankInline").addEventListener("click", openAccountDialog);
-      $("closeAccountDialog").addEventListener("click", () => accountDialog.close());
-      $("cancelAccountDialog").addEventListener("click", () => accountDialog.close());
+      $("transactionLaunch").addEventListener("click", () => switchTab("transaction"));
+      $("transactionLaunch").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); switchTab("transaction"); } });
+      document.querySelectorAll(".type-choice").forEach((btn) => btn.addEventListener("click", () => {
+        $("type").value = btn.dataset.type;
+        showTypes();
+        document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x === btn));
+        $("amount").focus({preventScroll:true});
+      }));
       $("bankInstitution").addEventListener("change", () => {
         const value = $("bankInstitution").value;
         $("accountKind").value = value === "Cash" ? "cash" : value === "UPI" ? "upi" : "bank";
         $("accountName").placeholder = value === "Cash" ? "e.g. Pocket cash" : value === "UPI" ? "e.g. Google Pay" : "e.g. Savings account";
       });
-      accountDialog.addEventListener("click", e => { if (e.target === accountDialog) accountDialog.close(); });
+      $("accounts").addEventListener("click", async (e) => {
+        const button = e.target.closest("[data-remove-account]");
+        if (!button) return;
+        if (!confirm("Remove this account? Accounts with transaction history cannot be removed.")) return;
+        button.disabled = true;
+        try { await api("/accounts/" + encodeURIComponent(button.dataset.removeAccount), { method: "DELETE" }); await load(); }
+        catch (err) { alert(err.message); button.disabled = false; }
+      });
       guardForm("budgetForm", async (e) => {
         e.preventDefault();
         try {
