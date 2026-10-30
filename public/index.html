@@ -33,6 +33,11 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
 .category-choice{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 10px;border-radius:13px;background:#1b2230;border:1px solid var(--line);color:var(--ink);font-size:11px;text-align:left}
 .category-choice .category-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:#293545;font-size:16px;flex:0 0 29px}
 .category-choice.active{border-color:var(--green);background:rgba(184,243,107,.12);color:var(--green)}
+.bank-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.bank-choice{min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:9px 5px;background:#171e2a;border:1px solid var(--line);border-radius:16px;color:#e7ebf2;font-size:10px;text-align:center}
+.bank-choice-logo{width:36px;height:36px;border-radius:11px;background:#fff;display:grid;place-items:center;overflow:hidden}
+.bank-choice img{width:100%;height:100%;object-fit:contain;padding:4px}
+.bank-choice.active{border-color:var(--green);background:rgba(184,243,107,.1);color:var(--green)}
 .bank-logo{position:relative;background:#fff;color:#15233b}.bank-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;background:#fff}
 @media(max-width:520px){.activity-chart{grid-template-columns:1fr;gap:15px}.pie-chart{width:170px}.category-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
@@ -747,7 +752,26 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
         selectTransactionType(btn.dataset.type);
         $("amount").focus({preventScroll:true});
       }));
+      const bankLogoSlugs = {"State Bank of India":"sbin","Indian Bank":"idib","Kotak Mahindra Bank":"kkbk","HDFC Bank":"hdfc","ICICI Bank":"icic","Axis Bank":"utib","Canara Bank":"cnrb","Bank of Baroda":"barb","Punjab National Bank":"punb","Union Bank of India":"ubin","IDFC FIRST Bank":"idfb","Federal Bank":"fdrl","Indian Overseas Bank":"ioba","South Indian Bank":"sibl","DBS Bank India":"dbss","RBL Bank":"ratn","Equitas Small Finance Bank":"esfb","Jana Small Finance Bank":"jsfb","Ujjivan Small Finance Bank":"ujvn","Tamilnad Mercantile Bank":"tmbl","City Union Bank":"ciub","Karur Vysya Bank":"kvbl"};
+      function renderBankChoices() {
+        const select = $("bankInstitution");
+        const opts = [...select.options].filter(o => o.value);
+        $("bankChoices").innerHTML = opts.map(o => {
+          const slug = bankLogoSlugs[o.value];
+          const url = slug ? "https://cdn.jsdelivr.net/gh/praveenpuglia/indian-banks/assets/logos/"+slug+"/symbol.svg" : "";
+          const fallback = o.value === "Cash" ? "₹" : o.value === "UPI" ? "↗" : o.value === "Other Bank" ? "+" : esc(o.value.split(/\\s+/).map(x=>x[0]).slice(0,3).join(""));
+          return '<button type="button" class="bank-choice" data-bank="'+esc(o.value)+'"><span class="bank-choice-logo">'+(url?'<img src="'+url+'" alt="" loading="eager" decoding="async" onerror="this.remove()">':fallback)+'</span><span>'+esc(o.textContent)+'</span></button>';
+        }).join("");
+        $("bankChoices").querySelectorAll("[data-bank]").forEach(btn => btn.addEventListener("click", () => {
+          select.value = btn.dataset.bank;
+          $("bankChoices").querySelectorAll(".bank-choice").forEach(x => x.classList.toggle("active",x===btn));
+          select.dispatchEvent(new Event("change"));
+        }));
+        $("bankChoices").querySelectorAll("img").forEach(img => { const warm = new Image(); warm.src = img.src; });
+      }
+      renderBankChoices();
       $("bankInstitution").addEventListener("change", () => {
+        $("bankChoices").querySelectorAll(".bank-choice").forEach(x => x.classList.toggle("active",x.dataset.bank === $("bankInstitution").value));
         const value = $("bankInstitution").value;
         $("accountKind").value = value === "Cash" ? "cash" : value === "UPI" ? "upi" : "bank";
         $("accountName").placeholder = value === "Cash" ? "e.g. Pocket cash" : value === "UPI" ? "e.g. Google Pay" : "e.g. Savings account";
