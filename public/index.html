@@ -16,7 +16,7 @@ h2{font-size:16px;letter-spacing:-.035em;margin:0 0 14px}.page-heading{display:f
 .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{padding:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.035);border-radius:17px;min-width:0}.metric strong{display:block;font-size:20px;letter-spacing:-.045em;overflow-wrap:anywhere;margin-top:4px}.metric span{font-size:11px;color:var(--muted)}
 label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,select,button{font:inherit;min-width:0;border:1px solid var(--line);background:#0f141e;color:var(--ink);padding:12px 13px;border-radius:13px;width:100%}input,select{outline:none}input:focus,select:focus{border-color:rgba(184,243,107,.55);box-shadow:0 0 0 3px rgba(184,243,107,.08)}button{cursor:pointer;font-weight:700;transition:transform .16s ease,border-color .16s ease,background .16s ease}button:active{transform:scale(.98)}button.primary{background:var(--green);color:var(--accent-ink);border-color:var(--green)}button.ghost{background:#222a38}button.danger{color:var(--red)}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.full{grid-column:1/-1}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.list{display:grid;gap:0}.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.item strong{display:block;font-size:13px}.item small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.amt{white-space:nowrap;font-weight:750;font-size:13px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#293341;color:#d0d8e6;font-size:10px}.bar{height:6px;background:#303847;border-radius:99px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#91d957,var(--green));border-radius:99px}.hidden{display:none!important}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.sectionhead button{width:auto}.section-label{margin:5px 3px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:750}.note{font-size:11px;color:var(--muted);line-height:1.55}.status{min-height:20px;color:var(--green);font-size:12px}.empty{color:var(--muted);padding:14px 0;font-size:12px}.checkbox{display:flex;align-items:center;gap:8px}.checkbox input{width:auto}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.tabs button{width:auto}
 .bottom-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));background:var(--nav-bg);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.nav-item{background:transparent;border:0;color:#8791a1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:7px 4px;font-size:10px;font-weight:650;border-radius:13px}.nav-item .nav-icon{font-size:19px;line-height:1.2}.nav-item.active{color:var(--green);background:rgba(184,243,107,.09)}
-.loading-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(7,10,15,.88);backdrop-filter:blur(14px);opacity:1;visibility:visible;transition:opacity .2s ease,visibility .2s ease}.loading-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}.loading-panel{width:min(430px,100%);padding:30px 24px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#202938,#141a25);box-shadow:0 24px 80px rgba(0,0,0,.4);text-align:center}.loading-mark{width:58px;height:58px;margin:0 auto 18px;border-radius:18px;display:grid;place-items:center;background:rgba(184,243,107,.13);color:var(--green);font-size:28px}.loading-spinner{width:24px;height:24px;border:3px solid rgba(184,243,107,.2);border-top-color:var(--green);border-radius:50%;margin:0 auto 18px;animation:pocket-spin .8s linear infinite}.loading-title{font-size:19px;font-weight:800;letter-spacing:-.03em;margin-bottom:5px}.loading-subtitle{font-size:13px;color:var(--muted);margin-bottom:22px}.loading-quote{font-size:16px;line-height:1.6;font-weight:650;min-height:76px;display:flex;align-items:center;justify-content:center}.loading-book{font-size:12px;color:var(--green);margin-top:10px}.loading-dots{display:inline-flex;gap:5px;vertical-align:middle;margin-left:4px}.loading-dots i{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pocket-pulse 1s infinite ease-in-out}.loading-dots i:nth-child(2){animation-delay:.15s}.loading-dots i:nth-child(3){animation-delay:.3s}button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-spin{to{transform:rotate(360deg)}}@keyframes pocket-pulse{0%,80%,100%{transform:scale(.65);opacity:.45}40%{transform:scale(1);opacity:1}}
+button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-spin{to{transform:rotate(360deg)}}@keyframes pocket-pulse{0%,80%,100%{transform:scale(.65);opacity:.45}40%{transform:scale(1);opacity:1}}
 @media(min-width:760px){main{padding-top:32px}.bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:min(620px,100%);border:1px solid rgba(255,255,255,.08);border-bottom:0;border-radius:20px 20px 0 0}}
 @media(max-width:420px){main{padding:16px 13px 105px}.card{padding:16px;border-radius:20px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.quick-actions{gap:4px}.quick-action{font-size:10px}.quick-action .qa-icon{width:43px;height:43px}.big{font-size:42px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
@@ -24,33 +24,20 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
 .bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.quick-add-option{display:flex;align-items:center;gap:13px;text-align:left;background:#1b2432;border-radius:16px;padding:14px}.quick-add-option>span:first-child{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#293545;color:var(--green);font-size:20px}.quick-add-option>span:nth-child(2){flex:1}.quick-add-option strong,.quick-add-option small{display:block}.quick-add-option small{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}.quick-add-option>b{font-size:22px;color:var(--muted)}.floating-add{position:fixed;z-index:60;right:max(20px,calc((100vw - 620px)/2 + 20px));bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 
 .transaction-launch{display:flex;align-items:center;gap:14px;cursor:pointer;min-height:82px;border-color:rgba(184,243,107,.2);background:linear-gradient(120deg,#1b2930,#171d29)}.launch-icon{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:grid;place-items:center;background:var(--green);color:#101608;font-size:26px}.launch-copy{flex:1;min-width:0}.launch-copy strong,.launch-copy span{display:block}.launch-copy span{font-size:11px;color:var(--muted);margin-top:3px}.launch-arrow{font-size:25px;color:var(--muted)}.transaction-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.type-choice{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;background:#1b2230;padding:12px 5px;border-radius:15px;font-size:11px}.type-choice span{font-size:20px}.type-choice.active{background:var(--green);color:#101608;border-color:var(--green)}.account-create-form{margin-top:16px}.bank-card{position:relative}.bank-card-info{display:flex;align-items:center;gap:13px;flex:1;min-width:0}.bank-card-actions{display:flex;align-items:center;gap:10px}.account-remove{width:auto;padding:7px 10px;font-size:10px;color:var(--red);background:transparent;border-color:rgba(255,120,135,.2)}.account-empty{padding:20px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:12px}
-.account-remove{min-width:100px}.account-remove:focus-visible{outline:2px solid var(--red);outline-offset:3px}</style>
+.account-remove{min-width:100px}.account-remove:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.activity-chart{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:22px;align-items:center;padding:18px 4px}
+.pie-chart{width:min(210px,100%);aspect-ratio:1;border-radius:50%;position:relative;margin:auto}
+.pie-chart:after{content:"";position:absolute;inset:24%;border-radius:50%;background:#171d28;border:1px solid var(--line)}
+.pie-legend{display:grid;gap:10px;min-width:0}.pie-legend-row{display:flex;align-items:center;gap:9px;font-size:12px;min-width:0}.pie-dot{width:10px;height:10px;border-radius:3px;flex:0 0 10px}.pie-legend-row strong{margin-left:auto;white-space:nowrap}
+.category-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.category-choice{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 10px;border-radius:13px;background:#1b2230;border:1px solid var(--line);color:var(--ink);font-size:11px;text-align:left}
+.category-choice .category-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:#293545;font-size:16px;flex:0 0 29px}
+.category-choice.active{border-color:var(--green);background:rgba(184,243,107,.12);color:var(--green)}
+.bank-logo{position:relative;background:#fff;color:#15233b}.bank-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;background:#fff}
+@media(max-width:520px){.activity-chart{grid-template-columns:1fr;gap:15px}.pie-chart{width:170px}.category-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
   </head>
   <body>
-    <div
-      class="loading-overlay"
-      id="loadingOverlay"
-      role="status"
-      aria-live="polite"
-      aria-label="Loading your financial data"
-    >
-      <div class="loading-panel">
-        <div class="loading-mark">₹</div>
-        <div class="loading-spinner" aria-hidden="true"></div>
-        <div class="loading-title">Taking care of your money</div>
-        <div class="loading-subtitle">
-          Syncing your ledger<span class="loading-dots" aria-hidden="true"
-            ><i></i><i></i><i></i
-          ></span>
-        </div>
-        <div class="loading-quote" id="loadingQuote">
-          A part of all you earn is yours to keep.
-        </div>
-        <div class="loading-book" id="loadingBook">
-          The Richest Man in Babylon — George S. Clason
-        </div>
-      </div>
-    </div>
     <main>
       <header class="top">
         <div>
@@ -98,25 +85,10 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         </section>
         <section data-page="home" class="card transaction-launch" id="transactionLaunch" role="button" tabindex="0" aria-label="Add a transaction"><div class="launch-icon">＋</div><div class="launch-copy"><strong>Add transaction</strong><span>Record income, expenses, lending or repayments</span></div><span class="launch-arrow">›</span></section>
 
-        <section data-page="transaction" class="card span12"><div class="sectionhead"><div><span class="section-label">NEW ENTRY</span><h2>What are you recording?</h2></div><span class="pill">Quick entry</span></div><div class="transaction-types" role="group" aria-label="Transaction type"><button type="button" class="type-choice active" data-type="expense"><span>↘</span>Expense</button><button type="button" class="type-choice" data-type="income"><span>↗</span>Income</button><button type="button" class="type-choice" data-type="lent"><span>↗</span>Lend</button><button type="button" class="type-choice" data-type="repayment"><span>↙</span>Repay</button></div></section>
+        <section data-page="transaction" class="card span12"><div class="sectionhead"><div><span class="section-label">NEW ENTRY</span><h2>Choose a transaction</h2></div></div><div class="transaction-types" role="group" aria-label="Transaction type"><button type="button" class="type-choice active" data-type="expense"><span>↘</span>Expense</button><button type="button" class="type-choice" data-type="income"><span>↗</span>Income</button><button type="button" class="type-choice" data-type="transfer"><span>⇄</span>Transfer</button><button type="button" class="type-choice" data-type="lent"><span>↗</span>Lend</button><button type="button" class="type-choice" data-type="repayment"><span>↙</span>Repay</button><button type="button" class="type-choice" data-type="borrowed_expense"><span>↙</span>Paid for me</button><button type="button" class="type-choice" data-type="collection"><span>↗</span>Collected</button><button type="button" class="type-choice" data-type="refund"><span>↶</span>Refund</button></div><input type="hidden" id="type" value="expense"></section>
 <section data-page="transaction" class="card span8">
           <h2>Add transaction</h2>
           <form id="txForm" class="formgrid">
-            <div>
-              <label>Type</label
-              ><select id="type">
-                <option value="expense">Expense</option>
-                <option value="income">Income / allowance</option>
-                <option value="transfer">Transfer between my accounts</option>
-                <option value="lent">Lent money to friend</option>
-                <option value="borrowed_expense">
-                  Friend paid for my purchase
-                </option>
-                <option value="repayment">Repay a friend</option>
-                <option value="collection">Friend repaid me</option>
-                <option value="refund">Refund</option>
-              </select>
-            </div>
             <div>
               <label>Amount (₹)</label
               ><input
@@ -140,19 +112,10 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
               <label>Friend / person</label
               ><input id="person" placeholder="Name" />
             </div>
-            <div>
-              <label>Category</label
-              ><select id="category">
-                <option>Food</option>
-                <option>Travel</option>
-                <option>College</option>
-                <option>Shopping</option>
-                <option>Subscriptions</option>
-                <option>Friends</option>
-                <option>Essentials</option>
-                <option>Health</option>
-                <option>Other</option>
-              </select>
+            <div class="full">
+              <label>Category</label>
+              <div id="categoryChoices" class="category-choices" role="group" aria-label="Choose category"></div>
+              <input id="category" type="hidden" value="Food">
             </div>
             <div>
               <label>Date</label><input id="date" type="date" required />
@@ -324,8 +287,8 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           </form>
         </section>
         <section data-page="accounts" class="card span12"><h2>Your accounts</h2><div id="accounts" class="bank-grid"></div></section>
-        <section data-page="activity" class="card span6">
-          <h2>Statement import</h2>
+        <section data-page="more" class="card span12">
+          <div class="sectionhead"><div><span class="section-label">DATA MANAGEMENT</span><h2>Import bank statement</h2></div></div>
           <p class="note">
             Import preview is intentionally separate from saving. Review
             imported transactions and confirm the correct account before
@@ -349,8 +312,12 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <div id="importStatus" class="status"></div>
         </section>
         <section data-page="activity" class="card span12">
+          <div class="sectionhead"><div><span class="section-label">SPENDING INSIGHTS</span><h2>Spending breakdown</h2></div></div>
+          <div id="activityChart" class="activity-chart"></div>
+        </section>
+        <section data-page="activity" class="card span12">
           <div class="sectionhead">
-            <h2>Recent transactions</h2>
+            <h2>Transactions</h2>
             <select id="monthFilter" style="max-width: 160px">
               <option value="">All recent</option>
             </select>
@@ -371,7 +338,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <span class="nav-icon">◷</span><span>Plan</span>
         </button>
         <button type="button" class="nav-item" data-tab="more">
-          <span class="nav-icon">•••</span><span>More</span>
+          <span class="nav-icon">⚙</span><span>Settings</span>
         </button>
       </nav>
     </main>
@@ -388,76 +355,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       };
-      let accounts = [],
-        previewRows = [];
-      const loadingQuotes = [
-        {
-          quote: "A part of all you earn is yours to keep.",
-          book: "The Richest Man in Babylon — George S. Clason",
-        },
-        {
-          quote:
-            "Beware of little expenses; a small leak will sink a great ship.",
-          book: "Poor Richard’s Almanack — Benjamin Franklin",
-        },
-        {
-          quote:
-            "Wealth consists not in having great possessions, but in having few wants.",
-          book: "The Enchiridion — Epictetus",
-        },
-        {
-          quote:
-            "Annual income twenty pounds, annual expenditure nineteen nineteen and six, result happiness.",
-          book: "David Copperfield — Charles Dickens",
-        },
-        {
-          quote: "Money is like muck, not good unless it be spread.",
-          book: "Essays: Of Riches — Francis Bacon",
-        },
-      ];
-      let pendingRequests = 0,
-        loadingHideTimer = null,
-        quoteTimer = null,
-        lastQuoteIndex = -1;
-      function rotateLoadingQuote() {
-        let next = Math.floor(Math.random() * loadingQuotes.length);
-        if (loadingQuotes.length > 1 && next === lastQuoteIndex)
-          next = (next + 1) % loadingQuotes.length;
-        lastQuoteIndex = next;
-        $("loadingQuote").textContent = "“" + loadingQuotes[next].quote + "”";
-        $("loadingBook").textContent = loadingQuotes[next].book;
-      }
-      function showLoading() {
-        clearTimeout(loadingHideTimer);
-        $("loadingOverlay").classList.remove("hidden");
-        if (!quoteTimer) {
-          rotateLoadingQuote();
-          quoteTimer = setInterval(rotateLoadingQuote, 4200);
-        }
-      }
-      function hideLoading() {
-        clearInterval(quoteTimer);
-        quoteTimer = null;
-        loadingHideTimer = setTimeout(() => {
-          $("loadingOverlay").classList.add("hidden");
-        }, 140);
-      }
-      async function api(path, options = {}) {
-        pendingRequests++;
-        showLoading();
-        try {
-          const r = await fetch("/api" + path, options);
-          let j = {};
-          try {
-            j = await r.json();
-          } catch {}
-          if (!r.ok) throw Error(j.error || "Request failed");
-          return j;
-        } finally {
-          pendingRequests = Math.max(0, pendingRequests - 1);
-          if (pendingRequests === 0) hideLoading();
-        }
-      }
+      let accounts = [], previewRows = [];
       function guardForm(formId, handler) {
         const form = $(formId);
         form.addEventListener("submit", async (e) => {
@@ -517,15 +415,15 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         accounts: { title: "Accounts", sub: "Manage your banks and wallets" },
         activity: {
           title: "Activity",
-          sub: "Transactions and statement imports",
+          sub: "Your transactions and spending breakdown",
         },
         plan: {
           title: "Plan ahead",
           sub: "Budgets, subscriptions and savings goals",
         },
         more: {
-          title: "Accounts & settings",
-          sub: "Balances, allowance and preferences",
+          title: "Settings",
+          sub: "Allowance, imports and data management",
         },
       };
       function switchTab(tab) {
@@ -566,6 +464,33 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
             })[c],
         );
       }
+      const categoryOptions = [
+        ["Food","🍜"],["Travel","🚌"],["College","🎓"],["Shopping","🛍️"],
+        ["Subscriptions","📱"],["Friends","🤝"],["Essentials","🧴"],["Health","💊"],["Other","✦"]
+      ];
+      function renderCategoryChoices() {
+        $("categoryChoices").innerHTML = categoryOptions.map(([name,icon]) =>
+          '<button type="button" class="category-choice" data-category="'+esc(name)+'"><span class="category-icon">'+icon+'</span><span>'+esc(name)+'</span></button>'
+        ).join("");
+        $("categoryChoices").querySelectorAll("[data-category]").forEach(btn => btn.addEventListener("click", () => {
+          $("category").value = btn.dataset.category;
+          $("categoryChoices").querySelectorAll(".category-choice").forEach(x => x.classList.toggle("active", x === btn));
+        }));
+        $("categoryChoices").querySelector('[data-category="'+($("category").value || "Food")+'"]')?.classList.add("active");
+      }
+      const chartPalette = ["#b8f36b","#75c8ff","#b69cff","#ffb86b","#ff7f9b","#62dbc0","#f4df79","#9ba8bd","#d28bff"];
+      function renderActivityChart(entries) {
+        const cleanEntries = entries.filter(([,value]) => Number(value) > 0);
+        const total = cleanEntries.reduce((sum,[,value]) => sum + Number(value),0);
+        if (!total) { $("activityChart").innerHTML = '<div class="empty">No expenses recorded for this period yet.</div>'; return; }
+        let cursor = 0;
+        const stops = cleanEntries.map(([,value],i) => {
+          const start = cursor; cursor += Number(value) / total * 360;
+          return chartPalette[i % chartPalette.length]+' '+start+'deg '+cursor+'deg';
+        });
+        const pie = 'conic-gradient('+stops.join(',')+')';
+        $("activityChart").innerHTML = '<div class="pie-chart" role="img" aria-label="Spending breakdown, total '+esc(money(total))+'" style="background:'+pie+'"></div><div class="pie-legend">'+cleanEntries.map(([name,value],i)=>'<div class="pie-legend-row"><span class="pie-dot" style="background:'+chartPalette[i%chartPalette.length]+'"></span><span>'+esc(name)+'</span><strong>'+esc(money(value))+'</strong></div>').join('')+'<div class="item"><strong>Total expenses</strong><strong>'+esc(money(total))+'</strong></div></div>';
+      }
       function optionAccounts(selectId) {
         $(selectId).innerHTML = accounts
           .map(
@@ -584,14 +509,11 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         $("fromWrap").classList.toggle("hidden", t === "borrowed_expense");
         $("accountId").required = t !== "borrowed_expense";
       }
-      $("type").onchange = () => {
+      function selectTransactionType(type) {
+        $("type").value = type;
         showTypes();
-        document
-          .querySelectorAll(".type-choice")
-          .forEach((x) =>
-            x.classList.toggle("active", x.dataset.type === $("type").value),
-          );
-      };
+        document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
+      }
       async function load() {
         const [s, a, txs, b, g, r, st] = await Promise.all([
           api("/summary"),
@@ -621,7 +543,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           const domainMap = {"State Bank of India":"sbi.co.in","Indian Bank":"indianbank.in","Kotak Mahindra Bank":"kotak.com","HDFC Bank":"hdfcbank.com","ICICI Bank":"icicibank.com","Axis Bank":"axisbank.com","Canara Bank":"canarabank.com","Bank of Baroda":"bankofbaroda.in","Punjab National Bank":"pnbindia.in","Union Bank of India":"unionbankofindia.co.in","IDFC FIRST Bank":"idfcfirstbank.com","Federal Bank":"federalbank.co.in","Indian Overseas Bank":"iob.in","South Indian Bank":"southindianbank.com","DBS Bank India":"dbs.com","RBL Bank":"rblbank.com","Equitas Small Finance Bank":"equitasbank.com","Jana Small Finance Bank":"janabank.com","Ujjivan Small Finance Bank":"ujjivansfb.in","Tamilnad Mercantile Bank":"tmb.in","City Union Bank":"cityunionbank.com","Karur Vysya Bank":"kvb.co.in"};
           const domain = domainMap[bank];
           const initials = bank.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
-          const logo = domain ? '<img src="https://www.google.com/s2/favicons?domain='+domain+'&sz=128" alt="" loading="lazy" onerror="this.remove()">' : esc(initials);
+          const logo = '<span class="bank-logo-fallback">'+esc(initials)+'</span>'+(domain ? '<img src="https://logo.clearbit.com/'+domain+'?size=128" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">' : '');
           const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Export & remove</button>' : '';
           return '<div class="bank-card"><div class="bank-card-info"><div class="bank-logo">'+logo+'</div><div class="bank-meta"><strong>'+esc(bank)+'</strong><small>'+esc(x.name)+' · '+esc(x.kind)+'</small></div></div><div class="bank-card-actions"><div class="bank-balance">'+money(x.balance)+'</div>'+remove+'</div></div>';
         };
@@ -631,6 +553,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         $("manageAccountCount").textContent = a.length + (a.length === 1 ? " account" : " accounts");
         const cats = Object.entries(s.byCat || {}).sort((x, y) => y[1] - x[1]),
           max = Math.max(1, ...cats.map((x) => x[1]));
+        renderActivityChart(cats);
         $("categories").innerHTML =
           cats
             .map(
@@ -762,18 +685,14 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         }
       });
       $("floatingAdd").addEventListener("click", () => {
-        $("type").value = "expense";
-        showTypes();
-        document.querySelectorAll(".type-choice").forEach((b) => b.classList.toggle("active", b.dataset.type === "expense"));
+        selectTransactionType("expense");
         switchTab("transaction");
         $("amount").focus({preventScroll:true});
       });
       $("transactionLaunch").addEventListener("click", () => switchTab("transaction"));
       $("transactionLaunch").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); switchTab("transaction"); } });
       document.querySelectorAll(".type-choice").forEach((btn) => btn.addEventListener("click", () => {
-        $("type").value = btn.dataset.type;
-        showTypes();
-        document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x === btn));
+        selectTransactionType(btn.dataset.type);
         $("amount").focus({preventScroll:true});
       }));
       $("bankInstitution").addEventListener("change", () => {
@@ -963,7 +882,8 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
       switchTab("home");
       $("date").value = today();
       $("payday").value = new Date().toISOString().slice(0, 10);
-      showTypes();
+      selectTransactionType("expense");
+      renderCategoryChoices();
       load().catch((e) => {
         $("heroSub").textContent = "Could not load data: " + e.message;
       });
