@@ -1,0 +1,9 @@
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: #090d0c;
+  color: #edf3ef;
+  font-family: Arial, Helvetica, sans-serif;
+}
+a { color: inherit; }

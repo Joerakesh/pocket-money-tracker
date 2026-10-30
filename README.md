@@ -1,86 +1,68 @@
 # Pocket Money Tracker
 
-A personal student finance tracker built with Express, MongoDB Atlas and a responsive dark frontend.
+A private personal finance tracker being migrated from Express + static HTML to a unified Next.js application.
 
-## Features
+## Current migration status
 
-- Multiple accounts (cash, bank, UPI, other)
-- Account balances derived from a ledger
-- Transfers that do not count as income or spending
-- Expenses, allowance/income, lending, borrowed expenses, repayments, collections and refunds
-- Daily safe-to-spend estimate, emergency reserve and payday
-- Category budgets, savings goals and recurring expense reminders
-- CSV import preview with duplicate-key protection and a review flag
-- Monthly category totals and recent transactions
+**Phase 1 — Next.js foundation**
 
-## 1. Requirements
+- Next.js App Router with TypeScript and React.
+- Node.js runtime MongoDB connection pool in `src/lib/mongodb.ts`.
+- Database-backed health endpoint at `/api/health`.
+- Existing Express backend (`server.js`) and static tracker (`public/index.html`) are intentionally retained as a compatibility fallback during migration.
+- The root page links to the existing tracker at `/index.html`.
+
+**Not yet migrated:** finance API routes and the React interface. Do not remove or disable the legacy Express service until the equivalent Next.js routes have been ported and verified.
+
+## Requirements
 
 - Node.js 20 or newer
-- A MongoDB Atlas cluster and database user
+- MongoDB Atlas
 
-## 2. Setup on Windows / Git Bash
+## Environment
 
-```bash
-cd /j/expenses
-npm install
-cp .env.example .env
-```
-
-Edit `.env` and set your Atlas connection string. Do not commit `.env`.
+Copy `.env.example` to `.env.local` for Next.js development. Configure:
 
 ```env
 MONGODB_URI=mongodb+srv://...
 DB_NAME=pocket_money_tracker
-PORT=3000
-HOST=127.0.0.1
 ```
 
-In Atlas, create a database user with a strong password and allow access from your current IP address. Do not use `0.0.0.0/0` unless you understand the risk. Ensure your URI-encoded password is used if it contains special characters.
+Keep credentials out of Git. The legacy Express service continues to read `.env`; Next.js reads `.env.local` (and also supports `.env`).
 
-## 3. Run
+## Run the Next.js foundation
 
 ```bash
-npm start
+npm install
+npm run dev
 ```
 
-Open http://localhost:3000. The first launch creates a Cash and Bank account with zero opening balances. Add your actual opening balance to the correct account when you create it, or edit the account data in MongoDB before adding transactions. Do not enter the same starting balance both as an opening balance and as an income transaction.
+Open http://localhost:3000. The database health endpoint is http://localhost:3000/api/health.
 
-## Accounting rules
+## Legacy fallback
 
-- Amounts are stored as integer paise.
-- Transfers reduce one owned account and increase another; they do not change total money or spending.
-- Lending reduces your cash balance and is shown as money owed back to you.
-- A borrowed expense counts as spending and as a liability but does not reduce your cash balance at the time of purchase.
-- Repayment and collection are separate ledger events.
-- Refunds increase the account balance and reduce net category spending.
-- CSV imports are marked `needsReview`; inspect and correct category/type/transfer classifications after import.
+Until the finance routes have been migrated, the previous backend can still be run separately:
 
-## Important limitations before public deployment
+```bash
+npm run legacy:start
+```
 
-This initial version is for one trusted user and should remain bound to `127.0.0.1`. It does not yet include login/authentication, transaction editing, full multi-row bank-specific CSV mapping, recurring transaction automation, budget enforcement, or account reconciliation against statement closing balances. Do not expose it to the internet until authentication, authorization, rate limiting, CSRF/security headers and a backup/restore process are implemented.
+Use a separate port for the legacy service if running both servers simultaneously. The legacy frontend currently calls relative `/api/*` URLs, so it should continue to be served by the legacy Express process until the React UI and Next.js API migration is complete.
 
-The importer supports common CSV headers but cannot reliably infer every bank's format or detect every duplicate. Always reconcile the imported rows and closing balance against your original statement. Back up your database before importing a large statement.
+## Financial data safety
 
-## API overview
+- The existing MongoDB database and collections are not renamed or recreated.
+- Monetary values remain integer paise in storage.
+- The ledger remains the source of truth for account balances.
+- Transfers must not be counted as income or spending.
+- Soft-deleted history, transaction revisions, settlement links, import deduplication and account export safeguards must be preserved during API migration.
+- Back up the database before testing future migration steps against real records.
 
-- `GET /api/health`
-- `GET /api/summary`
-- `GET|POST /api/accounts`
-- `GET|PUT /api/settings`
-- `GET|POST /api/transactions`
-- `DELETE /api/transactions/:id`
-- `POST /api/transactions/:id/settle`
-- `GET|POST /api/budgets`
-- `GET|POST /api/goals`
-- `GET|POST /api/recurring`
-- `POST /api/import/preview`
-- `POST /api/import/commit`
+## Planned migration
 
-## Data safety
-
-Never upload `.env`, Atlas credentials, or an unredacted bank statement to a public repository. Keep private backups and test restore before trusting this for financial records.
-
-
-## Google Sheets sync
-
-See [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md) to configure Apps Script syncing, the monthly tabs, and dashboard. Keep the deployment secret in `.env`, never in frontend code or GitHub.
+1. Port every Express endpoint to Next.js Route Handlers using the shared MongoDB connection.
+2. Preserve request/response contracts and accounting semantics.
+3. Add API regression tests for balances, transfers, settlements, corrections, restore, imports and exports.
+4. Convert the existing interface into React components page by page.
+5. Run parity checks against the legacy implementation before switching production traffic.
+6. Remove Express only after all routes and UI workflows pass verification.
