@@ -24,7 +24,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
 .bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.quick-add-option{display:flex;align-items:center;gap:13px;text-align:left;background:#1b2432;border-radius:16px;padding:14px}.quick-add-option>span:first-child{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#293545;color:var(--green);font-size:20px}.quick-add-option>span:nth-child(2){flex:1}.quick-add-option strong,.quick-add-option small{display:block}.quick-add-option small{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}.quick-add-option>b{font-size:22px;color:var(--muted)}.floating-add{position:fixed;z-index:60;right:max(20px,calc((100vw - 620px)/2 + 20px));bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 
 .transaction-launch{display:flex;align-items:center;gap:14px;cursor:pointer;min-height:82px;border-color:rgba(184,243,107,.2);background:linear-gradient(120deg,#1b2930,#171d29)}.launch-icon{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:grid;place-items:center;background:var(--green);color:#101608;font-size:26px}.launch-copy{flex:1;min-width:0}.launch-copy strong,.launch-copy span{display:block}.launch-copy span{font-size:11px;color:var(--muted);margin-top:3px}.launch-arrow{font-size:25px;color:var(--muted)}.transaction-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.type-choice{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;background:#1b2230;padding:12px 5px;border-radius:15px;font-size:11px}.type-choice span{font-size:20px}.type-choice.active{background:var(--green);color:#101608;border-color:var(--green)}.account-create-form{margin-top:16px}.bank-card{position:relative}.bank-card-info{display:flex;align-items:center;gap:13px;flex:1;min-width:0}.bank-card-actions{display:flex;align-items:center;gap:10px}.account-remove{width:auto;padding:7px 10px;font-size:10px;color:var(--red);background:transparent;border-color:rgba(255,120,135,.2)}.account-empty{padding:20px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:12px}
-</style>
+.account-remove{min-width:100px}.account-remove:focus-visible{outline:2px solid var(--red);outline-offset:3px}</style>
   </head>
   <body>
     <div
@@ -375,7 +375,8 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         </button>
       </nav>
     </main>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
       const $ = (id) => document.getElementById(id);
       const money = (n) =>
         "₹" +
@@ -621,7 +622,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           const domain = domainMap[bank];
           const initials = bank.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
           const logo = domain ? '<img src="https://www.google.com/s2/favicons?domain='+domain+'&sz=128" alt="" loading="lazy" onerror="this.remove()">' : esc(initials);
-          const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Remove</button>' : '';
+          const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Export & remove</button>' : '';
           return '<div class="bank-card"><div class="bank-card-info"><div class="bank-logo">'+logo+'</div><div class="bank-meta"><strong>'+esc(bank)+'</strong><small>'+esc(x.name)+' · '+esc(x.kind)+'</small></div></div><div class="bank-card-actions"><div class="bank-balance">'+money(x.balance)+'</div>'+remove+'</div></div>';
         };
         $("accounts").innerHTML = a.map(x => accountMarkup(x, true)).join("") || '<div class="account-empty">No accounts yet. Add your first bank above.</div>';
@@ -780,13 +781,78 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
         $("accountKind").value = value === "Cash" ? "cash" : value === "UPI" ? "upi" : "bank";
         $("accountName").placeholder = value === "Cash" ? "e.g. Pocket cash" : value === "UPI" ? "e.g. Google Pay" : "e.g. Savings account";
       });
+      function downloadExportFile(filename, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
+      function csvCell(value) {
+        let text = value == null ? "" : String(value);
+        if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      function exportAccountFiles(data) {
+        if (!window.XLSX) throw new Error("Excel export library did not load. Check your internet connection and try again; the account has not been deleted.");
+        const safeName = String(data.account.institution || data.account.name || "account")
+          .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "account";
+        const stem = "pocket-" + safeName + "-backup-" + today();
+        const columns = [
+          ["Transaction ID", "_id"], ["Date", "date"], ["Type", "type"],
+          ["Amount (INR)", "amount"], ["Amount (paise)", "amountPaise"],
+          ["Category", "category"], ["Note", "note"], ["Account ID", "accountId"],
+          ["To Account ID", "toAccountId"], ["Person", "person"], ["Settled", "settled"],
+          ["Needs Review", "needsReview"], ["Related Transaction ID", "relatedTransactionId"],
+          ["Created At", "createdAt"], ["Import Source", "importSource"]
+        ];
+        const rows = data.transactions.map(t => Object.fromEntries(columns.map(([label,key]) => [label, t[key] ?? ""])));
+        const csv = [columns.map(([label]) => csvCell(label)).join(","), ...rows.map(row => columns.map(([label]) => csvCell(row[label])).join(","))].join("\r\n");
+        downloadExportFile(stem + ".json", JSON.stringify(data, null, 2), "application/json;charset=utf-8");
+        downloadExportFile(stem + ".csv", "\uFEFF" + csv, "text/csv;charset=utf-8");
+        const workbook = XLSX.utils.book_new();
+        const accountRows = Object.entries(data.account).map(([key,value]) => ({ Field: key, Value: value instanceof Object ? JSON.stringify(value) : value }));
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(accountRows), "Account");
+        const sheetRows = rows.length ? rows : [Object.fromEntries(columns.map(([label]) => [label, ""]))];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sheetRows), "Transactions");
+        XLSX.writeFile(workbook, stem + ".xlsx", { compression: true });
+      }
       $("accounts").addEventListener("click", async (e) => {
         const button = e.target.closest("[data-remove-account]");
         if (!button) return;
-        if (!confirm("Remove this account? Accounts with transaction history cannot be removed.")) return;
+        const id = button.dataset.removeAccount;
         button.disabled = true;
-        try { await api("/accounts/" + encodeURIComponent(button.dataset.removeAccount), { method: "DELETE" }); await load(); }
-        catch (err) { alert(err.message); button.disabled = false; }
+        const original = button.textContent;
+        button.textContent = "Preparing backup…";
+        try {
+          const data = await api("/accounts/" + encodeURIComponent(id) + "/export");
+          exportAccountFiles(data);
+          const count = data.transactionCount;
+          const confirmed = confirm(
+            "Three backup files (JSON, CSV and Excel) have been prepared for " +
+            (data.account.institution || data.account.name) + ".\\n\\n" +
+            count + " transaction(s) will be permanently deleted with this account.\\n\\n" +
+            "Continue only after confirming the files were downloaded."
+          );
+          if (!confirmed) {
+            alert("Account kept. Your backup files were still exported.");
+            button.disabled = false;
+            button.textContent = original;
+            return;
+          }
+          button.textContent = "Removing…";
+          await api("/accounts/" + encodeURIComponent(id), { method: "DELETE" });
+          await load();
+          alert("Account removed. " + count + " transaction(s) were deleted after the backup export.");
+        } catch (err) {
+          alert(err.message + "\\n\\nThe account was not intentionally removed if export failed.");
+          button.disabled = false;
+          button.textContent = original;
+        }
       });
       guardForm("budgetForm", async (e) => {
         e.preventDefault();
