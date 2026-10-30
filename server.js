@@ -491,7 +491,7 @@ app.get('/api/summary', wrap(async (req, res) => {
   await accounts.createIndex({ name: 1 }, { unique: true });
   await ensureDefaultAccount();
   const port = Number(process.env.PORT || 3000);
-  const host = process.env.HOST || '127.0.0.1';
+  const host = process.env.HOST || '0.0.0.0';
   app.listen(port, host, () => console.log(`Pocket Money Tracker running at http://localhost:${port}`));
 })().catch(e => {
   console.error('Startup failed:', e.message);
