@@ -2,13 +2,23 @@
 import { ui } from "../ui";
 
 const tabs = [
-  ["home", "Home", "M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"],
+  [
+    "home",
+    "Home",
+    "M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z",
+  ],
   ["activity", "Activity", "M4 19V5m0 14h16M7 15l4-4 3 2 5-7"],
   ["accounts", "Accounts", "M3 5h18v15H3z M3 10h18"],
   ["plan", "Plan", "M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18 M12 7v5l3 2"],
 ] as const;
 
-export default function BottomNavigation({ active, onChange }: { active: string; onChange: (v: string) => void }) {
+export default function BottomNavigation({
+  active,
+  onChange,
+}: {
+  active: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <nav
       aria-label="Main navigation"
@@ -26,7 +36,11 @@ export default function BottomNavigation({ active, onChange }: { active: string;
             <span
               className={`grid size-[27px] place-items-center rounded-[10px] transition duration-150 ${on ? "-translate-y-px bg-[#b8f36b]/15 text-[#b8f36b]" : "bg-white/[.055] text-[#aeb8c8]"}`}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="block size-[19px] fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="block size-[19px] fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]"
+              >
                 <path d={path} />
               </svg>
             </span>
