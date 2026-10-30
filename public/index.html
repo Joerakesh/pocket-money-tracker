@@ -518,16 +518,15 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
         document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
       }
       async function load() {
-        const [s, a, txs, b, g, r, st] = await Promise.all([
+        const [s, txs, b, g, r] = await Promise.all([
           api("/summary"),
-          api("/accounts"),
           api("/transactions"),
           api("/budgets"),
           api("/goals"),
           api("/recurring"),
-          api("/settings"),
         ]);
-        accounts = a;
+        const st = s.settings;
+        accounts = s.accounts || [];
         ["accountId", "toAccountId", "importAccount"].forEach(optionAccounts);
         $("perDay").textContent = money(s.perDay) + " / day";
         $("perDay").className = "big " + (s.perDay < 0 ? "red" : "green");
@@ -543,8 +542,6 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
         $("reserve").value = Number(st.reservePaise || 0) / 100;
         const accountMarkup = (x, removable) => {
           const bank = x.institution || x.name;
-          const domainMap = {"State Bank of India":"sbi.co.in","Indian Bank":"indianbank.in","Kotak Mahindra Bank":"kotak.com","HDFC Bank":"hdfcbank.com","ICICI Bank":"icicibank.com","Axis Bank":"axisbank.com","Canara Bank":"canarabank.com","Bank of Baroda":"bankofbaroda.in","Punjab National Bank":"pnbindia.in","Union Bank of India":"unionbankofindia.co.in","IDFC FIRST Bank":"idfcfirstbank.com","Federal Bank":"federalbank.co.in","Indian Overseas Bank":"iob.in","South Indian Bank":"southindianbank.com","DBS Bank India":"dbs.com","RBL Bank":"rblbank.com","Equitas Small Finance Bank":"equitasbank.com","Jana Small Finance Bank":"janabank.com","Ujjivan Small Finance Bank":"ujjivansfb.in","Tamilnad Mercantile Bank":"tmb.in","City Union Bank":"cityunionbank.com","Karur Vysya Bank":"kvb.co.in"};
-          const domain = domainMap[bank];
           const initials = bank.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
           const bankSlugMap = {"State Bank of India":"sbin","Indian Bank":"idib","Kotak Mahindra Bank":"kkbk","HDFC Bank":"hdfc","ICICI Bank":"icic","Axis Bank":"utib","Canara Bank":"cnrb","Bank of Baroda":"barb","Punjab National Bank":"punb","Union Bank of India":"ubin","IDFC FIRST Bank":"idfb","Federal Bank":"fdrl","Indian Overseas Bank":"ioba","South Indian Bank":"sibl","DBS Bank India":"dbss","RBL Bank":"ratn","Equitas Small Finance Bank":"esfb","Jana Small Finance Bank":"jsfb","Ujjivan Small Finance Bank":"ujvn","Tamilnad Mercantile Bank":"tmbl","City Union Bank":"ciub","Karur Vysya Bank":"kvbl"};
           const slug = bankSlugMap[bank];
