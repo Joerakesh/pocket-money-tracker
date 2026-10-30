@@ -1,9 +1,9 @@
 name: Next.js validation
 on:
   push:
-    branches: [main, migration/nextjs-app]
+    branches: [main, migration/nextjs-app, feat/tailwind]
   pull_request:
-    branches: [main]
+    branches: [main, feat/tailwind]
 jobs:
   validate:
     runs-on: ubuntu-latest
