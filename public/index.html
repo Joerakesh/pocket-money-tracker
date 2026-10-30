@@ -513,7 +513,10 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           $("category").value = btn.dataset.category;
           $("categoryChoices").querySelectorAll(".category-choice").forEach(x => x.classList.toggle("active", x === btn));
         }));
-        $("categoryChoices").querySelector('[data-category="'+($("category").value || "Food")+'"]')?.classList.add("active");
+        const current = $("category").value;
+        const selected = categoryOptions.some(([name]) => name === current) ? current : categoryOptions[0][0];
+        $("category").value = selected;
+        $("categoryChoices").querySelector('[data-category="'+selected+'"]')?.classList.add("active");
       }
       const chartPalette = ["#b8f36b","#75c8ff","#b69cff","#ffb86b","#ff7f9b","#62dbc0","#f4df79","#9ba8bd","#d28bff"];
       function renderActivityChart(entries) {
