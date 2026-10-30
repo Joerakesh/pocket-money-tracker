@@ -159,6 +159,17 @@ app.post('/api/accounts', wrap(async (req, res) => {
   res.status(201).json({ ok: true, id: String(result.insertedId) });
 }));
 
+app.delete('/api/accounts/:id', wrap(async (req, res) => {
+  const id = parseId(req.params.id);
+  const account = await accounts.findOne({ _id: id });
+  if (!account) throw bad('Account not found.', 404);
+  const linked = await tx.countDocuments({ $or: [{ accountId: String(id) }, { toAccountId: String(id) }] });
+  if (linked > 0) throw bad('This account has transaction history. Move or remove its transactions before deleting it.', 409);
+  const count = await accounts.countDocuments();
+  if (count <= 1) throw bad('Keep at least one account in your wallet.', 409);
+  await accounts.deleteOne({ _id: id });
+  res.json({ ok: true });
+}));
 app.get('/api/settings', wrap(async (req, res) => res.json(await getMainSettings())));
 app.put('/api/settings', wrap(async (req, res) => {
   const payday = clean(req.body.payday || endOfMonth(), 10);
