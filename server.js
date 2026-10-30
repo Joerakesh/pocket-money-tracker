@@ -401,7 +401,7 @@ app.get('/api/summary', wrap(async (req, res) => {
   const spendable = cashPaise - owedToFriends - reserve;
   res.json({
     settings: { ...st, reserve: paiseToRupees(reserve) },
-    accounts: balances.map(a => ({ id: String(a._id), name: a.name, kind: a.kind, balance: paiseToRupees(a.balancePaise) })),
+    accounts: balances.map(a => ({ id: String(a._id), name: a.name, institution: a.institution || "", kind: a.kind, balance: paiseToRupees(a.balancePaise) })),
     totalBalance: paiseToRupees(cashPaise), spendable: paiseToRupees(spendable),
     owedToFriends: paiseToRupees(owedToFriends), owedByFriends: paiseToRupees(owedByFriends),
     days, perDay: paiseToRupees(Math.floor(spendable / days)),
