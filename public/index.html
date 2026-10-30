@@ -498,11 +498,14 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
             })[c],
         );
       }
-      const categoryOptions = [
-        ["Food","🍜"],["Travel","🚌"],["College","🎓"],["Shopping","🛍️"],
-        ["Subscriptions","📱"],["Friends","🤝"],["Essentials","🧴"],["Health","💊"],["Other","✦"]
-      ];
+      const categorySets = {
+        expense: [["Food & Dining","🍜"],["Transport","🚌"],["Shopping","🛍️"],["Education","🎓"],["Bills & Utilities","🧾"],["Subscriptions","📱"],["Health & Personal Care","🧴"],["Entertainment","🎬"],["Groceries","🛒"],["Travel","✈️"],["Family & Friends","🤝"],["Other","✦"]],
+        income: [["Salary","💼"],["Allowance","💸"],["Freelance","🧑‍💻"],["Business","🏪"],["Interest","📈"],["Cashback & Rewards","🎁"],["Gift","🎀"],["Scholarship","🎓"],["Refund","↩️"],["Other Income","✦"]],
+        transfer: [["Transfer","⇄"]], lent: [["Money Lent","🤝"]], repayment: [["Repayment Received","↙️"]], borrowed_expense: [["Paid for Me","🫱"]], collection: [["Money Collected","💰"]], refund: [["Refund","↩️"]]
+      };
+      let categoryOptions = categorySets.expense;
       function renderCategoryChoices() {
+        categoryOptions = categorySets[$("type").value] || categorySets.expense;
         $("categoryChoices").innerHTML = categoryOptions.map(([name,icon]) =>
           '<button type="button" class="category-choice" data-category="'+esc(name)+'"><span class="category-icon">'+icon+'</span><span>'+esc(name)+'</span></button>'
         ).join("");
@@ -546,6 +549,7 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
       function selectTransactionType(type) {
         $("type").value = type;
         showTypes();
+        renderCategoryChoices();
         document.querySelectorAll(".type-choice").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
       }
       async function load() {
