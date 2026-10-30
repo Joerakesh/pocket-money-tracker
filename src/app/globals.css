@@ -79,3 +79,32 @@ input::placeholder{color:#758093;opacity:1}
 
 /* The active page is rendered as a React component; no DOM page toggling is needed. */
 .layout>[data-page]{display:block;grid-column:1}
+
+
+/* Home dashboard refinements: restore the complete card hierarchy and compact bank rows. */
+.hero-per-day{font-size:.38em;font-weight:650;letter-spacing:-.02em;color:#b6c2b0}
+.hero-foot{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:19px;padding-top:13px;border-top:1px solid rgba(255,255,255,.09);font-size:11px;color:#b6c2b0}
+.hero-foot strong{font-size:13px;color:var(--green)}
+.text-action{width:auto;padding:6px 0;border:0;background:transparent;color:var(--green);font-size:11px;white-space:nowrap}
+.text-action span{font-size:16px;margin-left:3px}
+.home-category-block{margin-top:19px;padding-top:16px;border-top:1px solid var(--line)}
+.home-category-block h3{margin:0;font-size:13px;letter-spacing:-.02em}
+.home-category{margin-top:13px}
+.home-category-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
+.home-category-head span{display:flex;align-items:center;gap:8px;min-width:0}
+.home-category-head i{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#252f3d;font-style:normal}
+.home-category-head strong{font-size:12px;white-space:nowrap}
+.home-tx{gap:10px}
+.home-tx-icon{width:37px;height:37px;flex:0 0 37px;display:grid;place-items:center;border-radius:12px;background:#252f3d;color:var(--green);font-size:18px}
+.home-tx-copy{flex:1;min-width:0}
+.home-tx-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.home-tx-copy small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.home-tx .amt{font-size:12px}
+.bank-card{gap:10px}
+.bank-logo{position:relative}
+.bank-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;background:#fff}
+.bank-meta{flex:1;min-width:0}
+.bank-meta strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bank-balance{font-size:13px;white-space:nowrap}
+.account-empty .primary{display:block;width:auto;margin:12px auto 0}
+@media(max-width:420px){.hero{padding:23px 18px}.hero .big{font-size:40px}.metrics .metric strong{font-size:18px}.bank-card{padding:11px}.bank-logo{width:40px;height:40px;flex-basis:40px}.bank-balance{font-size:12px}}

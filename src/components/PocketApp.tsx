@@ -41,7 +41,7 @@ export default function PocketApp(){
  {error&&<div className="card status" role="alert">{error} <button type="button" onClick={()=>void load()}>Retry</button></div>}
  {notice&&<div className="card status" role="status">{notice}<button type="button" onClick={()=>setNotice("")}>×</button></div>}
  {busy&&!summary?<section className="card">Loading your financial data…</section>:<div className="layout">
- {tab==="home"&&<Overview summary={summary} accounts={accounts} transactions={transactions}/>}
+ {tab==="home"&&<Overview summary={summary} accounts={accounts} transactions={transactions} onNavigate={(next,nextType)=>{setTab(next);if(nextType)setType(nextType);setEditing(null);}}/>}
  {tab==="transaction"&&<TransactionSection type={type} setType={setType} accounts={accounts} onSubmit={saveTx} editing={editing}/>}
  {tab==="accounts"&&<AccountsSection accounts={accounts} onSubmit={createAccount}/>}
  {tab==="activity"&&<ActivitySection transactions={visible} search={search} onSearch={setSearch} month={month} onMonth={setMonth} onEdit={(tx)=>{setEditing(tx);setType(tx.type);setTab("transaction");}} onDelete={removeTx}/>}
