@@ -13,7 +13,7 @@ const csvLine=(line:string)=>{const out:string[]=[];let field="",quoted=false;fo
 async function dispatch(req:NextRequest,ctx:Ctx){
  const {path}=await ctx.params;const p="/"+path.join("/");const method=req.method;const c=await collections();const b=method==="GET"||method==="HEAD"?{}:await bodyJson(req);
  if(p==="/health"&&method==="GET"){await c.db.command({ping:1});return json({ok:true,status:"ok"});}
- if(p==="/accounts"&&method==="GET")return json(await accountBalances(c));
+ if(p==="/accounts"&&method==="GET")return json((await accountBalances(c)).map((a:any)=>({...a,id:String(a._id),_id:String(a._id),balance:paiseToRupees(a.balancePaise)})));
  if(p==="/accounts"&&method==="POST"){
   const institution=clean(b.institution,80),label=clean(b.name,60),kind=clean(b.kind||(institution==="Cash"?"cash":institution==="UPI"?"upi":"bank"),30);
   let name=label||institution||"Account";if(!label){const existing=await c.accounts.countDocuments({institution});if(existing)name=`${institution} · ${existing+1}`;}
