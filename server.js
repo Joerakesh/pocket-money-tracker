@@ -159,16 +159,57 @@ app.post('/api/accounts', wrap(async (req, res) => {
   res.status(201).json({ ok: true, id: String(result.insertedId) });
 }));
 
-app.delete('/api/accounts/:id', wrap(async (req, res) => {
-  const id = parseId(req.params.id);
+async function getAccountExportData(id) {
   const account = await accounts.findOne({ _id: id });
   if (!account) throw bad('Account not found.', 404);
-  const linked = await tx.countDocuments({ $or: [{ accountId: String(id) }, { toAccountId: String(id) }] });
-  if (linked > 0) throw bad('This account has transaction history. Move or remove its transactions before deleting it.', 409);
-  const count = await accounts.countDocuments();
-  if (count <= 1) throw bad('Keep at least one account in your wallet.', 409);
+  const accountId = String(id);
+  const matched = await tx.find({ $or: [{ accountId }, { toAccountId: accountId }] }).sort({ date: 1, createdAt: 1 }).toArray();
+  const byId = new Map(matched.map(row => [String(row._id), row]));
+  // Include linked records (for example, a lend and its repayment) so the export
+  // remains useful as a complete history and deletion does not leave broken links.
+  let frontier = [...byId.keys()];
+  while (frontier.length) {
+    const linked = await tx.find({ relatedTransactionId: { $in: frontier } }).toArray();
+    frontier = [];
+    for (const row of linked) {
+      const key = String(row._id);
+      if (!byId.has(key)) {
+        byId.set(key, row);
+        frontier.push(key);
+      }
+    }
+  }
+  const transactions = [...byId.values()].sort((a, b) =>
+    String(a.date || '').localeCompare(String(b.date || '')) ||
+    new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+  ).map(row => ({
+    ...row,
+    _id: String(row._id),
+    amount: paiseToRupees(row.amountPaise),
+    relatedTransactionId: row.relatedTransactionId ? String(row.relatedTransactionId) : null
+  }));
+  return {
+    exportedAt: new Date().toISOString(),
+    account: { ...account, _id: String(account._id) },
+    transactions,
+    transactionCount: transactions.length,
+    formatVersion: 1
+  };
+}
+
+app.get('/api/accounts/:id/export', wrap(async (req, res) => {
+  const data = await getAccountExportData(parseId(req.params.id));
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(data);
+}));
+
+app.delete('/api/accounts/:id', wrap(async (req, res) => {
+  const id = parseId(req.params.id);
+  const data = await getAccountExportData(id);
+  const ids = data.transactions.map(row => parseId(row._id));
+  if (ids.length) await tx.deleteMany({ _id: { $in: ids } });
   await accounts.deleteOne({ _id: id });
-  res.json({ ok: true });
+  res.json({ ok: true, deletedTransactions: ids.length, deletedAccount: data.account.name });
 }));
 app.get('/api/settings', wrap(async (req, res) => res.json(await getMainSettings())));
 app.put('/api/settings', wrap(async (req, res) => {
