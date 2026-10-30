@@ -110,18 +110,29 @@ async function accountById(id) {
 // Account balances are derived from the ledger. Transfers affect two accounts but never count as income/spending.
 async function accountBalances() {
   const list = await accounts.find().sort({ createdAt: 1 }).toArray();
-  const ledger = await tx.find().toArray();
+  if (!list.length) return [];
+  const ids = list.map(a => String(a._id));
+  const [outgoing, incoming] = await Promise.all([
+    tx.aggregate([
+      { $match: { accountId: { $in: ids } } },
+      { $group: { _id: { accountId: "$accountId", type: "$type" }, totalPaise: { $sum: "$amountPaise" } } }
+    ]).toArray(),
+    tx.aggregate([
+      { $match: { type: "transfer", toAccountId: { $in: ids } } },
+      { $group: { _id: "$toAccountId", totalPaise: { $sum: "$amountPaise" } } }
+    ]).toArray()
+  ]);
   const sums = new Map(list.map(a => [String(a._id), Number(a.openingPaise || 0)]));
-  for (const t of ledger) {
-    const amount = Number(t.amountPaise || 0);
-    if (t.accountId && sums.has(t.accountId)) {
-      if (['income', 'collection', 'refund'].includes(t.type)) sums.set(t.accountId, sums.get(t.accountId) + amount);
-      if (['expense', 'lent', 'repayment'].includes(t.type)) sums.set(t.accountId, sums.get(t.accountId) - amount);
-      if (t.type === 'transfer') sums.set(t.accountId, sums.get(t.accountId) - amount);
-    }
-    if (t.type === 'transfer' && t.toAccountId && sums.has(t.toAccountId)) {
-      sums.set(t.toAccountId, sums.get(t.toAccountId) + amount);
-    }
+  for (const row of outgoing) {
+    const id = row._id.accountId;
+    if (!sums.has(id)) continue;
+    const type = row._id.type;
+    const amount = Number(row.totalPaise || 0);
+    if (["income", "collection", "refund"].includes(type)) sums.set(id, sums.get(id) + amount);
+    else if (["expense", "lent", "repayment", "transfer"].includes(type)) sums.set(id, sums.get(id) - amount);
+  }
+  for (const row of incoming) {
+    if (sums.has(row._id)) sums.set(row._id, sums.get(row._id) + Number(row.totalPaise || 0));
   }
   return list.map(a => ({ ...a, balancePaise: sums.get(String(a._id)) || 0, balance: paiseToRupees(sums.get(String(a._id)) || 0) }));
 }
@@ -426,22 +437,27 @@ app.post('/api/sheets/sync-all', wrap(async (req, res) => {
 }));
 
 app.get('/api/summary', wrap(async (req, res) => {
-  const [st, all, balances] = await Promise.all([getMainSettings(), tx.find().toArray(), accountBalances()]);
   const t = today(), month = t.slice(0, 7);
+  const [st, monthRows, unpaidRows, balances] = await Promise.all([
+    getMainSettings(),
+    tx.find({ date: { $gte: monthStart(t), $lte: endOfMonth(t) } }, { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } }).toArray(),
+    tx.find({ type: { $in: ['borrowed_expense', 'lent'] }, settled: { $ne: true } }, { projection: { type: 1, amountPaise: 1 } }).toArray(),
+    accountBalances()
+  ]);
   let todaySpent = 0, monthSpent = 0, monthIncome = 0, owedToFriends = 0, owedByFriends = 0;
   const byCat = {};
-  for (const item of all) {
+  for (const item of monthRows) {
     if (item.date === t && ['expense', 'borrowed_expense'].includes(item.type)) todaySpent += item.amountPaise;
-    if (item.date.startsWith(month)) {
-      monthSpent += spendingEffect(item);
-      if (item.type === 'income') monthIncome += item.amountPaise;
-      if (['expense', 'borrowed_expense'].includes(item.type)) byCat[item.category] = (byCat[item.category] || 0) + item.amountPaise;
-      if (item.type === 'refund') byCat[item.category] = (byCat[item.category] || 0) - item.amountPaise;
-    }
-    if (item.type === 'borrowed_expense' && !item.settled) owedToFriends += item.amountPaise;
-    if (item.type === 'lent' && !item.settled) owedByFriends += item.amountPaise;
+    monthSpent += spendingEffect(item);
+    if (item.type === 'income') monthIncome += item.amountPaise;
+    if (['expense', 'borrowed_expense'].includes(item.type)) byCat[item.category || 'Other'] = (byCat[item.category || 'Other'] || 0) + item.amountPaise;
+    if (item.type === 'refund') byCat[item.category || 'Other'] = (byCat[item.category || 'Other'] || 0) - item.amountPaise;
   }
-  const cashPaise = balances.reduce((s, a) => s + a.balancePaise, 0);
+  for (const item of unpaidRows) {
+    if (item.type === 'borrowed_expense') owedToFriends += item.amountPaise;
+    if (item.type === 'lent') owedByFriends += item.amountPaise;
+  }
+  const cashPaise = balances.reduce((sum, a) => sum + a.balancePaise, 0);
   const days = dateDiff(t, st.payday) + 1 || 1;
   const reserve = Number(st.reservePaise || 0);
   const spendable = cashPaise - owedToFriends - reserve;
@@ -468,6 +484,9 @@ app.get('/api/summary', wrap(async (req, res) => {
   goals = db.collection('goals');
   recurring = db.collection('recurring');
   await tx.createIndex({ date: -1 });
+  await tx.createIndex({ accountId: 1, type: 1 });
+  await tx.createIndex({ toAccountId: 1, type: 1 });
+  await tx.createIndex({ type: 1, settled: 1 });
   await tx.createIndex({ importKey: 1 }, { unique: true, sparse: true });
   await accounts.createIndex({ name: 1 }, { unique: true });
   await ensureDefaultAccount();
