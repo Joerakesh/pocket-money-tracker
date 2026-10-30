@@ -59,15 +59,9 @@ type Recurring = {
   category: string;
   active?: boolean;
 };
-const headings: Record<string, [string, string]> = {
-  home: ["Overview", "Your essentials at a glance"],
-  transaction: ["New transaction", "Record money in, money out and transfers"],
-  activity: ["Activity", "Your spending and transaction history"],
-  accounts: ["Accounts", "Manage your wallets and bank accounts"],
-  plan: ["Plan", "Budgets, goals and recurring expenses"],
-  more: ["Settings", "Manage your allowance and data"],
-};
-async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
+type Settings = { payday?: string; reserve?: number; reservePaise?: number };
+type ImportRow = { importKey?: string; date: string; description: string; amount: number };
+async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch("/api" + path, {
     ...init,
     headers: {
@@ -76,20 +70,21 @@ async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
     },
     cache: "no-store",
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Request failed");
-  return data;
+  const data: unknown = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message =
+      typeof data === "object" && data !== null && "error" in data &&
+      typeof data.error === "string"
+        ? data.error
+        : "Request failed";
+    throw new Error(message);
+  }
+  return data as T;
 }
 const post = (body: unknown) => ({
   method: "POST",
   body: JSON.stringify(body),
 });
-const money = (n: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(Number(n) || 0);
 export default function PocketApp() {
   const [tab, setTab] = useState("home"),
     [type, setType] = useState("expense"),
@@ -100,14 +95,14 @@ export default function PocketApp() {
     [budgets, setBudgets] = useState<Budget[]>([]),
     [goals, setGoals] = useState<Goal[]>([]),
     [recurring, setRecurring] = useState<Recurring[]>([]);
-  const [settings, setSettings] = useState<any>(null),
+  const [settings, setSettings] = useState<Settings | null>(null),
     [busy, setBusy] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const [search, setSearch] = useState(""),
     [month, setMonth] = useState(""),
     [editing, setEditing] = useState<Tx | null>(null);
-  const [importRows, setImportRows] = useState<any[]>([]);
+  const [importRows, setImportRows] = useState<ImportRow[]>([]);
   const load = useCallback(async () => {
     setBusy(true);
     setError("");
@@ -119,7 +114,7 @@ export default function PocketApp() {
         api<Budget[]>("/budgets"),
         api<Goal[]>("/goals"),
         api<Recurring[]>("/recurring"),
-        api("/settings"),
+        api<Settings>("/settings"),
       ]);
       setSummary(s);
       setAccounts(a);
@@ -287,7 +282,7 @@ export default function PocketApp() {
   };
   const commitCsv = async (accountId: string) => {
     try {
-      const result = await api(
+      const result = await api<{ added: number; skipped: number }>(
         "/import/commit",
         post({ rows: importRows, accountId }),
       );
@@ -300,7 +295,6 @@ export default function PocketApp() {
       notify(err instanceof Error ? err.message : "Import failed.");
     }
   };
-  const [title, subtitle] = headings[tab];
   return (
     <>
       <main
@@ -311,14 +305,6 @@ export default function PocketApp() {
           onRefresh={() => setRefreshKey((x) => x + 1)}
           onSettings={() => setTab("more")}
         />
-        <div className="mx-0.5 mt-1 mb-4 flex min-h-[45px] items-end justify-between">
-          <div>
-            <h1 className="text-[25px] font-[780] tracking-[-.06em]">
-              {title}
-            </h1>
-            <p className="mt-[3px] text-xs text-[#929bad]">{subtitle}</p>
-          </div>
-        </div>
         {error && (
           <div
             className={`${ui.card} mb-[13px] text-xs text-[#ff7887] [overflow-wrap:anywhere]`}
