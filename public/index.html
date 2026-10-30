@@ -586,7 +586,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
       $("type").onchange = () => {
         showTypes();
         document
-          .querySelectorAll(".quick-action")
+          .querySelectorAll(".type-choice")
           .forEach((x) =>
             x.classList.toggle("active", x.dataset.type === $("type").value),
           );
