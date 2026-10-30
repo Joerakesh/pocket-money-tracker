@@ -144,12 +144,14 @@ app.get('/api/accounts', wrap(async (req, res) => {
   res.json(await accountBalances());
 }));
 app.post('/api/accounts', wrap(async (req, res) => {
-  const name = clean(req.body.name, 60);
-  const kind = clean(req.body.kind || 'other', 30);
+  const institution = clean(req.body.institution || '', 80);
+  const label = clean(req.body.name || '', 60);
+  const kind = clean(req.body.kind || (institution === 'Cash' ? 'cash' : institution === 'UPI' ? 'upi' : 'bank'), 30);
+  const name = label || institution || 'Account';
   if (!name) throw bad('Account name is required.');
   const openingPaise = Math.round(Number(req.body.openingBalance || 0) * 100);
-  if (!Number.isSafeInteger(openingPaise)) throw bad('Opening balance is invalid.');
-  const result = await accounts.insertOne({ name, kind, openingPaise, createdAt: new Date() });
+  if (!Number.isSafeInteger(openingPaise) || openingPaise < 0) throw bad('Opening balance is invalid.');
+  const result = await accounts.insertOne({ name, institution, kind, openingPaise, createdAt: new Date() });
   res.status(201).json({ ok: true, id: String(result.insertedId) });
 }));
 
