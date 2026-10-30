@@ -15,7 +15,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.text({ type: ['text/csv', 'application/csv'], limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const client = new MongoClient(process.env.MONGODB_URI);
+const client = new MongoClient(process.env.MONGODB_URI, { maxPoolSize: 20, minPoolSize: 2, serverSelectionTimeoutMS: 10000, connectTimeoutMS: 10000 });
 let db, tx, accounts, settings, imports, budgets, goals, recurring;
 
 const today = () => {
@@ -279,7 +279,7 @@ app.post('/api/transactions', wrap(async (req, res) => {
     doc.settled = false;
   }
   const result = await tx.insertOne(doc);
-  await syncToGoogleSheets('upsert', doc, result.insertedId);
+  void syncToGoogleSheets('upsert', doc, result.insertedId);
   res.status(201).json({ ok: true, id: String(result.insertedId) });
 }));
 
@@ -288,7 +288,7 @@ app.delete('/api/transactions/:id', wrap(async (req, res) => {
   const t = await tx.findOne({ _id: id });
   if (!t) throw bad('Transaction not found.', 404);
   await tx.deleteOne({ _id: id });
-  await syncToGoogleSheets('delete', t, id);
+  void syncToGoogleSheets('delete', t, id);
   res.json({ ok: true });
 }));
 
@@ -306,10 +306,10 @@ app.post('/api/transactions/:id/settle', wrap(async (req, res) => {
     person: original.person, accountId, relatedTransactionId: String(original._id), createdAt: new Date()
   };
   const settledResult = await tx.insertOne(settlement);
-  await syncToGoogleSheets('upsert', settlement, settledResult.insertedId);
+  void syncToGoogleSheets('upsert', settlement, settledResult.insertedId);
   await tx.updateOne({ _id: id }, { $set: { settled: true, settledAt: today() } });
   const updatedOriginal = await tx.findOne({ _id: id });
-  await syncToGoogleSheets('upsert', updatedOriginal, id);
+  void syncToGoogleSheets('upsert', updatedOriginal, id);
   res.json({ ok: true });
 }));
 
@@ -421,7 +421,7 @@ app.post('/api/import/commit', wrap(async (req, res) => {
       note: clean(row.description, 200), accountId, needsReview: true, createdAt: new Date()
     };
     const importedResult = await tx.insertOne(imported);
-    await syncToGoogleSheets('upsert', imported, importedResult.insertedId);
+    void syncToGoogleSheets('upsert', imported, importedResult.insertedId);
     added++;
   }
   res.json({ added, skipped, reviewRequired: added });
@@ -483,7 +483,7 @@ app.get('/api/summary', wrap(async (req, res) => {
   budgets = db.collection('budgets');
   goals = db.collection('goals');
   recurring = db.collection('recurring');
-  await tx.createIndex({ date: -1 });
+  await tx.createIndex({ date: -1, createdAt: -1 });
   await tx.createIndex({ accountId: 1, type: 1 });
   await tx.createIndex({ toAccountId: 1, type: 1 });
   await tx.createIndex({ type: 1, settled: 1 });
