@@ -174,7 +174,7 @@ async function getAccountExportData(id) {
   const account = await accounts.findOne({ _id: id });
   if (!account) throw bad('Account not found.', 404);
   const accountId = String(id);
-  const matched = await tx.find({ deletedAt: { $exists: false }, $or: [{ accountId }, { toAccountId: accountId }] }).sort({ date: 1, createdAt: 1 }).toArray();
+  const matched = await tx.find({ $or: [{ accountId }, { toAccountId: accountId }] }).sort({ date: 1, createdAt: 1 }).toArray();
   const byId = new Map(matched.map(row => [String(row._id), row]));
   // Include linked records (for example, a lend and its repayment) so the export
   // remains useful as a complete history and deletion does not leave broken links.
@@ -331,7 +331,7 @@ app.post('/api/transactions/:id/restore', wrap(async (req, res) => {
 
 app.post('/api/transactions/:id/settle', wrap(async (req, res) => {
   const id = parseId(req.params.id);
-  const original = await tx.findOne({ _id: id });
+  const original = await tx.findOne({ _id: id, deletedAt: { $exists: false } });
   if (!original || !['borrowed_expense', 'lent'].includes(original.type)) throw bad('Only a loan or borrowed expense can be settled.');
   if (original.settled) throw bad('This item is already settled.');
   const accountId = clean(req.body.accountId, 40);
