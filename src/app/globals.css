@@ -76,3 +76,6 @@ input::placeholder{color:#758093;opacity:1}
 @media(max-width:420px){.activity-filters{grid-template-columns:1fr}.toast-region{bottom:calc(94px + env(safe-area-inset-bottom))}}
 @media(forced-colors:active){button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid Highlight}}
 
+
+/* The active page is rendered as a React component; no DOM page toggling is needed. */
+.layout>[data-page]{display:block;grid-column:1}
