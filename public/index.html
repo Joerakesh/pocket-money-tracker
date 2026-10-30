@@ -21,7 +21,7 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
 @media(max-width:420px){main{padding:16px 13px 105px}.card{padding:16px;border-radius:20px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.quick-actions{gap:4px}.quick-action{font-size:10px}.quick-action .qa-icon{width:43px;height:43px}.big{font-size:42px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
-.bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.floating-add{position:fixed;z-index:60;right:max(20px,calc((100vw - 620px)/2 + 20px));bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.bank-grid{display:grid;grid-template-columns:1fr;gap:9px}.bank-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:18px;background:#171d28;min-width:0}.bank-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#15233b;font-size:12px;font-weight:900;letter-spacing:-.05em;overflow:hidden}.bank-logo img{width:100%;height:100%;object-fit:contain;padding:7px}.bank-meta{flex:1;min-width:0}.bank-meta strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bank-meta small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.bank-balance{font-size:15px;font-weight:750;white-space:nowrap}.account-dialog{width:min(440px,calc(100% - 28px));max-width:none;padding:0;border:1px solid var(--line);border-radius:25px;background:#111722;color:var(--ink);box-shadow:0 28px 90px #0009}.account-dialog::backdrop{background:#03060bc9;backdrop-filter:blur(7px)}.dialog-panel{padding:22px;display:grid;gap:10px}.dialog-panel h2{margin:0}.dialog-panel .sectionhead{margin-bottom:2px}.icon-close{width:38px;height:38px;padding:0;border-radius:50%;font-size:23px;background:#242d3b}.dialog-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:7px}.quick-add-option{display:flex;align-items:center;gap:13px;text-align:left;background:#1b2432;border-radius:16px;padding:14px}.quick-add-option>span:first-child{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#293545;color:var(--green);font-size:20px}.quick-add-option>span:nth-child(2){flex:1}.quick-add-option strong,.quick-add-option small{display:block}.quick-add-option small{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}.quick-add-option>b{font-size:22px;color:var(--muted)}.floating-add{position:fixed;z-index:60;right:max(20px,calc((100vw - 620px)/2 + 20px));bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:50%;background:#b8f36b;color:#101608;font-size:32px;line-height:1;box-shadow:0 10px 30px #0008,0 0 0 6px #b8f36b1a}.account-dialog[open]{animation:dialog-in .18s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 </style>
   </head>
   <body>
@@ -383,7 +383,14 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
           <div id="accountStatus" class="status" role="status" aria-live="polite"></div>
         </form>
       </dialog>
-      <button type="button" class="floating-add" id="floatingAdd" aria-label="Add transaction or account">＋</button>
+      <dialog id="quickAddDialog" class="account-dialog" aria-label="Create new">
+        <div class="dialog-panel">
+          <div class="sectionhead"><div><span class="section-label">QUICK ACTION</span><h2>What would you like to add?</h2></div><button type="button" class="icon-close" id="closeQuickAdd" aria-label="Close">×</button></div>
+          <button type="button" class="quick-add-option" id="quickAddExpense"><span>↘</span><span><strong>New transaction</strong><small>Expense, income, transfer or repayment</small></span><b>›</b></button>
+          <button type="button" class="quick-add-option" id="quickAddBank"><span>▤</span><span><strong>Bank or wallet</strong><small>Add an account and opening balance</small></span><b>›</b></button>
+        </div>
+      </dialog>
+      <button type="button" class="floating-add" id="floatingAdd" aria-label="Add new item">＋</button>
       
       <nav class="bottom-nav" aria-label="Main navigation">
         <button type="button" class="nav-item active" data-tab="home">
@@ -795,11 +802,16 @@ label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}input,se
       });
       const accountDialog = $("accountDialog");
       const openAccountDialog = () => { accountDialog.showModal(); $("bankInstitution").focus(); };
-      $("floatingAdd").addEventListener("click", () => {
-        const choice = prompt("What would you like to add?\\n1. Transaction\\n2. Bank / account", "1");
-        if (choice === "2") openAccountDialog();
-        else if (choice === "1") { switchTab("home"); $("txForm").scrollIntoView({behavior:"smooth",block:"start"}); $("amount").focus({preventScroll:true}); }
+      const quickAddDialog = $("quickAddDialog");
+      $("floatingAdd").addEventListener("click", () => quickAddDialog.showModal());
+      $("closeQuickAdd").addEventListener("click", () => quickAddDialog.close());
+      $("quickAddExpense").addEventListener("click", () => {
+        quickAddDialog.close(); switchTab("home");
+        $("txForm").scrollIntoView({behavior:"smooth",block:"start"});
+        $("amount").focus({preventScroll:true});
       });
+      $("quickAddBank").addEventListener("click", () => { quickAddDialog.close(); openAccountDialog(); });
+      quickAddDialog.addEventListener("click", e => { if (e.target === quickAddDialog) quickAddDialog.close(); });
       $("addBankInline").addEventListener("click", openAccountDialog);
       $("closeAccountDialog").addEventListener("click", () => accountDialog.close());
       $("cancelAccountDialog").addEventListener("click", () => accountDialog.close());
