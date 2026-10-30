@@ -546,7 +546,9 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           const domainMap = {"State Bank of India":"sbi.co.in","Indian Bank":"indianbank.in","Kotak Mahindra Bank":"kotak.com","HDFC Bank":"hdfcbank.com","ICICI Bank":"icicibank.com","Axis Bank":"axisbank.com","Canara Bank":"canarabank.com","Bank of Baroda":"bankofbaroda.in","Punjab National Bank":"pnbindia.in","Union Bank of India":"unionbankofindia.co.in","IDFC FIRST Bank":"idfcfirstbank.com","Federal Bank":"federalbank.co.in","Indian Overseas Bank":"iob.in","South Indian Bank":"southindianbank.com","DBS Bank India":"dbs.com","RBL Bank":"rblbank.com","Equitas Small Finance Bank":"equitasbank.com","Jana Small Finance Bank":"janabank.com","Ujjivan Small Finance Bank":"ujjivansfb.in","Tamilnad Mercantile Bank":"tmb.in","City Union Bank":"cityunionbank.com","Karur Vysya Bank":"kvb.co.in"};
           const domain = domainMap[bank];
           const initials = bank.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join("").toUpperCase();
-          const logo = '<span class="bank-logo-fallback">'+esc(initials)+'</span>'+(domain ? '<img src="https://logo.clearbit.com/'+domain+'?size=128" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">' : '');
+          const bankSlugMap = {"State Bank of India":"sbin","Indian Bank":"idib","Kotak Mahindra Bank":"kkbk","HDFC Bank":"hdfc","ICICI Bank":"icic","Axis Bank":"utib","Canara Bank":"cnrb","Bank of Baroda":"barb","Punjab National Bank":"punb","Union Bank of India":"ubin","IDFC FIRST Bank":"idfb","Federal Bank":"fdrl","Indian Overseas Bank":"ioba","South Indian Bank":"sibl","DBS Bank India":"dbss","RBL Bank":"ratn","Equitas Small Finance Bank":"esfb","Jana Small Finance Bank":"jsfb","Ujjivan Small Finance Bank":"ujvn","Tamilnad Mercantile Bank":"tmbl","City Union Bank":"ciub","Karur Vysya Bank":"kvbl"};
+          const slug = bankSlugMap[bank];
+          const logo = '<span class="bank-logo-fallback">'+esc(initials)+'</span>'+(slug ? '<img src="https://cdn.jsdelivr.net/gh/praveenpuglia/indian-banks/assets/logos/'+slug+'/symbol.svg" alt="'+esc(bank)+' logo" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">' : '');
           const remove = removable ? '<button type="button" class="account-remove" data-remove-account="'+esc(x._id || x.id)+'">Export & remove</button>' : '';
           return '<div class="bank-card"><div class="bank-card-info"><div class="bank-logo">'+logo+'</div><div class="bank-meta"><strong>'+esc(bank)+'</strong><small>'+esc(x.name)+' · '+esc(x.kind)+'</small></div></div><div class="bank-card-actions"><div class="bank-balance">'+money(x.balance)+'</div>'+remove+'</div></div>';
         };
@@ -650,9 +652,10 @@ button:disabled{opacity:.58;cursor:wait;filter:saturate(.65)}@keyframes pocket-s
           };
           await send("/transactions", body);
           e.target.reset();
+          selectTransactionType("expense");
+          renderCategoryChoices();
           switchTab("home");
           $("date").value = today();
-          showTypes();
           msg("txStatus", "Saved.");
           await load();
         } catch (err) {
