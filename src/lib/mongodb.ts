@@ -17,23 +17,28 @@ declare global {
   var __pocketMongo: MongoCache | undefined;
 }
 
-const cache = globalThis.__pocketMongo ??= { client: null, promise: null };
+const cache = (globalThis.__pocketMongo ??= { client: null, promise: null });
 
 export async function getMongoClient(): Promise<MongoClient> {
   if (cache.client) return cache.client;
   if (!cache.promise) {
     const uri = process.env.MONGODB_URI;
     if (!uri) {
-      throw new Error("MONGODB_URI is not configured. Copy .env.example to .env.local.");
+      throw new Error(
+        "MONGODB_URI is not configured. Copy .env.example to .env.local.",
+      );
     }
     const client = new MongoClient(uri, options);
-    cache.promise = client.connect().then((connected) => {
-      cache.client = connected;
-      return connected;
-    }).catch((error) => {
-      cache.promise = null;
-      throw error;
-    });
+    cache.promise = client
+      .connect()
+      .then((connected) => {
+        cache.client = connected;
+        return connected;
+      })
+      .catch((error) => {
+        cache.promise = null;
+        throw error;
+      });
   }
   return cache.promise;
 }

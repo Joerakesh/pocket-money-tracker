@@ -5,8 +5,7 @@ const focusRing =
 const cardBase =
   "min-w-0 rounded-[20px] border border-white/[.075] p-4 shadow-[0_12px_34px_rgba(0,0,0,.14)] min-[421px]:rounded-3xl min-[421px]:p-[19px]";
 
-const btn =
-  `w-full min-w-0 cursor-pointer rounded-[13px] border border-white/[.075] px-[13px] py-3 font-bold text-[#f5f7fb] transition duration-150 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60 ${focusRing}`;
+const btn = `w-full min-w-0 cursor-pointer rounded-[13px] border border-white/[.075] px-[13px] py-3 font-bold text-[#f5f7fb] transition duration-150 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60 ${focusRing}`;
 
 export const ui = {
   focusRing,
@@ -17,7 +16,8 @@ export const ui = {
   h2: "mb-3.5 text-base font-bold tracking-[-.035em]",
   h2Flush: "text-base font-bold tracking-[-.035em]",
   sectionHead: "flex items-center justify-between gap-2",
-  sectionLabel: "block text-[10px] font-bold uppercase tracking-[.1em] text-[#929bad]",
+  sectionLabel:
+    "block text-[10px] font-bold uppercase tracking-[.1em] text-[#929bad]",
   note: "mt-0.5 mb-3 text-[11px] leading-[1.55] text-[#929bad]",
   empty: "py-3.5 text-xs text-[#929bad]",
   muted: "text-[#929bad]",
@@ -35,7 +35,8 @@ export const ui = {
   iconButton: `size-[42px] shrink-0 cursor-pointer rounded-full border border-white/[.075] bg-[#222a38] p-0 text-lg text-[#f5f7fb] transition active:scale-[.98] ${focusRing}`,
   smallButton: `mt-[5px] w-auto cursor-pointer rounded-[9px] border border-white/[.075] bg-[#222a38] px-[9px] py-[5px] text-[10px] font-bold text-[#f5f7fb] ${focusRing}`,
 
-  formGrid: "grid grid-cols-2 gap-[13px] max-[420px]:grid-cols-1 [&>div]:min-w-0",
+  formGrid:
+    "grid grid-cols-2 gap-[13px] max-[420px]:grid-cols-1 [&>div]:min-w-0",
   full: "col-span-full",
   list: "grid",
   row: "flex min-w-0 items-center justify-between gap-3 border-b border-white/[.075] py-[13px] text-[13px] last:border-b-0 max-[520px]:gap-2",
@@ -45,7 +46,8 @@ export const ui = {
   rowSub: "mt-[3px] block text-[11px] text-[#929bad]",
 
   metrics: "grid grid-cols-2 gap-[9px]",
-  metric: "min-w-0 rounded-[17px] border border-white/[.035] bg-white/[.035] p-3.5",
+  metric:
+    "min-w-0 rounded-[17px] border border-white/[.035] bg-white/[.035] p-3.5",
   metricLabel: "text-[11px] text-[#929bad]",
   metricValue:
     "mt-1 block text-xl tracking-[-.045em] [overflow-wrap:anywhere] max-[420px]:text-lg",

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collections, accountBalances, accountById, accountExport, amountIn, bad, clean, endOfMonth, HttpError, monthStart, paiseToRupees, parseId, spendingEffect, syncToSheets, today } from "@/lib/finance";
+import { computeSummary } from "@/lib/ledger";
 import { createHash } from "node:crypto";
 
 export const runtime="nodejs";
@@ -63,8 +64,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const id=parseId(m[1]),original=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!original)bad("Transaction not found.",404);if(original.settled)bad("Settled transactions cannot be edited. Add a correcting transaction instead.");
   const amountPaise=amountIn(b.amount),date=clean(b.date,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+"T00:00:00")))bad("Enter a valid transaction date.");
   const revision={amountPaise:original.amountPaise,date:original.date,category:original.category,note:original.note||"",changedAt:new Date()};
-  await c.tx.updateOne({_id:id},{$set:{amountPaise,date,category:clean(b.category||original.category||"Other",50),note:clean(b.note,200),updatedAt:new Date()},$push:{revisions:{$each:[revision],$slice:-20}}});
-  const updated=await c.tx.findOne({_id:id});void syncToSheets(c,"upsert",updated,id);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
+  await c.tx.updateOne({_id:id},{$set:{amountPaise,date,category:clean(b.category||original.category||"Other",50),note:clean(b.note,200),updatedAt:new Date()},$push:{revisions:{$each:[revision],$slice:-20}}} as any);
+  const updated=await c.tx.findOne({_id:id});if(!updated)bad("Transaction not found.",404);void syncToSheets(c,"upsert",updated,id);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
  }
  if(p==="/budgets"&&method==="GET"){const list=await c.budgets.find().sort({category:1}).toArray();return json(list.map((x:any)=>({...x,amount:paiseToRupees(x.amountPaise),_id:String(x._id)})));}
  if(p==="/budgets"&&method==="POST"){const category=clean(b.category,50),amountPaise=amountIn(b.amount);if(!category)bad("Category is required.");await c.budgets.updateOne({category},{$set:{category,amountPaise,updatedAt:new Date()}},{upsert:true});return json({ok:true});}
@@ -99,11 +100,9 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const t=today(),[st,monthRows,unpaidRows,balances]=await Promise.all([
    getSettings(c),c.tx.find({deletedAt:{$exists:false},date:{$gte:monthStart(t),$lte:endOfMonth(t)}},{projection:{date:1,type:1,amountPaise:1,category:1,settled:1}}).toArray(),
    c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c)]);
-  let todaySpent=0,monthSpent=0,monthIncome=0,owedToFriends=0,owedByFriends=0;const byCat:Record<string,number>={};
-  for(const item of monthRows){if(item.date===t&&["expense","borrowed_expense"].includes(item.type))todaySpent+=item.amountPaise;monthSpent+=spendingEffect(item);if(item.type==="income")monthIncome+=item.amountPaise;if(["expense","borrowed_expense"].includes(item.type))byCat[item.category||"Other"]=(byCat[item.category||"Other"]||0)+item.amountPaise;if(item.type==="refund")byCat[item.category||"Other"]=(byCat[item.category||"Other"]||0)-item.amountPaise;}
-  for(const item of unpaidRows){if(item.type==="borrowed_expense")owedToFriends+=item.amountPaise;if(item.type==="lent")owedByFriends+=item.amountPaise;}
-  const cash=balances.reduce((s:any,a:any)=>s+a.balancePaise,0),days=Math.max(1,Math.round((new Date(`${st.payday}T12:00:00`).getTime()-new Date(`${t}T12:00:00`).getTime())/86400000)+1),reserve=Number(st.reservePaise||0),spendable=cash-owedToFriends-reserve;
-  return json({settings:{...st,reserve:paiseToRupees(reserve)},accounts:balances.map((a:any)=>({id:String(a._id),name:a.name,institution:a.institution||"",kind:a.kind,balance:paiseToRupees(a.balancePaise)})),totalBalance:paiseToRupees(cash),spendable:paiseToRupees(spendable),owedToFriends:paiseToRupees(owedToFriends),owedByFriends:paiseToRupees(owedByFriends),days,perDay:paiseToRupees(Math.floor(spendable/days)),todaySpent:paiseToRupees(todaySpent),monthSpent:paiseToRupees(monthSpent),monthIncome:paiseToRupees(monthIncome),byCat:Object.fromEntries(Object.entries(byCat).map(([k,v])=>[k,paiseToRupees(v)]))});
+  const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise)});
+  const {todaySpent,monthSpent,monthIncome,owedToFriends,owedByFriends,byCat,cash,days,reserve,spendable}=r;
+  return json({settings:{...st,reserve:paiseToRupees(reserve)},accounts:balances.map((a:any)=>({id:String(a._id),name:a.name,institution:a.institution||"",kind:a.kind,balance:paiseToRupees(a.balancePaise)})),totalBalance:paiseToRupees(cash),spendable:paiseToRupees(spendable),owedToFriends:paiseToRupees(owedToFriends),owedByFriends:paiseToRupees(owedByFriends),days,perDay:paiseToRupees(r.perDay),todaySpent:paiseToRupees(todaySpent),monthSpent:paiseToRupees(monthSpent),monthIncome:paiseToRupees(monthIncome),byCat:Object.fromEntries(Object.entries(byCat).map(([k,v])=>[k,paiseToRupees(v)]))});
  }
  return json({error:"Not found."},404);
 }
