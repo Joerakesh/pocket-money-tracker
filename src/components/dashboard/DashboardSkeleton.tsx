@@ -1,10 +1,11 @@
+import type { ReactNode } from "react";
 import { ui } from "../ui";
 
 function Bar({ className = "" }: { className?: string }) {
   return <div aria-hidden="true" className={`animate-pulse rounded-lg bg-white/[.07] ${className}`} />;
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children }: { children: ReactNode }) {
   return <section className={ui.card}>{children}</section>;
 }
 
