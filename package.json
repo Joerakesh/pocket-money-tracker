@@ -1,17 +1,32 @@
 {
   "name": "pocket-money-tracker",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "Personal finance tracker with account balances, transfers, debts, budgets and CSV imports",
-  "main": "server.js",
+  "description": "Private personal finance tracker built with Next.js and MongoDB",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "mongodb": "^6.12.0"
+    "mongodb": "^6.12.0",
+    "next": "^16.0.10",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.7.2"
   }
 }
