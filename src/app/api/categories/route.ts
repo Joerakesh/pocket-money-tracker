@@ -1,0 +1,5 @@
+import { NextRequest,NextResponse } from "next/server";
+import { collections } from "@/lib/finance";
+export const runtime="nodejs";export const dynamic="force-dynamic";
+export async function GET(){const c=await collections(),rows=await c.db.collection("categories").find().sort({name:1,subcategory:1}).toArray();return NextResponse.json(rows.map(x=>({id:String(x._id),name:x.name,subcategory:x.subcategory||""})));}
+export async function POST(req:NextRequest){const b=await req.json().catch(()=>({})),name=String(b.name||"").trim().slice(0,50),subcategory=String(b.subcategory||"").trim().slice(0,50);if(!name)return NextResponse.json({error:"Category name is required."},{status:400});const c=await collections(),col=c.db.collection("categories"),existing=await col.findOne({name,subcategory});if(existing)return NextResponse.json({error:"Category already exists."},{status:409});const r=await col.insertOne({name,subcategory,createdAt:new Date()});return NextResponse.json({ok:true,id:String(r.insertedId)},{status:201});}
