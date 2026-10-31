@@ -9,6 +9,7 @@ import {
 import AppHeader from "./layout/AppHeader";
 import BottomNavigation from "./layout/BottomNavigation";
 import Overview from "./dashboard/Overview";
+import DashboardSkeleton from "./dashboard/DashboardSkeleton";
 import TransactionSection from "./transactions/TransactionSection";
 import AccountsSection from "./accounts/AccountsSection";
 import ActivitySection from "./activity/ActivitySection";
@@ -337,7 +338,7 @@ export default function PocketApp() {
           </div>
         )}
         {busy && !summary ? (
-          <section className={ui.card}>Loading your financial data…</section>
+          <DashboardSkeleton />
         ) : (
           <div className="grid grid-cols-1 items-start gap-[13px] [&>*]:w-full [&>*]:min-w-0">
             {tab === "home" && (
