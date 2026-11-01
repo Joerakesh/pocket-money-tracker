@@ -14,6 +14,7 @@ import TransactionSection from "./transactions/TransactionSection";
 import AccountsSection from "./accounts/AccountsSection";
 import ActivitySection from "./activity/ActivitySection";
 import PlanningSection from "./planning/PlanningSection";
+import FinancialIntelligenceSection from "./planning/FinancialIntelligenceSection";
 import DataManagementSection from "./settings/DataManagementSection";
 import { ui } from "./ui";
 
@@ -60,7 +61,7 @@ type Recurring = {
   category: string;
   active?: boolean;
 };
-type Settings = { payday?: string; reserve?: number; reservePaise?: number };
+type Settings = { payday?: string; reserve?: number; reservePaise?: number; financialPlan?: { allocationPercentages: { essentials: number; savings: number; personal: number; future: number }; financialFloor: number; emergencyTarget: number } };
 type ImportRow = { importKey?: string; date: string; description: string; amount: number };
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch("/api" + path, {
@@ -253,6 +254,13 @@ export default function PocketApp() {
       notify(err instanceof Error ? err.message : "Could not save settings.");
     }
   };
+  const saveFinancialPlan = async (financialPlan: NonNullable<Settings["financialPlan"]>) => {
+    await api("/financial-plan", {
+      method: "PUT",
+      body: JSON.stringify(financialPlan),
+    });
+    await load();
+  };
   const removeTx = async (tx: Tx) => {
     if (!window.confirm("Move this transaction to deleted history?")) return;
     try {
@@ -386,6 +394,13 @@ export default function PocketApp() {
                 goals={goals}
                 recurring={recurring}
                 onSave={savePlan}
+              />
+              <FinancialIntelligenceSection
+                summary={summary}
+                transactions={transactions}
+                budgets={budgets}
+                settings={settings}
+                onSave={saveFinancialPlan}
               />
             )}
             {tab === "more" && (

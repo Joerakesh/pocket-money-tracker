@@ -29,6 +29,20 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   if(!exported||exported.length!==current.length||exported.some((v:string,i:number)=>v!==current[i]))bad("The account transaction history changed after export. Download a fresh backup before deleting.",409);
   const ids=exported.map(parseId);if(ids.length)await c.tx.deleteMany({_id:{$in:ids}});await c.accounts.deleteOne({_id:id});return json({ok:true,deletedTransactions:ids.length,deletedAccount:data.account.name});
  }
+ if(p==="/financial-plan"&&method==="GET"){
+  const st=await getSettings(c),plan=st.financialPlan||{allocationPercentages:{essentials:50,savings:10,personal:25,future:15},financialFloorPaise:0,emergencyTargetPaise:0};
+  return json({allocationPercentages:plan.allocationPercentages,financialFloor:paiseToRupees(Number(plan.financialFloorPaise||0)),emergencyTarget:paiseToRupees(Number(plan.emergencyTargetPaise||0))});
+ }
+ if(p==="/financial-plan"&&method==="PUT"){
+  const allocation=b.allocationPercentages||{},keys=["essentials","savings","personal","future"];
+  const percentages:any={};let total=0;
+  for(const key of keys){const value=Number(allocation[key]);if(!Number.isFinite(value)||value<0||value>100)bad("Allocation percentages must be between 0 and 100.");percentages[key]=value;total+=value;}
+  if(Math.abs(total-100)>0.001)bad("Allocation percentages must add up to 100%.");
+  const toPaise=(value:unknown,label:string)=>{const n=Number(value);if(!Number.isFinite(n)||n<0||!Number.isSafeInteger(Math.round(n*100)))bad(label+" must be a valid non-negative amount.");return Math.round(n*100);};
+  const financialFloorPaise=toPaise(b.financialFloor,"Financial floor"),emergencyTargetPaise=toPaise(b.emergencyTarget,"Emergency target");
+  await c.settings.updateOne({_id:"main"},{$set:{financialPlan:{allocationPercentages:percentages,financialFloorPaise,emergencyTargetPaise},updatedAt:new Date()}},{upsert:true});
+  return json({ok:true});
+ }
  if(p==="/settings"&&method==="GET")return json(await getSettings(c));
  if(p==="/settings"&&method==="PUT"){
   const payday=clean(b.payday||endOfMonth(),10);if(!/^\d{4}-\d{2}-\d{2}$/.test(payday))bad("Payday must use YYYY-MM-DD.");
