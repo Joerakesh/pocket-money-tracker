@@ -86,10 +86,19 @@ async function dispatch(req:NextRequest,ctx:Ctx){
  }
  if(p==="/budgets"&&method==="GET"){const list=await c.budgets.find().sort({category:1}).toArray();return json(list.map((x:any)=>({...x,amount:paiseToRupees(x.amountPaise),_id:String(x._id)})));}
  if(p==="/budgets"&&method==="POST"){const category=clean(b.category,50),amountPaise=amountIn(b.amount);if(!category)bad("Category is required.");await c.budgets.updateOne({category},{$set:{category,amountPaise,updatedAt:new Date()}},{upsert:true});return json({ok:true});}
+ m=p.match(/^\\/budgets\\/([^/]+)$/);
+ if(m&&method==="PUT"){const id=parseId(m[1]),category=clean(b.category,50),amountPaise=amountIn(b.amount);if(!category)bad("Category is required.");const result=await c.budgets.updateOne({_id:id},{$set:{category,amountPaise,updatedAt:new Date()}});if(!result.matchedCount)bad("Budget not found.",404);return json({ok:true});}
+ if(m&&method==="DELETE"){const result=await c.budgets.deleteOne({_id:parseId(m[1])});if(!result.deletedCount)bad("Budget not found.",404);return json({ok:true});}
  if(p==="/goals"&&method==="GET"){const list=await c.goals.find().sort({createdAt:-1}).toArray();return json(list.map((g:any)=>({...g,target:paiseToRupees(g.targetPaise),saved:paiseToRupees(g.savedPaise),_id:String(g._id)})));}
  if(p==="/goals"&&method==="POST"){const name=clean(b.name,80),targetPaise=amountIn(b.target),savedPaise=Math.max(0,Math.round(Number(b.saved||0)*100));if(!name)bad("Goal name is required.");await c.goals.insertOne({name,targetPaise,savedPaise,createdAt:new Date()});return json({ok:true});}
+ m=p.match(/^\\/goals\\/([^/]+)$/);
+ if(m&&method==="PUT"){const id=parseId(m[1]),name=clean(b.name,80),targetPaise=amountIn(b.target),savedPaise=Math.max(0,Math.round(Number(b.saved||0)*100));if(!name)bad("Goal name is required.");const result=await c.goals.updateOne({_id:id},{$set:{name,targetPaise,savedPaise,updatedAt:new Date()}});if(!result.matchedCount)bad("Savings goal not found.",404);return json({ok:true});}
+ if(m&&method==="DELETE"){const result=await c.goals.deleteOne({_id:parseId(m[1])});if(!result.deletedCount)bad("Savings goal not found.",404);return json({ok:true});}
  if(p==="/recurring"&&method==="GET")return json(await c.recurring.find().sort({dueDay:1}).toArray());
  if(p==="/recurring"&&method==="POST"){const name=clean(b.name,80),amountPaise=amountIn(b.amount),dueDay=Number(b.dueDay);if(!name)bad("Name is required.");if(!Number.isInteger(dueDay)||dueDay<1||dueDay>31)bad("Due day must be between 1 and 31.");await c.recurring.insertOne({name,amountPaise,dueDay,category:clean(b.category||"Subscriptions",50),active:true,createdAt:new Date()});return json({ok:true});}
+ m=p.match(/^\\/recurring\\/([^/]+)$/);
+ if(m&&method==="PUT"){const id=parseId(m[1]),name=clean(b.name,80),amountPaise=amountIn(b.amount),dueDay=Number(b.dueDay);if(!name)bad("Name is required.");if(!Number.isInteger(dueDay)||dueDay<1||dueDay>31)bad("Due day must be between 1 and 31.");const result=await c.recurring.updateOne({_id:id},{$set:{name,amountPaise,dueDay,category:clean(b.category||"Subscriptions",50),updatedAt:new Date()}});if(!result.matchedCount)bad("Recurring reminder not found.",404);return json({ok:true});}
+ if(m&&method==="DELETE"){const result=await c.recurring.deleteOne({_id:parseId(m[1])});if(!result.deletedCount)bad("Recurring reminder not found.",404);return json({ok:true});}
  if(p==="/import/preview"&&method==="POST"){
   const text=await req.text();const lines=text.split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)bad("CSV appears empty.");
   const headerIndex=lines.findIndex(l=>/date/i.test(l)&&/(debit|withdrawal|amount)/i.test(l));if(headerIndex<0)bad("Could not identify the CSV columns. Export a CSV with date and debit/credit or amount columns.");
