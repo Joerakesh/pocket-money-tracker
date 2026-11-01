@@ -95,7 +95,7 @@ export default function PWAInstallPrompt() {
           onClick={() => void install()}
           className="shrink-0 rounded-xl bg-[#b8f36b] px-3 py-2.5 text-xs font-extrabold text-[#101608] transition hover:bg-[#ccff91] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b8f36b]"
         >
-          {installEvent ? "Install app" : "How to install"}
+          Install app
         </button>
       </div>
 
