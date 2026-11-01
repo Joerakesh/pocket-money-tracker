@@ -113,9 +113,48 @@ test("safe-to-spend = cash - unpaid borrowed expenses - reserve, spread over day
   assert.equal(s.perDay, Math.floor(2300_00 / 11));
 });
 
-test("payday today or in the past gives 1 day, never divides by zero or a negative", () => {
+test("payday rolls forward to the next monthly date after the configured date passes", () => {
   assert.equal(computeSummary({ ...base, payday: "2026-10-10" }).days, 1);
-  assert.equal(computeSummary({ ...base, payday: "2026-09-01" }).days, 1);
+  assert.equal(computeSummary({ ...base, payday: "2026-09-01" }).days, 23);
+  assert.equal(computeSummary({ ...base, today: "2026-11-01", payday: "2026-10-31" }).days, 30);
+});
+
+test("allocation-aware safe-to-spend protects reserve, savings and future allocations", () => {
+  const s = computeSummary({
+    ...base,
+    balancesPaise: [3000_00],
+    reservePaise: 500_00,
+    allocation: {
+      incomePaise: 3000_00,
+      essentialsPercent: 0,
+      savingsPercent: 33,
+      personalPercent: 27,
+      futurePercent: 40,
+      cycleSpendPaise: 0,
+    },
+  });
+  assert.equal(s.ledgerSpendable, 2500_00);
+  assert.equal(s.protectedAllocations, 2190_00);
+  assert.equal(s.remainingAllocatedSpending, 810_00);
+  assert.equal(s.spendable, 310_00);
+  assert.equal(s.days, 11);
+  assert.equal(s.perDay, Math.floor(310_00 / 11));
+});
+
+test("cycle spending reduces safe-to-spend and does not include transfers or income", () => {
+  const s = computeSummary({
+    ...base,
+    balancesPaise: [2900_00],
+    allocation: {
+      incomePaise: 3000_00,
+      essentialsPercent: 0,
+      savingsPercent: 33,
+      personalPercent: 27,
+      futurePercent: 40,
+      cycleSpendPaise: 100_00,
+    },
+  });
+  assert.equal(s.spendable, 210_00);
 });
 
 test("negative spendable yields a negative per-day allowance", () => {
