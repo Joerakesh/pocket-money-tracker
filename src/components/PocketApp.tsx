@@ -376,6 +376,8 @@ export default function PocketApp() {
           onSettings={() => setTab("more")}
           onLogout={() => { if (firebaseAuth) void signOut(firebaseAuth); }}
           userEmail={firebaseAuth?.currentUser?.email || ""}
+          userName={firebaseAuth?.currentUser?.displayName || ""}
+          photoURL={firebaseAuth?.currentUser?.photoURL}
         />
         {error && (
           <div
