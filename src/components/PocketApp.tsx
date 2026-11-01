@@ -7,7 +7,6 @@ import {
   type FormEvent,
 } from "react";
 import AppHeader from "./layout/AppHeader";
-import PWAInstallPrompt from "./layout/PWAInstallPrompt";
 import BottomNavigation from "./layout/BottomNavigation";
 import Overview from "./dashboard/Overview";
 import DashboardSkeleton from "./dashboard/DashboardSkeleton";
@@ -62,8 +61,27 @@ type Recurring = {
   category: string;
   active?: boolean;
 };
-type Settings = { payday?: string; reserve?: number; reservePaise?: number; financialPlan?: { allocationPercentages: { essentials: number; savings: number; personal: number; future: number }; financialFloor: number; emergencyTarget: number } };
-type ImportRow = { importKey?: string; date: string; description: string; amount: number };
+type Settings = {
+  payday?: string;
+  reserve?: number;
+  reservePaise?: number;
+  financialPlan?: {
+    allocationPercentages: {
+      essentials: number;
+      savings: number;
+      personal: number;
+      future: number;
+    };
+    financialFloor: number;
+    emergencyTarget: number;
+  };
+};
+type ImportRow = {
+  importKey?: string;
+  date: string;
+  description: string;
+  amount: number;
+};
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch("/api" + path, {
     ...init,
@@ -76,7 +94,9 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const data: unknown = await res.json().catch(() => ({}));
   if (!res.ok) {
     const message =
-      typeof data === "object" && data !== null && "error" in data &&
+      typeof data === "object" &&
+      data !== null &&
+      "error" in data &&
       typeof data.error === "string"
         ? data.error
         : "Request failed";
@@ -212,9 +232,20 @@ export default function PocketApp() {
       kind === "budget"
         ? { category: f.get("category"), amount: Number(f.get("amount")) }
         : kind === "goal"
-          ? { name: f.get("name"), target: Number(f.get("target")), saved: Number(f.get("saved") || 0) }
-          : { name: f.get("name"), amount: Number(f.get("amount")), dueDay: Number(f.get("dueDay")), category: f.get("category") };
-    const endpoint = "/" + (kind === "goal" ? "goals" : kind === "budget" ? "budgets" : "recurring");
+          ? {
+              name: f.get("name"),
+              target: Number(f.get("target")),
+              saved: Number(f.get("saved") || 0),
+            }
+          : {
+              name: f.get("name"),
+              amount: Number(f.get("amount")),
+              dueDay: Number(f.get("dueDay")),
+              category: f.get("category"),
+            };
+    const endpoint =
+      "/" +
+      (kind === "goal" ? "goals" : kind === "budget" ? "budgets" : "recurring");
     try {
       await api(id ? endpoint + "/" + id : endpoint, {
         method: id ? "PUT" : "POST",
@@ -226,10 +257,19 @@ export default function PocketApp() {
       notify(err instanceof Error ? err.message : "Could not save.");
     }
   };
-  const removePlan = async (kind: "budget" | "goal" | "recurring", id: string) => {
-    const label = kind === "budget" ? "category budget" : kind === "goal" ? "savings goal" : "recurring reminder";
+  const removePlan = async (
+    kind: "budget" | "goal" | "recurring",
+    id: string,
+  ) => {
+    const label =
+      kind === "budget"
+        ? "category budget"
+        : kind === "goal"
+          ? "savings goal"
+          : "recurring reminder";
     if (!window.confirm("Delete this " + label + "?")) return;
-    const endpoint = kind === "goal" ? "goals" : kind === "budget" ? "budgets" : "recurring";
+    const endpoint =
+      kind === "goal" ? "goals" : kind === "budget" ? "budgets" : "recurring";
     try {
       await api("/" + endpoint + "/" + id, { method: "DELETE" });
       notify(label[0].toUpperCase() + label.slice(1) + " deleted.");
@@ -255,7 +295,9 @@ export default function PocketApp() {
       notify(err instanceof Error ? err.message : "Could not save settings.");
     }
   };
-  const saveFinancialPlan = async (financialPlan: NonNullable<Settings["financialPlan"]>) => {
+  const saveFinancialPlan = async (
+    financialPlan: NonNullable<Settings["financialPlan"]>,
+  ) => {
     await api("/financial-plan", {
       method: "PUT",
       body: JSON.stringify(financialPlan),
@@ -311,7 +353,6 @@ export default function PocketApp() {
         key={refreshKey}
         className="mx-auto max-w-[620px] px-[18px] pt-6 pb-[125px] min-[760px]:pt-8 max-[420px]:px-[13px] max-[420px]:pt-4 max-[360px]:px-[11px]"
       >
-        <PWAInstallPrompt />
         <AppHeader
           onRefresh={() => setRefreshKey((x) => x + 1)}
           onSettings={() => setTab("more")}
