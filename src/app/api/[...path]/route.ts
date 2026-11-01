@@ -43,7 +43,10 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   await c.settings.updateOne({_id:"main"},{$set:{financialPlan:{allocationPercentages:percentages,financialFloorPaise,emergencyTargetPaise},updatedAt:new Date()}},{upsert:true});
   return json({ok:true});
  }
- if(p==="/settings"&&method==="GET")return json(await getSettings(c));
+ if(p==="/settings"&&method==="GET"){
+  const st=await getSettings(c),plan=st.financialPlan;
+  return json({...st,financialPlan:plan?{allocationPercentages:plan.allocationPercentages,financialFloor:paiseToRupees(Number(plan.financialFloorPaise||0)),emergencyTarget:paiseToRupees(Number(plan.emergencyTargetPaise||0))}:undefined});
+ }
  if(p==="/settings"&&method==="PUT"){
   const payday=clean(b.payday||endOfMonth(),10);if(!/^\d{4}-\d{2}-\d{2}$/.test(payday))bad("Payday must use YYYY-MM-DD.");
   const reservePaise=Math.max(0,Math.round(Number(b.reserve||0)*100));if(!Number.isSafeInteger(reservePaise))bad("Reserve is invalid.");
