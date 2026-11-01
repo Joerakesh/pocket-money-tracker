@@ -123,12 +123,28 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const all=await c.tx.find().sort({date:1,createdAt:1}).toArray();for(const item of all)await syncToSheets(c,"upsert",item,item._id);return json({ok:true,attempted:all.length,message:"Sync attempted. Check server logs for sync errors."});
  }
  if(p==="/summary"&&method==="GET"){
-  const t=today(),[st,monthRows,unpaidRows,balances]=await Promise.all([
+  const t=today(),[st,monthRows,unpaidRows,balances,latestIncome]=await Promise.all([
    getSettings(c),c.tx.find({deletedAt:{$exists:false},date:{$gte:monthStart(t),$lte:endOfMonth(t)}},{projection:{date:1,type:1,amountPaise:1,category:1,settled:1}}).toArray(),
-   c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c)]);
-  const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise)});
+   c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c),
+   c.tx.findOne({deletedAt:{$exists:false},type:"income"},{sort:{date:-1,createdAt:-1},projection:{date:1,amountPaise:1,createdAt:1}})]);
+  let cycleSpendPaise=0;
+  if(latestIncome){
+   const cycleFilter:any={deletedAt:{$exists:false},$or:[{date:{$gt:latestIncome.date}},{date:latestIncome.date,...(latestIncome.createdAt?{createdAt:{$gte:latestIncome.createdAt}}:{})}]};
+   const cycleRows=await c.tx.find(cycleFilter,{projection:{type:1,amountPaise:1}}).toArray();
+   cycleSpendPaise=cycleRows.reduce((sum:number,row:any)=>sum+spendingEffect(row),0);
+  }
+  const percentages=st.financialPlan?.allocationPercentages;
+  const allocation=latestIncome&&percentages?{
+   incomePaise:Number(latestIncome.amountPaise||0),
+   essentialsPercent:Number(percentages.essentials||0),
+   savingsPercent:Number(percentages.savings||0),
+   personalPercent:Number(percentages.personal||0),
+   futurePercent:Number(percentages.future||0),
+   cycleSpendPaise,
+  }:undefined;
+  const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise),allocation});
   const {todaySpent,monthSpent,monthIncome,owedToFriends,owedByFriends,byCat,cash,days,reserve,spendable}=r;
-  return json({settings:{...st,reserve:paiseToRupees(reserve)},accounts:balances.map((a:any)=>({id:String(a._id),name:a.name,institution:a.institution||"",kind:a.kind,balance:paiseToRupees(a.balancePaise)})),totalBalance:paiseToRupees(cash),spendable:paiseToRupees(spendable),owedToFriends:paiseToRupees(owedToFriends),owedByFriends:paiseToRupees(owedByFriends),days,perDay:paiseToRupees(r.perDay),todaySpent:paiseToRupees(todaySpent),monthSpent:paiseToRupees(monthSpent),monthIncome:paiseToRupees(monthIncome),byCat:Object.fromEntries(Object.entries(byCat).map(([k,v])=>[k,paiseToRupees(v)]))});
+  return json({settings:{...st,reserve:paiseToRupees(reserve)},accounts:balances.map((a:any)=>({id:String(a._id),name:a.name,institution:a.institution||"",kind:a.kind,balance:paiseToRupees(a.balancePaise)})),totalBalance:paiseToRupees(cash),spendable:paiseToRupees(spendable),ledgerSpendable:paiseToRupees(r.ledgerSpendable),protectedAllocations:paiseToRupees(r.protectedAllocations),remainingAllocatedSpending:Number.isFinite(r.remainingAllocatedSpending)?paiseToRupees(r.remainingAllocatedSpending):null,owedToFriends:paiseToRupees(owedToFriends),owedByFriends:paiseToRupees(owedByFriends),days,perDay:paiseToRupees(r.perDay),todaySpent:paiseToRupees(todaySpent),monthSpent:paiseToRupees(monthSpent),monthIncome:paiseToRupees(monthIncome),byCat:Object.fromEntries(Object.entries(byCat).map(([k,v])=>[k,paiseToRupees(v)]))});
  }
  return json({error:"Not found."},404);
 }
