@@ -7,6 +7,7 @@ import {
   type FormEvent,
 } from "react";
 import AppHeader from "./layout/AppHeader";
+import PWAInstallPrompt from "./layout/PWAInstallPrompt";
 import BottomNavigation from "./layout/BottomNavigation";
 import Overview from "./dashboard/Overview";
 import DashboardSkeleton from "./dashboard/DashboardSkeleton";
@@ -310,6 +311,7 @@ export default function PocketApp() {
         key={refreshKey}
         className="mx-auto max-w-[620px] px-[18px] pt-6 pb-[125px] min-[760px]:pt-8 max-[420px]:px-[13px] max-[420px]:pt-4 max-[360px]:px-[11px]"
       >
+        <PWAInstallPrompt />
         <AppHeader
           onRefresh={() => setRefreshKey((x) => x + 1)}
           onSettings={() => setTab("more")}
