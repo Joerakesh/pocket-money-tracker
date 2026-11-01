@@ -16,7 +16,7 @@ Built with **Next.js 16**, **React 19**, **TypeScript**, and **MongoDB**. The ap
 - **Data safety:** export an account and its linked transaction history before deleting it; transaction revisions and soft-deleted entries are retained.
 - **Installable PWA:** add Pocket to a supported browser or device home screen. The offline page is a fallback; live financial data requires an internet connection.
 
-MongoDB is the source of truth. The app does not require Google Sheets or a separate Express server.
+MongoDB is the source of truth. No separate Express server is needed.
 
 ## Requirements
 
