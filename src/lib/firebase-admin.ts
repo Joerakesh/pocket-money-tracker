@@ -20,7 +20,7 @@ export async function verifyFirebaseRequest(request: Request) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return null;
   try {
-    const decoded = await getFirebaseAdminAuth().verifyIdToken(token, true);
+    const decoded = await getFirebaseAdminAuth().verifyIdToken(token);
     if (!decoded.uid || !decoded.email || decoded.email_verified !== true) return null;
     return { uid: decoded.uid, email: decoded.email.toLowerCase() };
   } catch {
