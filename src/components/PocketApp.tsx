@@ -51,7 +51,6 @@ type Summary = {
   byCat: Record<string, number>;
   accounts?: Account[];
   recentTransactions?: Tx[];
-  settings?: Settings;
 };
 type Budget = { _id?: string; category: string; amount: number };
 type Goal = { _id?: string; name: string; target: number; saved: number };
@@ -140,7 +139,6 @@ export default function PocketApp() {
       setSummary(s);
       if (s.accounts) setAccounts(s.accounts);
       if (s.recentTransactions) setTransactions(s.recentTransactions);
-      if (s.settings) setSettings(s.settings);
       setBusy(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load your dashboard.");
