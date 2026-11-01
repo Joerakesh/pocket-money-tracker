@@ -49,6 +49,9 @@ type Summary = {
   monthSpent: number;
   monthIncome: number;
   byCat: Record<string, number>;
+  accounts?: Account[];
+  recentTransactions?: Tx[];
+  settings?: Settings;
 };
 type Budget = { _id?: string; category: string; amount: number };
 type Goal = { _id?: string; name: string; target: number; saved: number };
@@ -129,28 +132,40 @@ export default function PocketApp() {
   const load = useCallback(async () => {
     setBusy(true);
     setError("");
+
+    // The home screen is backed by one request. The summary response also
+    // carries the account snapshot and five latest transactions it displays.
     try {
-      const [s, a, t, b, g, r, st] = await Promise.all([
-        api<Summary>("/summary"),
-        api<Account[]>("/accounts"),
-        api<Tx[]>("/transactions"),
-        api<Budget[]>("/budgets"),
-        api<Goal[]>("/goals"),
-        api<Recurring[]>("/recurring"),
-        api<Settings>("/settings"),
-      ]);
+      const s = await api<Summary>("/summary");
       setSummary(s);
-      setAccounts(a);
-      setTransactions(t);
-      setBudgets(b);
-      setGoals(g);
-      setRecurring(r);
-      setSettings(st);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load your ledger.");
-    } finally {
+      if (s.accounts) setAccounts(s.accounts);
+      if (s.recentTransactions) setTransactions(s.recentTransactions);
+      if (s.settings) setSettings(s.settings);
       setBusy(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load your dashboard.");
+      setBusy(false);
+      return;
     }
+
+    // Load the larger datasets independently after the first screen is ready.
+    // One failed endpoint must not prevent the other sections from rendering.
+    const backgroundLoads = [
+      { name: "accounts", request: api<Account[]>("/accounts").then(setAccounts) },
+      { name: "transactions", request: api<Tx[]>("/transactions").then(setTransactions) },
+      { name: "budgets", request: api<Budget[]>("/budgets").then(setBudgets) },
+      { name: "goals", request: api<Goal[]>("/goals").then(setGoals) },
+      { name: "recurring items", request: api<Recurring[]>("/recurring").then(setRecurring) },
+      { name: "settings", request: api<Settings>("/settings").then(setSettings) },
+    ];
+    void Promise.allSettled(backgroundLoads.map((item) => item.request)).then((results) => {
+      const failed = results.flatMap((result, index) =>
+        result.status === "rejected" ? [backgroundLoads[index].name] : [],
+      );
+      if (failed.length) {
+        setError("Some sections could not be refreshed: " + failed.join(", ") + ".");
+      }
+    });
   }, []);
   useEffect(() => {
     void load();
@@ -395,8 +410,8 @@ export default function PocketApp() {
             {tab === "home" && (
               <Overview
                 summary={summary}
-                accounts={accounts}
-                transactions={transactions}
+                accounts={summary?.accounts ?? accounts}
+                transactions={summary?.recentTransactions ?? transactions}
                 onNavigate={(next, nextType) => {
                   setTab(next);
                   if (nextType) setType(nextType);
