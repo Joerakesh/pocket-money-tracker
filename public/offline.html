@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#080b11">
+    <title>You're offline · Pocket</title>
+    <style>
+      *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#080b11;color:#f5f7fb;font:15px/1.6 Inter,system-ui,sans-serif}
+      main{width:min(100%,420px);padding:28px;border:1px solid #293243;border-radius:24px;background:#111722;text-align:center}
+      .mark{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 18px;border-radius:18px;background:#b8f36b;color:#101608;font-size:28px;font-weight:800}
+      h1{margin:0 0 8px;font-size:23px}p{margin:0;color:#aab5c5}button{margin-top:22px;padding:12px 18px;border:0;border-radius:12px;background:#b8f36b;color:#101608;font-weight:750}
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark">P</div>
+      <h1>You're offline</h1>
+      <p>Pocket needs an internet connection to securely load your latest balances and transactions. Your financial data is not stored in the offline cache.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>
