@@ -22,6 +22,9 @@ type Tx = {
 type Summary = {
   totalBalance: number;
   spendable: number;
+  ledgerSpendable?: number;
+  protectedAllocations?: number;
+  remainingAllocatedSpending?: number | null;
   owedToFriends: number;
   owedByFriends: number;
   days: number;
@@ -142,7 +145,7 @@ export default function Overview({
           className="pointer-events-none absolute -right-[82px] -bottom-[122px] size-[190px] rounded-full border border-[#b8f36b]/[.08] shadow-[0_0_0_18px_rgba(184,243,107,.025),0_0_0_38px_rgba(184,243,107,.02)]"
         />
         <small className="text-[9px] font-extrabold tracking-[.09em] text-[#b6c2b0]">
-          SAFE TO SPEND · AFTER RESERVE AND UNPAID BORROWED EXPENSES
+          SAFE TO SPEND · AFTER RESERVE, SAVINGS & FUTURE ALLOCATIONS
         </small>
         <div
           className={`mt-[13px] mb-2 text-[clamp(38px,10vw,54px)] font-[780] leading-[1.08] tracking-[-.065em] max-[420px]:text-[40px] ${(s?.perDay ?? 0) < 0 ? ui.red : ui.green}`}
@@ -155,9 +158,14 @@ export default function Overview({
         <div className="text-xs text-[#b0bac9]">
           {money(s?.spendable || 0)} safe to spend · {s?.days ?? 0} day(s) until
           next allowance
+          {s?.protectedAllocations !== undefined && s.protectedAllocations > 0 && (
+            <span className="mt-1 block text-[10px] text-[#929bad]">
+              {money(s.ledgerSpendable || 0)} after reserve · {money(s.protectedAllocations)} kept for savings & future expenses
+            </span>
+          )}
         </div>
         <div className="relative z-[1] mt-[19px] flex items-center justify-between gap-3 border-t border-white/[.09] pt-[13px] text-[11px] text-[#b6c2b0]">
-          <span>Available after reserve</span>
+          <span>Available after allocations</span>
           <strong className="text-[13px] text-[#b8f36b]">
             {money(s?.spendable || 0)}
           </strong>
