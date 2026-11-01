@@ -206,35 +206,35 @@ export default function PocketApp() {
   ) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const id = String(f.get("_id") || "");
     const payload =
       kind === "budget"
         ? { category: f.get("category"), amount: Number(f.get("amount")) }
         : kind === "goal"
-          ? {
-              name: f.get("name"),
-              target: Number(f.get("target")),
-              saved: Number(f.get("saved") || 0),
-            }
-          : {
-              name: f.get("name"),
-              amount: Number(f.get("amount")),
-              dueDay: Number(f.get("dueDay")),
-              category: f.get("category"),
-            };
+          ? { name: f.get("name"), target: Number(f.get("target")), saved: Number(f.get("saved") || 0) }
+          : { name: f.get("name"), amount: Number(f.get("amount")), dueDay: Number(f.get("dueDay")), category: f.get("category") };
+    const endpoint = "/" + (kind === "goal" ? "goals" : kind === "budget" ? "budgets" : "recurring");
     try {
-      await api(
-        "/" +
-          (kind === "goal"
-            ? "goals"
-            : kind === "budget"
-              ? "budgets"
-              : "recurring"),
-        post(payload),
-      );
+      await api(id ? endpoint + "/" + id : endpoint, {
+        method: id ? "PUT" : "POST",
+        body: JSON.stringify(payload),
+      });
       notify("Saved successfully.");
       await load();
     } catch (err) {
       notify(err instanceof Error ? err.message : "Could not save.");
+    }
+  };
+  const removePlan = async (kind: "budget" | "goal" | "recurring", id: string) => {
+    const label = kind === "budget" ? "category budget" : kind === "goal" ? "savings goal" : "recurring reminder";
+    if (!window.confirm("Delete this " + label + "?")) return;
+    const endpoint = kind === "goal" ? "goals" : kind === "budget" ? "budgets" : "recurring";
+    try {
+      await api("/" + endpoint + "/" + id, { method: "DELETE" });
+      notify(label[0].toUpperCase() + label.slice(1) + " deleted.");
+      await load();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "Could not delete item.");
     }
   };
   const saveSettings = async (e: FormEvent<HTMLFormElement>) => {
@@ -395,6 +395,7 @@ export default function PocketApp() {
                   goals={goals}
                   recurring={recurring}
                   onSave={savePlan}
+                  onDelete={removePlan}
                 />
                 <FinancialIntelligenceSection
                   summary={summary}
