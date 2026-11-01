@@ -93,3 +93,36 @@ Pocket provides a web app manifest, install prompt, app icon, and service worker
 ## Privacy and deployment
 
 Keep `.env.local` out of version control. Use HTTPS in production, restrict access to the MongoDB database, and keep database credentials private. Back up MongoDB before production changes and test deployments against a non-production database where possible.
+
+## Authentication and private accounts
+
+Pocket uses **Firebase Authentication with Google sign-in** for identity and MongoDB Atlas for finance records. Firebase is not used as the finance database.
+
+### Firebase setup
+
+1. In Firebase Console, enable **Authentication → Sign-in method → Google**.
+2. Register the production domain under **Authentication → Settings → Authorized domains** (for example, `pocket-money-tracker-two.vercel.app`).
+3. Create a Firebase Web App and copy its configuration into the `NEXT_PUBLIC_FIREBASE_*` variables in Vercel.
+4. Create a dedicated Firebase service account for server-side ID-token verification. Add its project ID, client email, and private key to the server-only `FIREBASE_*` variables. Never expose the private key through a `NEXT_PUBLIC_*` variable or commit it.
+5. Set `OWNER_GOOGLE_EMAIL=rakeshjoe52@gmail.com` before the first owner login.
+
+### Required production environment variables
+
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` (optional if not present in the Firebase web config)
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `OWNER_GOOGLE_EMAIL`
+- Existing `MONGODB_URI` and `DB_NAME`
+
+After changing production variables, redeploy the application.
+
+### Account isolation and existing records
+
+Every finance API request verifies a Firebase ID token on the server. Unauthenticated requests are rejected. The verified Firebase UID determines a separate MongoDB collection namespace for each non-owner account. The verified owner email continues to use the existing unscoped collections, preserving the current finance records without a rename or copy migration. Other Google accounts start with their own empty accounts and records.
+
+Take a MongoDB Atlas backup before enabling authentication in production. Keep the owner email exact and configure it before the first sign-in; do not change it casually after friends have begun using Pocket.
