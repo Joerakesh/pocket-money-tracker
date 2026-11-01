@@ -51,7 +51,31 @@ export type SummaryInput = {
   monthRows: TxRow[];
   unpaidRows: { type: string; amountPaise: number }[];
   balancesPaise: number[];
+  allocation?: {
+    incomePaise: number;
+    essentialsPercent: number;
+    savingsPercent: number;
+    personalPercent: number;
+    futurePercent: number;
+    cycleSpendPaise: number;
+  };
 };
+
+function daysUntilNextPayday(today: string, payday: string) {
+  const [year, month, day] = today.split("-").map(Number);
+  const paydayDay = Number(payday.slice(8, 10));
+  const todayDate = new Date(year, month - 1, day, 12);
+  const makePayday = (y: number, m: number) => {
+    const lastDay = new Date(y, m, 0).getDate();
+    return new Date(y, m - 1, Math.min(paydayDay, lastDay), 12);
+  };
+  let next = makePayday(year, month);
+  if (next < todayDate) {
+    const nextMonth = new Date(year, month, 1, 12);
+    next = makePayday(nextMonth.getFullYear(), nextMonth.getMonth() + 1);
+  }
+  return Math.max(1, Math.round((next.getTime() - todayDate.getTime()) / 86400000) + 1);
+}
 
 export function computeSummary(i: SummaryInput) {
   let todaySpent = 0,
@@ -75,16 +99,21 @@ export function computeSummary(i: SummaryInput) {
     if (item.type === "lent") owedByFriends += item.amountPaise;
   }
   const cash = i.balancesPaise.reduce((s, n) => s + n, 0);
-  const days = Math.max(
-    1,
-    Math.round(
-      (new Date(`${i.payday}T12:00:00`).getTime() -
-        new Date(`${i.today}T12:00:00`).getTime()) /
-        86400000,
-    ) + 1,
-  );
+  const days = daysUntilNextPayday(i.today, i.payday);
   const reserve = Number(i.reservePaise || 0);
-  const spendable = cash - owedToFriends - reserve;
+  const ledgerSpendable = cash - owedToFriends - reserve;
+  const protectedAllocations = i.allocation
+    ? Math.round(i.allocation.incomePaise * (i.allocation.savingsPercent + i.allocation.futurePercent) / 100)
+    : 0;
+  const allocatedSpending = i.allocation
+    ? Math.round(i.allocation.incomePaise * (i.allocation.essentialsPercent + i.allocation.personalPercent) / 100)
+    : Number.POSITIVE_INFINITY;
+  const remainingAllocatedSpending = i.allocation
+    ? allocatedSpending - i.allocation.cycleSpendPaise
+    : Number.POSITIVE_INFINITY;
+  const spendable = i.allocation
+    ? Math.min(ledgerSpendable - protectedAllocations, remainingAllocatedSpending)
+    : ledgerSpendable;
   return {
     todaySpent,
     monthSpent,
@@ -95,6 +124,10 @@ export function computeSummary(i: SummaryInput) {
     cash,
     days,
     reserve,
+    ledgerSpendable,
+    protectedAllocations,
+    allocatedSpending,
+    remainingAllocatedSpending,
     spendable,
     perDay: Math.floor(spendable / days),
   };
