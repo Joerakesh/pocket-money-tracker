@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { collections, accountBalances, accountById, accountExport, amountIn, bad, clean, endOfMonth, HttpError, monthStart, paiseToRupees, parseId, spendingEffect, syncToSheets, today } from "@/lib/finance";
+import { collections, accountBalances, accountById, accountExport, amountIn, bad, clean, endOfMonth, HttpError, monthStart, paiseToRupees, parseId, spendingEffect, today } from "@/lib/finance";
 import { computeSummary } from "@/lib/ledger";
 import { createHash } from "node:crypto";
 
@@ -65,24 +65,24 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   if(["lent","borrowed_expense","repayment","collection"].includes(b.type)){doc.person=clean(b.person,80);if(!doc.person)bad("Enter the other person’s name.");}
   if(b.relatedTransactionId){const related=await c.tx.findOne({_id:parseId(b.relatedTransactionId)});if(!related)bad("Linked transaction not found.");doc.relatedTransactionId=String(related._id);}
   if(b.type==="borrowed_expense"){doc.accountId=null;doc.settled=false;}
-  const result=await c.tx.insertOne(doc);void syncToSheets(c,"upsert",doc,result.insertedId);return json({ok:true,id:String(result.insertedId)},201);
+  const result=await c.tx.insertOne(doc);return json({ok:true,id:String(result.insertedId)},201);
  }
  m=p.match(/^\/transactions\/([^/]+)\/(restore|settle)$/);
  if(m&&method==="POST"){
   const id=parseId(m[1]),action=m[2];
-  if(action==="restore"){const result=await c.tx.updateOne({_id:id,deletedAt:{$exists:true}},{$unset:{deletedAt:"",deletedByAction:""},$set:{restoredAt:new Date()}});if(!result.modifiedCount)bad("Deleted transaction not found or already restored.",404);const restored=await c.tx.findOne({_id:id});void syncToSheets(c,"upsert",restored,id);return json({ok:true});}
+  if(action==="restore"){const result=await c.tx.updateOne({_id:id,deletedAt:{$exists:true}},{$unset:{deletedAt:"",deletedByAction:""},$set:{restoredAt:new Date()}});if(!result.modifiedCount)bad("Deleted transaction not found or already restored.",404);const restored=await c.tx.findOne({_id:id});return json({ok:true});}
   const original=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!original||!["borrowed_expense","lent"].includes(original.type))bad("Only a loan or borrowed expense can be settled.");if(original.settled)bad("This item is already settled.");
   const accountId=clean(b.accountId,40);await accountById(c,accountId);const settlement:any={type:original.type==="borrowed_expense"?"repayment":"collection",amountPaise:original.amountPaise,date:today(),category:"Friends",note:`Settlement: ${original.note||original.person}`,person:original.person,accountId,relatedTransactionId:String(original._id),createdAt:new Date()};
-  const inserted=await c.tx.insertOne(settlement);void syncToSheets(c,"upsert",settlement,inserted.insertedId);await c.tx.updateOne({_id:id},{$set:{settled:true,settledAt:today()}});const updated=await c.tx.findOne({_id:id});void syncToSheets(c,"upsert",updated,id);return json({ok:true});
+  const inserted=await c.tx.insertOne(settlement);await c.tx.updateOne({_id:id},{$set:{settled:true,settledAt:today()}});const updated=await c.tx.findOne({_id:id});return json({ok:true});
  }
  m=p.match(/^\/transactions\/([^/]+)$/);
- if(m&&method==="DELETE"){const id=parseId(m[1]),t=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!t)bad("Transaction not found.",404);await c.tx.updateOne({_id:id,deletedAt:{$exists:false}},{$set:{deletedAt:new Date(),deletedByAction:"user"}});void syncToSheets(c,"delete",t,id);return json({ok:true,undoAvailable:true});}
+ if(m&&method==="DELETE"){const id=parseId(m[1]),t=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!t)bad("Transaction not found.",404);await c.tx.updateOne({_id:id,deletedAt:{$exists:false}},{$set:{deletedAt:new Date(),deletedByAction:"user"}});return json({ok:true,undoAvailable:true});}
  if(m&&method==="PUT"){
   const id=parseId(m[1]),original=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!original)bad("Transaction not found.",404);if(original.settled)bad("Settled transactions cannot be edited. Add a correcting transaction instead.");
   const amountPaise=amountIn(b.amount),date=clean(b.date,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+"T00:00:00")))bad("Enter a valid transaction date.");
   const revision={amountPaise:original.amountPaise,date:original.date,category:original.category,note:original.note||"",changedAt:new Date()};
   await c.tx.updateOne({_id:id},{$set:{amountPaise,date,category:clean(b.category||original.category||"Other",50),note:clean(b.note,200),updatedAt:new Date()},$push:{revisions:{$each:[revision],$slice:-20}}} as any);
-  const updated=await c.tx.findOne({_id:id});if(!updated)bad("Transaction not found.",404);void syncToSheets(c,"upsert",updated,id);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
+  const updated=await c.tx.findOne({_id:id});if(!updated)bad("Transaction not found.",404);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
  }
  if(p==="/budgets"&&method==="GET"){const list=await c.budgets.find().sort({category:1}).toArray();return json(list.map((x:any)=>({...x,amount:paiseToRupees(x.amountPaise),_id:String(x._id)})));}
  if(p==="/budgets"&&method==="POST"){const category=clean(b.category,50),amountPaise=amountIn(b.amount);if(!category)bad("Category is required.");await c.budgets.updateOne({category},{$set:{category,amountPaise,updatedAt:new Date()}},{upsert:true});return json({ok:true});}
@@ -115,12 +115,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
  if(p==="/import/commit"&&method==="POST"){
   const rows=Array.isArray(b.rows)?b.rows.slice(0,2000):[],accountId=clean(b.accountId,40);if(!rows.length)bad("No rows selected.");await accountById(c,accountId);let added=0,skipped=0;
   for(const row of rows){if(!row.importKey||!/^[a-f0-9]{64}$/.test(row.importKey)){skipped++;continue;}const exists=await c.tx.findOne({importKey:row.importKey});if(exists){skipped++;continue;}
-   const imported={importKey:row.importKey,importSource:"csv",type:row.type==="income"?"income":"expense",amountPaise:amountIn(row.amount),date:clean(row.date,10),category:"Needs review",note:clean(row.description,200),accountId,needsReview:true,createdAt:new Date()};const result=await c.tx.insertOne(imported);void syncToSheets(c,"upsert",imported,result.insertedId);added++;
+   const imported={importKey:row.importKey,importSource:"csv",type:row.type==="income"?"income":"expense",amountPaise:amountIn(row.amount),date:clean(row.date,10),category:"Needs review",note:clean(row.description,200),accountId,needsReview:true,createdAt:new Date()};const result=await c.tx.insertOne(imported);added++;
   }return json({added,skipped,reviewRequired:added});
- }
- if(p==="/sheets/sync-all"&&method==="POST"){
-  if(!process.env.GOOGLE_SHEETS_WEB_APP_URL||!process.env.GOOGLE_SHEETS_SECRET)bad("Configure GOOGLE_SHEETS_WEB_APP_URL and GOOGLE_SHEETS_SECRET in environment first.");
-  const all=await c.tx.find().sort({date:1,createdAt:1}).toArray();for(const item of all)await syncToSheets(c,"upsert",item,item._id);return json({ok:true,attempted:all.length,message:"Sync attempted. Check server logs for sync errors."});
  }
  if(p==="/summary"&&method==="GET"){
   const t=today(),[st,monthRows,unpaidRows,balances,latestIncome]=await Promise.all([
