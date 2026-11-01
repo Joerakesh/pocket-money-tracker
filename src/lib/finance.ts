@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { createHash } from "node:crypto";
 import { getDatabase } from "./mongodb";
 import { foldBalances } from "./ledger";
 import { rupeesToPaise, paiseToRupees } from "./money";
@@ -45,13 +46,32 @@ export type SettingsDoc = {
   currency?: string;
   updatedAt?: Date;
 };
-let init: Promise<void> | null = null;
-export async function collections() {
+const initByNamespace = new Map<string, Promise<void>>();
+
+export async function collections(user: { uid: string; email: string }) {
   const db = await getDatabase();
-  if (!init)
+  const ownerEmail = process.env.OWNER_GOOGLE_EMAIL?.trim().toLowerCase();
+  if (!ownerEmail) throw new Error("OWNER_GOOGLE_EMAIL is not configured.");
+  const isOwner = user.email.toLowerCase() === ownerEmail;
+  // Keep the existing unscoped collections exclusively for the verified owner.
+  // Every other Firebase UID receives a separate namespace without copying data.
+  const suffix = isOwner
+    ? ""
+    : "_" + createHash("sha256").update(user.uid).digest("hex").slice(0, 24);
+  const names = {
+    tx: "transactions" + suffix,
+    accounts: "accounts" + suffix,
+    settings: "settings" + suffix,
+    imports: "imports" + suffix,
+    budgets: "budgets" + suffix,
+    goals: "goals" + suffix,
+    recurring: "recurring" + suffix,
+  };
+  const namespace = isOwner ? "owner" : user.uid;
+  let init = initByNamespace.get(namespace);
+  if (!init) {
     init = (async () => {
-      const tx = db.collection("transactions"),
-        accounts = db.collection("accounts");
+      const tx = db.collection(names.tx), accounts = db.collection(names.accounts);
       await Promise.all([
         tx.createIndex({ date: -1, createdAt: -1 }),
         tx.createIndex({ accountId: 1, type: 1 }),
@@ -60,35 +80,28 @@ export async function collections() {
         tx.createIndex({ importKey: 1 }, { unique: true, sparse: true }),
         accounts.createIndex({ name: 1 }, { unique: true }),
       ]);
-      if ((await accounts.countDocuments()) === 0)
+      if ((await accounts.countDocuments()) === 0) {
         await accounts.insertMany([
-          {
-            name: "Cash",
-            kind: "cash",
-            openingPaise: 0,
-            createdAt: new Date(),
-          },
-          {
-            name: "Bank account",
-            kind: "bank",
-            openingPaise: 0,
-            createdAt: new Date(),
-          },
+          { name: "Cash", kind: "cash", openingPaise: 0, createdAt: new Date() },
+          { name: "Bank account", kind: "bank", openingPaise: 0, createdAt: new Date() },
         ]);
-    })().catch((e) => {
-      init = null;
-      throw e;
+      }
+    })().catch((error) => {
+      initByNamespace.delete(namespace);
+      throw error;
     });
+    initByNamespace.set(namespace, init);
+  }
   await init;
   return {
     db,
-    tx: db.collection("transactions"),
-    accounts: db.collection("accounts"),
-    settings: db.collection<SettingsDoc>("settings"),
-    imports: db.collection("imports"),
-    budgets: db.collection("budgets"),
-    goals: db.collection("goals"),
-    recurring: db.collection("recurring"),
+    tx: db.collection(names.tx),
+    accounts: db.collection(names.accounts),
+    settings: db.collection<SettingsDoc>(names.settings),
+    imports: db.collection(names.imports),
+    budgets: db.collection(names.budgets),
+    goals: db.collection(names.goals),
+    recurring: db.collection(names.recurring),
   };
 }
 export async function accountBalances(
