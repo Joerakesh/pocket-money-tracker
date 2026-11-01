@@ -389,19 +389,21 @@ export default function PocketApp() {
               />
             )}
             {tab === "plan" && (
-              <PlanningSection
-                budgets={budgets}
-                goals={goals}
-                recurring={recurring}
-                onSave={savePlan}
-              />
-              <FinancialIntelligenceSection
-                summary={summary}
-                transactions={transactions}
-                budgets={budgets}
-                settings={settings}
-                onSave={saveFinancialPlan}
-              />
+              <>
+                <PlanningSection
+                  budgets={budgets}
+                  goals={goals}
+                  recurring={recurring}
+                  onSave={savePlan}
+                />
+                <FinancialIntelligenceSection
+                  summary={summary}
+                  transactions={transactions}
+                  budgets={budgets}
+                  settings={settings}
+                  onSave={saveFinancialPlan}
+                />
+              </>
             )}
             {tab === "more" && (
               <DataManagementSection
