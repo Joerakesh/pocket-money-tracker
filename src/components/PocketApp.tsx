@@ -17,6 +17,8 @@ import PlanningSection from "./planning/PlanningSection";
 import FinancialIntelligenceSection from "./planning/FinancialIntelligenceSection";
 import DataManagementSection from "./settings/DataManagementSection";
 import { ui } from "./ui";
+import { signOut } from "firebase/auth";
+import { firebaseAuth } from "@/lib/firebase-client";
 
 type Account = {
   id: string;
@@ -85,10 +87,12 @@ type ImportRow = {
   amount: number;
 };
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = await firebaseAuth?.currentUser?.getIdToken();
   const res = await fetch("/api" + path, {
     ...init,
     headers: {
       ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: "Bearer " + token } : {}),
       ...init?.headers,
     },
     cache: "no-store",
@@ -332,9 +336,10 @@ export default function PocketApp() {
     const file = new FormData(e.currentTarget).get("csv") as File;
     if (!file) return;
     try {
+      const token = await firebaseAuth?.currentUser?.getIdToken();
       const res = await fetch("/api/import/preview", {
         method: "POST",
-        headers: { "Content-Type": "text/csv" },
+        headers: { "Content-Type": "text/csv", ...(token ? { Authorization: "Bearer " + token } : {}) },
         body: await file.text(),
       });
       const data = await res.json();
@@ -369,6 +374,8 @@ export default function PocketApp() {
         <AppHeader
           onRefresh={() => setRefreshKey((x) => x + 1)}
           onSettings={() => setTab("more")}
+          onLogout={() => { if (firebaseAuth) void signOut(firebaseAuth); }}
+          userEmail={firebaseAuth?.currentUser?.email || ""}
         />
         {error && (
           <div

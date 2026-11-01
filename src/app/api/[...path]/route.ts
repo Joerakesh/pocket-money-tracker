@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { collections, accountBalances, accountById, accountExport, amountIn, bad, clean, endOfMonth, HttpError, monthStart, paiseToRupees, parseId, spendingEffect, today } from "@/lib/finance";
 import { computeSummary } from "@/lib/ledger";
 import { createHash } from "node:crypto";
+import { verifyFirebaseRequest } from "@/lib/firebase-admin";
+import { getDatabase } from "@/lib/mongodb";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -12,8 +14,11 @@ const getSettings=async(c:any)=>await c.settings.findOne({_id:"main"})||{_id:"ma
 const csvLine=(line:string)=>{const out:string[]=[];let field="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&quoted&&line[i+1]==='"'){field+='"';i++;}else if(ch==='"')quoted=!quoted;else if(ch===","&&!quoted){out.push(field);field="";}else field+=ch;}out.push(field);return out;};
 
 async function dispatch(req:NextRequest,ctx:Ctx){
- const {path}=await ctx.params;const p="/"+path.join("/");const method=req.method;const c=await collections();const b=method==="GET"||method==="HEAD"?{}:await bodyJson(req);
- if(p==="/health"&&method==="GET"){await c.db.command({ping:1});return json({ok:true,status:"ok"});}
+ const {path}=await ctx.params;const p="/"+path.join("/");const method=req.method;
+ if(p==="/health"&&method==="GET"){const db=await getDatabase();await db.command({ping:1});return json({ok:true,status:"ok"});}
+ const identity=await verifyFirebaseRequest(req);
+ if(!identity)return json({error:"Authentication required. Sign in again."},401);
+ const c=await collections(identity);const b=method==="GET"||method==="HEAD"?{}:await bodyJson(req);
  if(p==="/accounts"&&method==="GET")return json((await accountBalances(c)).map((a:any)=>({...a,id:String(a._id),_id:String(a._id),balance:paiseToRupees(a.balancePaise)})));
  if(p==="/accounts"&&method==="POST"){
   const institution=clean(b.institution,80),label=clean(b.name,60),kind=clean(b.kind||(institution==="Cash"?"cash":institution==="UPI"?"upi":"bank"),30);
