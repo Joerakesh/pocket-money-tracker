@@ -60,6 +60,7 @@ export default function TransactionSection({ type, setType, accounts, onSubmit, 
             </select>
           </div>}
           {needsPerson && <div className={ui.full}><label className={ui.label} htmlFor="person">{personLabel}</label><input className={ui.field} name="person" id="person" required maxLength={80} defaultValue={editing?.person} placeholder="Enter person's name" /></div>}
+          {type === "expense" && <div className={ui.full}><label className={ui.label} htmlFor="allocationSource">Fund this expense from</label><select className={ui.field} name="allocationSource" id="allocationSource" defaultValue={editing?.allocationSource || "personal"}><option value="essentials">Essentials</option><option value="personal">Personal spending</option><option value="future">Future expenses</option><option value="savings">Savings</option></select><p className={ui.note}>This updates the selected virtual wallet. Your actual account balance is still reduced only by this expense.</p></div>}
           <div className={ui.full}><label className={ui.label} htmlFor="category">Category</label>
             <select className={ui.field} name="category" id="category" defaultValue={editing?.category || (needsPerson ? "Friends" : isTransfer ? "Transfer" : "Food")}>{categories.map((c) => <option key={c}>{c}</option>)}{isTransfer && <option>Transfer</option>}</select>
           </div>
