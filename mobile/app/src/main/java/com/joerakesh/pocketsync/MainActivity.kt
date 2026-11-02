@@ -1,7 +1,6 @@
 package com.joerakesh.pocketsync
 
 import android.app.Activity
-import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
@@ -65,10 +64,13 @@ class MainActivity : Activity() {
     }
 
     private fun refreshStatus() {
-        val manager = getSystemService(NotificationManager::class.java)
-        val enabled = manager.isNotificationListenerAccessGranted(
-            ComponentName(this, PocketNotificationListener::class.java)
-        )
+        val component = ComponentName(this, PocketNotificationListener::class.java)
+        val enabledListeners = Settings.Secure.getString(
+            contentResolver,
+            "enabled_notification_listeners"
+        ).orEmpty()
+        val enabled = enabledListeners.split(':').any { it == component.flattenToString() }
+
         statusText.text = if (enabled) {
             "Notification access: enabled"
         } else {
