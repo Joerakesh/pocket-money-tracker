@@ -20,3 +20,6 @@ mobile/.idea/
 # General
 .DS_Store
 *.log
+
+# Firebase Android app configuration (contains project identifiers)
+mobile/app/google-services.json
