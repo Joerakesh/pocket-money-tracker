@@ -196,7 +196,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
  if(p==="/transactions"&&method==="POST"){
   const allowed=["expense","income","transfer","lent","borrowed_expense","repayment","collection","refund"];if(!allowed.includes(b.type))bad("Choose a valid transaction type.");
   const amountPaise=amountIn(b.amount),date=clean(b.date||today(),10);if(!/^\d{4}-\d{2}-\d{2}$/.test(date))bad("Date must use YYYY-MM-DD.");
-  const doc:any={type:b.type,amountPaise,date,category:clean(b.category||"Other",50),note:clean(b.note,200),accountId:null,createdAt:new Date()};
+  const allocationSource=clean(b.allocationSource||"personal",20);if(b.type==="expense"&&!["essentials","personal","future","savings"].includes(allocationSource))bad("Choose a valid allocation wallet.");
+  const doc:any={type:b.type,amountPaise,date,category:clean(b.category||"Other",50),note:clean(b.note,200),accountId:null,createdAt:new Date()};if(b.type==="expense")doc.allocationSource=allocationSource;
   if(["expense","income","transfer","lent","repayment","collection","refund"].includes(b.type)){if(!b.accountId)bad("Select the account used for this transaction.");await accountById(c,b.accountId);doc.accountId=String(b.accountId);}
   if(b.type==="transfer"){if(!b.toAccountId||b.toAccountId===b.accountId)bad("Choose two different accounts for a transfer.");await accountById(c,b.toAccountId);doc.toAccountId=String(b.toAccountId);}
   if(["lent","borrowed_expense","repayment","collection"].includes(b.type)){doc.person=clean(b.person,80);if(!doc.person)bad("Enter the other person’s name.");}
@@ -221,8 +222,9 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const type=clean(b.type||original.type,40);
   const allowed=["expense","income","transfer","lent","borrowed_expense","repayment","collection","refund"];
   if(!allowed.includes(type))bad("Choose a valid transaction type.");
-  const revision={type:original.type,amountPaise:original.amountPaise,date:original.date,category:original.category,note:original.note||"",person:original.person||"",accountId:original.accountId||null,toAccountId:original.toAccountId||null,changedAt:new Date()};
+  const revision={type:original.type,amountPaise:original.amountPaise,date:original.date,category:original.category,note:original.note||"",person:original.person||"",accountId:original.accountId||null,toAccountId:original.toAccountId||null,allocationSource:original.allocationSource||null,changedAt:new Date()};
   const next:any={type,amountPaise,date,category:clean(b.category||original.category||"Other",50),note:clean(b.note,200),accountId:null,updatedAt:new Date()};
+  if(type==="expense"){const allocationSource=clean(b.allocationSource||original.allocationSource||"personal",20);if(!["essentials","personal","future","savings"].includes(allocationSource))bad("Choose a valid allocation wallet.");next.allocationSource=allocationSource;}
   if(["expense","income","transfer","lent","repayment","collection","refund"].includes(type)){
    const accountId=clean(b.accountId||original.accountId,40);
    if(!accountId)bad("Select the account used for this transaction.");
@@ -240,6 +242,7 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   if(type==="borrowed_expense")next.settled=false;
   const unset:any={};
   if(type!=="transfer")unset.toAccountId="";
+  if(type!=="expense")unset.allocationSource="";
   if(!["lent","borrowed_expense","repayment","collection"].includes(type))unset.person="";
   await c.tx.updateOne({_id:id},{$set:next,$unset:unset,$push:{revisions:{$each:[revision],$slice:-20}}} as any);
   const updated=await c.tx.findOne({_id:id});if(!updated)bad("Transaction not found.",404);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
