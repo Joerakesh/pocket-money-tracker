@@ -13,6 +13,7 @@ import DashboardSkeleton from "./dashboard/DashboardSkeleton";
 import TransactionSection from "./transactions/TransactionSection";
 import AccountsSection from "./accounts/AccountsSection";
 import ActivitySection from "./activity/ActivitySection";
+import SyncSection from "./sync/SyncSection";
 import PlanningSection from "./planning/PlanningSection";
 import FinancialIntelligenceSection from "./planning/FinancialIntelligenceSection";
 import DataManagementSection from "./settings/DataManagementSection";
@@ -438,6 +439,7 @@ export default function PocketApp() {
             {tab === "accounts" && (
               <AccountsSection accounts={accounts} onSubmit={createAccount} />
             )}
+            {tab === "sync" && <SyncSection accounts={accounts} onChanged={() => { void load(); }} />}
             {tab === "activity" && (
               <ActivitySection
                 transactions={visible}

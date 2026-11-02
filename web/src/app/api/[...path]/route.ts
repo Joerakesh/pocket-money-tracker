@@ -13,12 +13,144 @@ const bodyJson=async(req:NextRequest)=>{if((req.headers.get("content-type")||"")
 const getSettings=async(c:any)=>await c.settings.findOne({_id:"main"})||{_id:"main",payday:endOfMonth(),reservePaise:50000,currency:"INR"};
 const csvLine=(line:string)=>{const out:string[]=[];let field="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&quoted&&line[i+1]==='"'){field+='"';i++;}else if(ch==='"')quoted=!quoted;else if(ch===","&&!quoted){out.push(field);field="";}else field+=ch;}out.push(field);return out;};
 
+
+function parseNotificationTransaction(title:string,text:string,postedAt:number){
+ const content=(title+" "+text).replace(/\s+/g," ").trim();
+ if(!content || content.length>3500)return null;
+ if(/\b(failed|failure|declined|pending|reversed|reversal)\b/i.test(content))return null;
+ const amountMatch=content.match(/(?:₹|Rs\.?|INR)\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i);
+ if(!amountMatch)return null;
+ const amount=Number(amountMatch[1].replace(/,/g,""));
+ if(!Number.isFinite(amount)||amount<=0||amount>100000000)return null;
+ const direction=/\b(credited|received|money added|deposit successful)\b/i.test(content)?"INCOME":
+  /\b(debited|sent|paid|withdrawn|payment successful|transferred)\b/i.test(content)?"EXPENSE":null;
+ if(!direction)return null;
+ const reference=content.match(/(?:UPI\s*(?:Ref(?:erence)?(?:\s*No\.?)?|ID)|Txn\s*(?:ID|Ref)|Transaction\s*ID|RRN)\s*[:#.-]?\s*([A-Za-z0-9-]{8,})/i)?.[1]||null;
+ const accountSuffix=content.match(/(?:A\/c|account|from)\s*[*Xx-]*([0-9]{4})\b/i)?.[1]||null;
+ const counterpartyPattern=direction==="EXPENSE"
+  ? /\b(?:sent|paid|transferred)\s+(?:Rs\.?\s*[0-9,.]+\s+)?(?:from\s+[*Xx0-9-]+\s+)?to\s+(.+?)(?=\s+(?:on\s+\d|UPI\s+ref|ref(?:erence)?\s+no)|[,.]|$)/i
+  : /\b(?:received\s+from|credited\s+(?:by|from))\s+(.+?)(?=\s+(?:on\s+\d|RRN|UPI\s+ref|available\s+balance)|[,.]|$)/i;
+ const counterparty=counterpartyPattern.exec(content)?.[1]?.trim().slice(0,100)||null;
+ const bankName=content.match(/[-–]\s*([A-Za-z][A-Za-z &]{1,40})\s*$/)?.[1]?.trim()||title.trim().slice(0,80)||null;
+ const dateMatch=content.match(/\bon\s+(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/i);
+ let date=new Date(postedAt||Date.now()).toISOString().slice(0,10);
+ if(dateMatch){const year=Number(dateMatch[3].length===2?"20"+dateMatch[3]:dateMatch[3]);date=year+"-"+String(Number(dateMatch[2])).padStart(2,"0")+"-"+String(Number(dateMatch[1])).padStart(2,"0");}
+ return {amountPaise:Math.round(amount*100),direction,reference,accountSuffix,counterparty,bankName,date};
+}
+
 async function dispatch(req:NextRequest,ctx:Ctx){
  const {path}=await ctx.params;const p="/"+path.join("/");const method=req.method;
  if(p==="/health"&&method==="GET"){const db=await getDatabase();await db.command({ping:1});return json({ok:true,status:"ok"});}
  const identity=await verifyFirebaseRequest(req);
  if(!identity)return json({error:"Authentication required. Sign in again."},401);
  const c=await collections(identity);const b=method==="GET"||method==="HEAD"?{}:await bodyJson(req);
+
+ if(p==="/sync/notifications"&&method==="POST"){
+  const events=Array.isArray(b.events)?b.events.slice(0,40):[];
+  if(!events.length)return json({accepted:0,duplicates:0,ignored:0});
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  await inbox.createIndex({fingerprint:1},{unique:true});
+  await inbox.createIndex({detectedAt:-1});
+  const allowed=new Set(["com.google.android.apps.nbu.paisa.user","com.phonepe.app","net.one97.paytm","in.org.npci.upiapp","com.kotak811mobilebankingapp.instantsavingsupiscanandpayrecharge","com.google.android.apps.messaging"]);
+  let accepted=0,duplicates=0,ignored=0;
+  for(const event of events){
+   const sourcePackage=clean(event?.sourcePackage,160),title=clean(event?.title,180),text=clean(event?.text,3000);
+   if(!allowed.has(sourcePackage)||!text){ignored++;continue;}
+   const parsed=parseNotificationTransaction(title,text,Number(event?.postedAt)||Date.now());
+   if(!parsed){ignored++;continue;}
+   const fallbackKey=createHash("sha256").update(sourcePackage+"|"+title+"|"+text).digest("hex");
+   const base=parsed.reference?("ref:"+parsed.reference+":"+parsed.amountPaise):("event:"+fallbackKey+":"+parsed.date+":"+parsed.amountPaise);
+   const fingerprint=base+":"+parsed.direction;
+   const detectedAt=new Date(Number(event?.postedAt)||Date.now());
+   const normalize=(value:string|null|undefined)=>String(value||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+   const incomingParty=normalize(parsed.counterparty);
+   // Cross-app dedupe: SMS, bank-app and UPI-app alerts for one payment often
+   // have different wording (and sometimes different reference formats).
+   // Match only across different sources, within a short time window, with
+   // amount/date/direction plus a strong reference or account+counterparty match.
+   const recent=await inbox.find({
+    amountPaise:parsed.amountPaise,direction:parsed.direction,date:parsed.date,
+    detectedAt:{$gte:new Date(detectedAt.getTime()-30*60*1000),$lte:new Date(detectedAt.getTime()+30*60*1000)},
+    sourcePackage:{$ne:sourcePackage},status:{$in:["PENDING","APPROVED"]}
+   }).sort({detectedAt:-1}).limit(30).toArray();
+   const crossSourceMatch=recent.find((candidate:any)=>{
+    const sameReference=!!parsed.reference&&!!candidate.reference&&normalize(parsed.reference)===normalize(candidate.reference);
+    if(sameReference)return true;
+    const sameAccount=!!parsed.accountSuffix&&!!candidate.accountSuffix&&parsed.accountSuffix===candidate.accountSuffix;
+    const candidateParty=normalize(candidate.counterparty);
+    const sameParty=!!incomingParty&&!!candidateParty&&(incomingParty===candidateParty||incomingParty.includes(candidateParty)||candidateParty.includes(incomingParty));
+    return sameAccount&&sameParty;
+   });
+   if(crossSourceMatch){
+    await inbox.updateOne({_id:crossSourceMatch._id},{$addToSet:{sourcePackages:sourcePackage,duplicateSources:sourcePackage},$set:{lastDuplicateAt:detectedAt}});
+    duplicates++;
+    continue;
+   }
+   const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,bankName:parsed.bankName,date:parsed.date,sourcePackage,sourcePackages:[sourcePackage],detectedAt,status:"PENDING",reviewedAt:null};
+   try{
+    await inbox.insertOne(doc);accepted++;
+    if(parsed.reference){
+     const opposite=parsed.direction==="INCOME"?"EXPENSE":"INCOME";
+     const other=await inbox.findOne({fingerprint:base+":"+opposite});
+     if(other){
+      await inbox.updateMany({fingerprint:{$in:[fingerprint,base+":"+opposite]}},{$set:{direction:"TRANSFER",transferCandidate:true,transferGroupKey:base}});
+     }
+    }
+   }catch(error:any){if(error?.code===11000)duplicates++;else throw error;}
+  }
+  return json({accepted,duplicates,ignored});
+ }
+ if(p==="/sync/notifications"&&method==="GET"){
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  const rows=await inbox.find({}).sort({detectedAt:-1}).limit(200).toArray();
+  const seenTransfers=new Set<string>();
+  const visibleRows=rows.filter((row:any)=>{
+   if(row.transferGroupKey){
+    if(seenTransfers.has(row.transferGroupKey))return false;
+    seenTransfers.add(row.transferGroupKey);
+   }
+   return true;
+  });
+  return json(visibleRows.slice(0,100).map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
+ }
+ if(p==="/sync/notifications"&&method==="GET"){
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  const rows=await inbox.find({}).sort({detectedAt:-1}).limit(100).toArray();
+  return json(rows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
+ }
+ const reviewMatch=p.match(/^\/sync\/notifications\/([^/]+)\/review$/);
+ if(reviewMatch&&method==="POST"){
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  const id=parseId(reviewMatch[1]),row=await inbox.findOne({_id:id});
+  if(!row)bad("Notification candidate not found.",404);
+  const action=clean(b.action,20);
+  if(action==="ignore"){
+   await inbox.updateOne({_id:id,status:"PENDING"},{$set:{status:"IGNORED",reviewedAt:new Date()}});
+   return json({ok:true,status:"IGNORED"});
+  }
+  if(action!=="approve")bad("Choose approve or ignore.");
+  if(row.status==="APPROVED")return json({ok:true,status:"APPROVED",alreadyApproved:true});
+  if(row.status!=="PENDING")bad("This notification has already been reviewed.",409);
+  const accountId=clean(b.accountId,40),toAccountId=clean(b.toAccountId,40);
+  const type=row.direction==="TRANSFER"?"transfer":row.direction==="INCOME"?"income":"expense";
+  if(!accountId)bad("Choose the account for this transaction.");
+  await accountById(c,accountId);
+  if(type==="transfer"){
+   if(!toAccountId||toAccountId===accountId)bad("Choose a different destination account for this transfer.");
+   await accountById(c,toAccountId);
+  }
+  const existing=await c.tx.findOne({notificationInboxId:String(id)});
+  let transactionId=existing?String(existing._id):null;
+  if(!existing){
+   const transaction:any={type,amountPaise:Number(row.amountPaise),date:clean(row.date,10),category:clean(b.category||(type==="transfer"?"Transfer":"Needs review"),50),note:clean(b.note||row.counterparty||"Imported from bank notification",200),accountId,notificationInboxId:String(id),notificationReference:row.reference||null,createdAt:new Date()};
+   if(type==="transfer")transaction.toAccountId=toAccountId;
+   const inserted=await c.tx.insertOne(transaction);transactionId=String(inserted.insertedId);
+  }
+  const reviewUpdate={$set:{status:"APPROVED",reviewedAt:new Date(),transactionId}};
+  if(type==="transfer"&&row.transferGroupKey) await inbox.updateMany({transferGroupKey:row.transferGroupKey,status:"PENDING"},reviewUpdate);
+  else await inbox.updateOne({_id:id,status:"PENDING"},reviewUpdate);
+  return json({ok:true,status:"APPROVED",transactionId});
+ }
  if(p==="/accounts"&&method==="GET")return json((await accountBalances(c)).map((a:any)=>({...a,id:String(a._id),_id:String(a._id),balance:paiseToRupees(a.balancePaise)})));
  if(p==="/accounts"&&method==="POST"){
   const institution=clean(b.institution,80),label=clean(b.name,60),kind=clean(b.kind||(institution==="Cash"?"cash":institution==="UPI"?"upi":"bank"),30);
@@ -124,25 +256,16 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   }return json({added,skipped,reviewRequired:added});
  }
  if(p==="/summary"&&method==="GET"){
-  const t=today(),[st,monthRows,unpaidRows,balances,latestIncome,recentRows]=await Promise.all([
+  const t=today(),[st,monthRows,unpaidRows,balances,recentRows]=await Promise.all([
    getSettings(c),c.tx.find({deletedAt:{$exists:false},date:{$gte:monthStart(t),$lte:endOfMonth(t)}},{projection:{date:1,type:1,amountPaise:1,category:1,settled:1}}).toArray(),
    c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c),
-   c.tx.findOne({deletedAt:{$exists:false},type:"income"},{sort:{date:-1,createdAt:-1},projection:{date:1,amountPaise:1,createdAt:1}}),
    c.tx.find({deletedAt:{$exists:false}},{projection:{type:1,amountPaise:1,date:1,category:1,note:1,person:1,accountId:1,settled:1}}).sort({date:-1,createdAt:-1}).limit(5).toArray()]);
-  let cycleSpendPaise=0;
-  if(latestIncome){
-   const cycleFilter:any={deletedAt:{$exists:false},$or:[{date:{$gt:latestIncome.date}},{date:latestIncome.date,...(latestIncome.createdAt?{createdAt:{$gte:latestIncome.createdAt}}:{})}]};
-   const cycleRows=await c.tx.find(cycleFilter,{projection:{type:1,amountPaise:1}}).toArray();
-   cycleSpendPaise=cycleRows.reduce((sum:number,row:any)=>sum+spendingEffect(row),0);
-  }
   const percentages=st.financialPlan?.allocationPercentages;
-  const allocation=latestIncome&&percentages?{
-   incomePaise:Number(latestIncome.amountPaise||0),
+  const allocation=percentages?{
    essentialsPercent:Number(percentages.essentials||0),
    savingsPercent:Number(percentages.savings||0),
    personalPercent:Number(percentages.personal||0),
    futurePercent:Number(percentages.future||0),
-   cycleSpendPaise,
   }:undefined;
   const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise),allocation});
   const {todaySpent,monthSpent,monthIncome,owedToFriends,owedByFriends,byCat,cash,days,reserve,spendable}=r;

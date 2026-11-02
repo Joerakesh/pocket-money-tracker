@@ -1,19 +1,25 @@
-name: Next.js validation
+name: Pocket web validation
+
 on:
   push:
-    branches: [main, migration/nextjs-app, feat/tailwind]
+    branches: [main, migration/nextjs-app, feat/tailwind, feat/pocket-sync-android]
   pull_request:
     branches: [main, feat/tailwind]
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm install --no-audit --no-fund
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

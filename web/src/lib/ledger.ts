@@ -52,12 +52,10 @@ export type SummaryInput = {
   unpaidRows: { type: string; amountPaise: number }[];
   balancesPaise: number[];
   allocation?: {
-    incomePaise: number;
     essentialsPercent: number;
     savingsPercent: number;
     personalPercent: number;
     futurePercent: number;
-    cycleSpendPaise: number;
   };
 };
 
@@ -102,17 +100,20 @@ export function computeSummary(i: SummaryInput) {
   const days = daysUntilNextPayday(i.today, i.payday);
   const reserve = Number(i.reservePaise || 0);
   const ledgerSpendable = cash - owedToFriends - reserve;
+  // The ledger balance already reflects every recorded transaction. Allocate only
+  // the money that is still available; never subtract cycle spending a second time.
+  const allocationBase = Math.max(0, ledgerSpendable);
   const protectedAllocations = i.allocation
-    ? Math.round(i.allocation.incomePaise * (i.allocation.savingsPercent + i.allocation.futurePercent) / 100)
+    ? Math.round(allocationBase * (i.allocation.savingsPercent + i.allocation.futurePercent) / 100)
     : 0;
   const allocatedSpending = i.allocation
-    ? Math.round(i.allocation.incomePaise * (i.allocation.essentialsPercent + i.allocation.personalPercent) / 100)
+    ? Math.round(allocationBase * (i.allocation.essentialsPercent + i.allocation.personalPercent) / 100)
     : Number.POSITIVE_INFINITY;
   const remainingAllocatedSpending = i.allocation
-    ? allocatedSpending - i.allocation.cycleSpendPaise
+    ? Math.max(0, Math.min(allocatedSpending, allocationBase - protectedAllocations))
     : Number.POSITIVE_INFINITY;
   const spendable = i.allocation
-    ? Math.min(ledgerSpendable - protectedAllocations, remainingAllocatedSpending)
+    ? remainingAllocatedSpending
     : ledgerSpendable;
   return {
     todaySpent,
