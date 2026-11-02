@@ -37,7 +37,7 @@ object TransactionParser {
         // Parse all notification text fields together; Android may split long SMS across title/text/bigText.
         val content = listOfNotNull(title, body)
             .joinToString(" ")
-            .replace(Regex("\\s+"), " ")
+            .replace(Regex("\s+"), " ")
             .trim()
         if (content.isBlank()) return null
 
@@ -47,8 +47,8 @@ object TransactionParser {
         }
 
         val direction = when {
-            Regex("""\\b(credited|received|money added)\\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) -> "INCOME"
-            Regex("""\\b(sent|debited|paid|payment successful|transferred)\\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) -> "EXPENSE"
+            Regex("""\b(credited|received|money added)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) -> "INCOME"
+            Regex("""\b(sent|debited|paid|payment successful|transferred)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) -> "EXPENSE"
             else -> return null
         }
 
@@ -61,7 +61,7 @@ object TransactionParser {
         val accountSuffix = accountRegex.find(content)?.groupValues?.getOrNull(1)
         val counterparty = (if (direction == "EXPENSE") sentToRegex else receivedFromRegex)
             .find(content)?.groupValues?.getOrNull(1)
-            ?.replace(Regex("""\\s+(?:UPI|RRN|Ref(?:erence)?|on\\s+\\d).*?$""", RegexOption.IGNORE_CASE), "")
+            ?.replace(Regex("""\s+(?:UPI|RRN|Ref(?:erence)?|on\s+\d).*?$""", RegexOption.IGNORE_CASE), "")
             ?.trim(' ', '.', ',', ':', '-')
             ?.take(100)
             ?.takeIf { it.isNotBlank() }
