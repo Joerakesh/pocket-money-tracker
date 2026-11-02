@@ -291,7 +291,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const cycleCashChange=cycleRows.reduce((sum:number,row:any)=>sum+(["expense","lent","repayment"].includes(row.type)?-Number(row.amountPaise||0):["income","collection","refund"].includes(row.type)?Number(row.amountPaise||0):0),0);
   const allocationCycleBasePaise=Math.max(0,balances.reduce((sum:number,a:any)=>sum+Number(a.balancePaise||0),0)-cycleCashChange);
   const allocationSpentPaise={essentials:0,savings:0,personal:0,future:0};
-  for(const row of cycleRows){if(row.type!=="expense"&&row.type!=="refund")continue;const source=["essentials","savings","personal","future"].includes(row.allocationSource)?row.allocationSource:"personal";allocationSpentPaise[source]+=Number(row.amountPaise||0)*(row.type==="refund"?-1:1);}
+  const allocationSources=new Set<keyof typeof allocationSpentPaise>(["essentials","savings","personal","future"]);
+  for(const row of cycleRows){if(row.type!=="expense"&&row.type!=="refund")continue;const rawSource=String(row.allocationSource||"personal");const source:keyof typeof allocationSpentPaise=allocationSources.has(rawSource as keyof typeof allocationSpentPaise)?rawSource as keyof typeof allocationSpentPaise:"personal";allocationSpentPaise[source]+=Number(row.amountPaise||0)*(row.type==="refund"?-1:1);}
 
   const percentages=st.financialPlan?.allocationPercentages;
   const allocation=percentages?{
