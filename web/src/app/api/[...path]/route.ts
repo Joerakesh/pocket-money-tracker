@@ -67,7 +67,7 @@ async function dispatch(req:NextRequest,ctx:Ctx){
      const opposite=parsed.direction==="INCOME"?"EXPENSE":"INCOME";
      const other=await inbox.findOne({fingerprint:base+":"+opposite});
      if(other){
-      await inbox.updateMany({fingerprint:{$in:[fingerprint,base+":"+opposite]}},{$set:{direction:"TRANSFER",transferCandidate:true}});
+      await inbox.updateMany({fingerprint:{$in:[fingerprint,base+":"+opposite]}},{$set:{direction:"TRANSFER",transferCandidate:true,transferGroupKey:base}});
      }
     }
    }catch(error:any){if(error?.code===11000)duplicates++;else throw error;}
@@ -76,8 +76,16 @@ async function dispatch(req:NextRequest,ctx:Ctx){
  }
  if(p==="/sync/notifications"&&method==="GET"){
   const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
-  const rows=await inbox.find({}).sort({detectedAt:-1}).limit(100).toArray();
-  return json(rows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
+  const rows=await inbox.find({}).sort({detectedAt:-1}).limit(200).toArray();
+  const seenTransfers=new Set<string>();
+  const visibleRows=rows.filter((row:any)=>{
+   if(row.transferGroupKey){
+    if(seenTransfers.has(row.transferGroupKey))return false;
+    seenTransfers.add(row.transferGroupKey);
+   }
+   return true;
+  });
+  return json(visibleRows.slice(0,100).map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
  }
  if(p==="/sync/notifications"&&method==="GET"){
   const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
@@ -112,7 +120,9 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    if(type==="transfer")transaction.toAccountId=toAccountId;
    const inserted=await c.tx.insertOne(transaction);transactionId=String(inserted.insertedId);
   }
-  await inbox.updateOne({_id:id,status:"PENDING"},{$set:{status:"APPROVED",reviewedAt:new Date(),transactionId}});
+  const reviewUpdate={$set:{status:"APPROVED",reviewedAt:new Date(),transactionId}};
+  if(type==="transfer"&&row.transferGroupKey) await inbox.updateMany({transferGroupKey:row.transferGroupKey,status:"PENDING"},reviewUpdate);
+  else await inbox.updateOne({_id:id,status:"PENDING"},reviewUpdate);
   return json({ok:true,status:"APPROVED",transactionId});
  }
  if(p==="/accounts"&&method==="GET")return json((await accountBalances(c)).map((a:any)=>({...a,id:String(a._id),_id:String(a._id),balance:paiseToRupees(a.balancePaise)})));
