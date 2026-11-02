@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ui } from "../ui";
+import { firebaseAuth } from "@/lib/firebase-client";
 
 type Account = { id: string; name: string; institution?: string; balance: number };
 type Candidate = {
@@ -46,9 +47,10 @@ export default function SyncSection({ accounts, onChanged }: {
   const [expanded, setExpanded] = useState("");
 
   const request = useCallback(async (url: string, init?: RequestInit) => {
+    const token = await firebaseAuth?.currentUser?.getIdToken();
     const response = await fetch("/api" + url, {
       ...init,
-      headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}), ...init?.headers },
+      headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: "Bearer " + token } : {}), ...init?.headers },
       cache: "no-store",
     });
     const data = await response.json().catch(() => ({}));
