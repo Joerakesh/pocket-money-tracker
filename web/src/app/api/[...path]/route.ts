@@ -61,7 +61,32 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    const fallbackKey=createHash("sha256").update(sourcePackage+"|"+title+"|"+text).digest("hex");
    const base=parsed.reference?("ref:"+parsed.reference+":"+parsed.amountPaise):("event:"+fallbackKey+":"+parsed.date+":"+parsed.amountPaise);
    const fingerprint=base+":"+parsed.direction;
-   const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,bankName:parsed.bankName,date:parsed.date,sourcePackage,detectedAt:new Date(Number(event?.postedAt)||Date.now()),status:"PENDING",reviewedAt:null};
+   const detectedAt=new Date(Number(event?.postedAt)||Date.now());
+   const normalize=(value:string|null|undefined)=>String(value||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+   const incomingParty=normalize(parsed.counterparty);
+   // Cross-app dedupe: SMS, bank-app and UPI-app alerts for one payment often
+   // have different wording (and sometimes different reference formats).
+   // Match only across different sources, within a short time window, with
+   // amount/date/direction plus a strong reference or account+counterparty match.
+   const recent=await inbox.find({
+    amountPaise:parsed.amountPaise,direction:parsed.direction,date:parsed.date,
+    detectedAt:{$gte:new Date(detectedAt.getTime()-30*60*1000),$lte:new Date(detectedAt.getTime()+30*60*1000)},
+    sourcePackage:{$ne:sourcePackage},status:{$in:["PENDING","APPROVED"]}
+   }).sort({detectedAt:-1}).limit(30).toArray();
+   const crossSourceMatch=recent.find((candidate:any)=>{
+    const sameReference=!!parsed.reference&&!!candidate.reference&&normalize(parsed.reference)===normalize(candidate.reference);
+    if(sameReference)return true;
+    const sameAccount=!!parsed.accountSuffix&&!!candidate.accountSuffix&&parsed.accountSuffix===candidate.accountSuffix;
+    const candidateParty=normalize(candidate.counterparty);
+    const sameParty=!!incomingParty&&!!candidateParty&&(incomingParty===candidateParty||incomingParty.includes(candidateParty)||candidateParty.includes(incomingParty));
+    return sameAccount&&sameParty;
+   });
+   if(crossSourceMatch){
+    await inbox.updateOne({_id:crossSourceMatch._id},{$addToSet:{sourcePackages:sourcePackage,duplicateSources:sourcePackage},$set:{lastDuplicateAt:detectedAt}});
+    duplicates++;
+    continue;
+   }
+   const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,bankName:parsed.bankName,date:parsed.date,sourcePackage,sourcePackages:[sourcePackage],detectedAt,status:"PENDING",reviewedAt:null};
    try{
     await inbox.insertOne(doc);accepted++;
     if(parsed.reference){
