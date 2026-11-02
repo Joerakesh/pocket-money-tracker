@@ -24,13 +24,13 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const [message, setMessage] = useState("");
   const percentages = plan.allocationPercentages;
   const percentageTotal = percentages.essentials + percentages.savings + percentages.personal + percentages.future;
-  const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income").sort((a,b) => b.date.localeCompare(a.date) || Date.parse(b.createdAt || "") - Date.parse(a.createdAt || ""))[0], [transactions]);
+  const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income" && t.category !== "Friends" && !/^old balance$/i.test(t.note || "")).sort((a,b) => b.date.localeCompare(a.date) || Date.parse(b.createdAt || "") - Date.parse(a.createdAt || ""))[0], [transactions]);
   const incomeAmount = latestIncome?.amount || 0;
   const currentBalance = summary?.totalBalance ?? 0;
   // Reconstruct the balance immediately after the latest income. This keeps each
   // virtual wallet fixed for the current income cycle instead of shrinking its
   // starting allocation every time an expense is recorded.
-  const cycleRows = latestIncome ? transactions.filter(t => t._id !== latestIncome._id && (t.date > latestIncome.date || (t.date === latestIncome.date && (!latestIncome.createdAt || !t.createdAt || Date.parse(t.createdAt) > Date.parse(latestIncome.createdAt))))) : [];
+  const cycleRows = latestIncome ? transactions.filter(t => t._id !== latestIncome._id && t.date >= latestIncome.date) : [];
   const cycleCashChange = cycleRows.reduce((total, tx) => total + (["expense", "lent", "repayment"].includes(tx.type) ? -tx.amount : ["income", "collection", "refund"].includes(tx.type) ? tx.amount : 0), 0);
   const cycleStartingBalance = latestIncome ? Math.max(0, currentBalance - cycleCashChange) : currentBalance;
   const walletSpent = (key: "essentials" | "personal" | "future" | "savings") => cycleRows.reduce((total, tx) => {
@@ -72,7 +72,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const disciplinePoints = (summary?.spendable ?? 0) > 0 ? 15 : 0;
   const healthScore = Math.round(savingsPoints+reservePoints+budgetPoints+disciplinePoints);
   const incomeHistory = useMemo(() => {
-    const rows = [...transactions].filter(t => t.type === "income").sort((a,b) => b.date.localeCompare(a.date));
+    const rows = [...transactions].filter(t => t.type === "income" && t.category !== "Friends" && !/^old balance$/i.test(t.note || "")).sort((a,b) => b.date.localeCompare(a.date));
     return rows.slice(0,8).map((income, index) => {
       const nextIncome = rows[index-1];
       const cycleRows = transactions.filter(t => t.date >= income.date && (!nextIncome || t.date < nextIncome.date));
@@ -149,7 +149,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
 
       <section className={ui.card}>
         <span className={ui.sectionLabel}>INCOME CYCLES</span><h2 className={ui.h2Flush}>Payday history</h2>
-        <p className={ui.note}>Each recorded income starts a cycle. Spending is calculated from ledger transactions until the next recorded income.</p>
+        <p className={ui.note}>Each allowance or salary starts a payday cycle. Friend reimbursements and opening-balance entries do not reset your allocations.</p>
         {incomeHistory.length ? <div className={ui.list}>{incomeHistory.map(({income,spent})=><div className={ui.row} key={income._id}><span className={ui.rowMain}><b className={ui.rowTitle}>{income.note || income.category || "Income"}</b><small className={ui.rowSub}>{income.date} · Cycle spending {money(spent)}</small></span><b className={ui.green}>{money(income.amount)}</b></div>)}</div> : <p className={ui.empty}>No income transactions recorded yet.</p>}
       </section>
 
