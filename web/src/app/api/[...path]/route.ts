@@ -216,9 +216,29 @@ async function dispatch(req:NextRequest,ctx:Ctx){
  if(m&&method==="DELETE"){const id=parseId(m[1]),t=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!t)bad("Transaction not found.",404);await c.tx.updateOne({_id:id,deletedAt:{$exists:false}},{$set:{deletedAt:new Date(),deletedByAction:"user"}});return json({ok:true,undoAvailable:true});}
  if(m&&method==="PUT"){
   const id=parseId(m[1]),original=await c.tx.findOne({_id:id,deletedAt:{$exists:false}});if(!original)bad("Transaction not found.",404);if(original.settled)bad("Settled transactions cannot be edited. Add a correcting transaction instead.");
-  const amountPaise=amountIn(b.amount),date=clean(b.date,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+"T00:00:00")))bad("Enter a valid transaction date.");
-  const revision={amountPaise:original.amountPaise,date:original.date,category:original.category,note:original.note||"",changedAt:new Date()};
-  await c.tx.updateOne({_id:id},{$set:{amountPaise,date,category:clean(b.category||original.category||"Other",50),note:clean(b.note,200),updatedAt:new Date()},$push:{revisions:{$each:[revision],$slice:-20}}} as any);
+  const amountPaise=amountIn(b.amount),date=clean(b.date,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+"T00:00:00")))bad("Enter a valid transaction date.");
+  const type=clean(b.type||original.type,40);
+  const allowed=["expense","income","transfer","lent","borrowed_expense","repayment","collection","refund"];
+  if(!allowed.includes(type))bad("Choose a valid transaction type.");
+  const revision={type:original.type,amountPaise:original.amountPaise,date:original.date,category:original.category,note:original.note||"",person:original.person||"",accountId:original.accountId||null,toAccountId:original.toAccountId||null,changedAt:new Date()};
+  const next:any={type,amountPaise,date,category:clean(b.category||original.category||"Other",50),note:clean(b.note,200),accountId:null,updatedAt:new Date()};
+  if(["expense","income","transfer","lent","repayment","collection","refund"].includes(type)){
+   const accountId=clean(b.accountId||original.accountId,40);
+   if(!accountId)bad("Select the account used for this transaction.");
+   await accountById(c,accountId);next.accountId=accountId;
+  }
+  if(type==="transfer"){
+   const toAccountId=clean(b.toAccountId||original.toAccountId,40);
+   if(!toAccountId||toAccountId===next.accountId)bad("Choose two different accounts for this transfer.");
+   await accountById(c,toAccountId);next.toAccountId=toAccountId;
+  }
+  if(["lent","borrowed_expense","repayment","collection"].includes(type)){
+   next.person=clean(b.person||original.person,80);
+   if(!next.person)bad("Enter the other person’s name.");
+  }
+  if(type==="borrowed_expense")next.settled=false;
+  await c.tx.updateOne({_id:id},{$set:next,$push:{revisions:{$each:[revision],$slice:-20}}} as any);
   const updated=await c.tx.findOne({_id:id});if(!updated)bad("Transaction not found.",404);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
  }
  if(p==="/budgets"&&method==="GET"){const list=await c.budgets.find().sort({category:1}).toArray();return json(list.map((x:any)=>({...x,amount:paiseToRupees(x.amountPaise),_id:String(x._id)})));}
