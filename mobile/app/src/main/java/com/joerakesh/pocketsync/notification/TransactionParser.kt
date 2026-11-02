@@ -37,7 +37,7 @@ object TransactionParser {
         // Parse all notification text fields together; Android may split long SMS across title/text/bigText.
         val content = listOfNotNull(title, body)
             .joinToString(" ")
-            .replace(Regex("\s+"), " ")
+            .replace(Regex("""\s+"""), " ")
             .trim()
         if (content.isBlank()) return null
 
