@@ -238,7 +238,10 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    if(!next.person)bad("Enter the other person’s name.");
   }
   if(type==="borrowed_expense")next.settled=false;
-  await c.tx.updateOne({_id:id},{$set:next,$push:{revisions:{$each:[revision],$slice:-20}}} as any);
+  const unset:any={};
+  if(type!=="transfer")unset.toAccountId="";
+  if(!["lent","borrowed_expense","repayment","collection"].includes(type))unset.person="";
+  await c.tx.updateOne({_id:id},{$set:next,$unset:unset,$push:{revisions:{$each:[revision],$slice:-20}}} as any);
   const updated=await c.tx.findOne({_id:id});if(!updated)bad("Transaction not found.",404);return json({ok:true,transaction:{...updated,_id:String(updated._id),amount:paiseToRupees(updated.amountPaise)}});
  }
  if(p==="/budgets"&&method==="GET"){const list=await c.budgets.find().sort({category:1}).toArray();return json(list.map((x:any)=>({...x,amount:paiseToRupees(x.amountPaise),_id:String(x._id)})));}
