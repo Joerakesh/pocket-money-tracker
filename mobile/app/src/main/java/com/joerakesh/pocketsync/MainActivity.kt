@@ -111,7 +111,7 @@ class MainActivity : Activity() {
         val panel = card()
         panel.addView(label("WHY THIS PERMISSION?", 10f, lime, true))
         space(panel, 10)
-        panel.addView(label("Pocket Sync reads payment notifications to prepare activity for your review. It cannot make payments or access your banking password or PIN. Detected entries stay on this device.", 13f, ink, false))
+        panel.addView(label("Pocket Sync reads notifications from supported UPI and messaging apps. Eligible payment notification text (including visible bank-message notifications from Google Messages) is sent to the Pocket server for parsing when you are signed in. You review each detected item in Pocket Web before it enters your ledger. Pocket Sync cannot make payments or access your UPI PIN, OTP or banking password.", 13f, ink, false))
         content.addView(panel)
         space(content, 22)
         content.addView(button("Enable notification access", true) {
