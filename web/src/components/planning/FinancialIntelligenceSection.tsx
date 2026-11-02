@@ -105,7 +105,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
           <strong className={`mt-1 block text-3xl tracking-tight ${(summary?.perDay || 0)>=0 ? ui.green : ui.red}`}>{money(summary?.perDay || 0)}</strong>
           <span className={ui.rowSub}>{money(summary?.spendable || 0)} spendable across {summary?.days || 0} day(s) until your next allowance.</span>
         </div>
-        <p className={`${ui.note} mt-3`}>This uses the cash still in your accounts after recorded transactions, protects your reserve and savings/future allocations, and subtracts unpaid borrowed expenses. Money lent is excluded from spending reports, but it is not spendable cash until it is collected.</p>
+        <p className={`${ui.note} mt-3`}>Savings and future allocations use the same full account-balance base shown in the Payday Planner. Safe-to-spend then subtracts those protected allocations, your reserve, and unpaid borrowed expenses from actual cash remaining after recorded transactions. Money lent is excluded from spending reports, but it is not spendable cash until collected.</p>
       </section>
 
       <section className={ui.card}>
