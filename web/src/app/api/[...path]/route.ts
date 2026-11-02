@@ -15,23 +15,23 @@ const csvLine=(line:string)=>{const out:string[]=[];let field="",quoted=false;fo
 
 
 function parseNotificationTransaction(title:string,text:string,postedAt:number){
- const content=(title+" "+text).replace(/\\s+/g," ").trim();
+ const content=(title+" "+text).replace(/\s+/g," ").trim();
  if(!content || content.length>3500)return null;
- if(/\\b(failed|failure|declined|pending|reversed|reversal)\\b/i.test(content))return null;
- const amountMatch=content.match(/(?:₹|Rs\\.?|INR)\\s*([0-9][0-9,]*(?:\\.\\d{1,2})?)/i);
+ if(/\b(failed|failure|declined|pending|reversed|reversal)\b/i.test(content))return null;
+ const amountMatch=content.match(/(?:₹|Rs\.?|INR)\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i);
  if(!amountMatch)return null;
  const amount=Number(amountMatch[1].replace(/,/g,""));
  if(!Number.isFinite(amount)||amount<=0||amount>100000000)return null;
- const direction=/\\b(credited|received|money added|deposit successful)\\b/i.test(content)?"INCOME":
-  /\\b(debited|sent|paid|withdrawn|payment successful|transferred)\\b/i.test(content)?"EXPENSE":null;
+ const direction=/\b(credited|received|money added|deposit successful)\b/i.test(content)?"INCOME":
+  /\b(debited|sent|paid|withdrawn|payment successful|transferred)\b/i.test(content)?"EXPENSE":null;
  if(!direction)return null;
- const reference=content.match(/(?:UPI\\s*(?:Ref(?:erence)?(?:\\s*No\\.?)?|ID)|Txn\\s*(?:ID|Ref)|Transaction\\s*ID|RRN)\\s*[:#.-]?\\s*([A-Za-z0-9-]{8,})/i)?.[1]||null;
- const accountSuffix=content.match(/(?:A\\/c|account|from)\\s*[*Xx-]*([0-9]{4})\\b/i)?.[1]||null;
+ const reference=content.match(/(?:UPI\s*(?:Ref(?:erence)?(?:\s*No\.?)?|ID)|Txn\s*(?:ID|Ref)|Transaction\s*ID|RRN)\s*[:#.-]?\s*([A-Za-z0-9-]{8,})/i)?.[1]||null;
+ const accountSuffix=content.match(/(?:A\/c|account|from)\s*[*Xx-]*([0-9]{4})\b/i)?.[1]||null;
  const counterpartyPattern=direction==="EXPENSE"
-  ? /\\b(?:sent|paid|transferred)\\s+(?:Rs\\.?\\s*[0-9,.]+\\s+)?(?:from\\s+[*Xx0-9-]+\\s+)?to\\s+(.+?)(?=\\s+(?:on\\s+\\d|UPI\\s+ref|ref(?:erence)?\\s+no)|[,.]|$)/i
-  : /\\b(?:received\\s+from|credited\\s+(?:by|from))\\s+(.+?)(?=\\s+(?:on\\s+\\d|RRN|UPI\\s+ref|available\\s+balance)|[,.]|$)/i;
+  ? /\b(?:sent|paid|transferred)\s+(?:Rs\.?\s*[0-9,.]+\s+)?(?:from\s+[*Xx0-9-]+\s+)?to\s+(.+?)(?=\s+(?:on\s+\d|UPI\s+ref|ref(?:erence)?\s+no)|[,.]|$)/i
+  : /\b(?:received\s+from|credited\s+(?:by|from))\s+(.+?)(?=\s+(?:on\s+\d|RRN|UPI\s+ref|available\s+balance)|[,.]|$)/i;
  const counterparty=counterpartyPattern.exec(content)?.[1]?.trim().slice(0,100)||null;
- const dateMatch=content.match(/\\bon\\s+(\\d{1,2})[-/](\\d{1,2})[-/](\\d{2,4})/i);
+ const dateMatch=content.match(/\bon\s+(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/i);
  let date=new Date(postedAt||Date.now()).toISOString().slice(0,10);
  if(dateMatch){const year=Number(dateMatch[3].length===2?"20"+dateMatch[3]:dateMatch[3]);date=year+"-"+String(Number(dateMatch[2])).padStart(2,"0")+"-"+String(Number(dateMatch[1])).padStart(2,"0");}
  return {amountPaise:Math.round(amount*100),direction,reference,accountSuffix,counterparty,date};
