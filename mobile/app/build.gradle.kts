@@ -3,8 +3,13 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+val pocketApiBase = System.getenv("POCKET_API_BASE") ?: "https://money.joerakesh.tech/api"
+
 android {
     namespace = "com.joerakesh.pocketsync"
+    buildFeatures {
+        buildConfig = true
+    }
     compileSdk = 37
 
     defaultConfig {
@@ -12,7 +17,8 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 2
-        versionName = "0.2.0"
+        versionName = "0.3.0"
+        buildConfigField("String", "API_BASE", "\"$pocketApiBase\"")
     }
 
     compileOptions {
