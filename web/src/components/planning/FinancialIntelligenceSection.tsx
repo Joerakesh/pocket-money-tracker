@@ -109,7 +109,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
           <button className={`${ui.primary} col-span-full`} disabled={saving || percentageTotal!==100}>{saving ? "Saving…" : "Save payday rules"}</button>
         </form>
         {message && <p className={`${ui.note} mt-2`} role="status">{message}</p>}
-        {percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(currentBalance*item.value/100)}</b></div>)}</div>}
+        {percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(cycleStartingBalance*item.value/100)}</b></div>)}</div>}
       </section>
 
       <section className={ui.card}>
