@@ -16,7 +16,7 @@ const typeMeta: Record<string, { label: string; sign: string; tone: string; deta
 
 export default function ActivitySection({ transactions, search, onSearch, month, onMonth, onEdit, onDelete }: { transactions: Tx[]; search: string; onSearch: (v: string) => void; month: string; onMonth: (v: string) => void; onEdit: (tx: Tx) => void; onDelete: (tx: Tx) => void }) {
   const lending = transactions.filter((tx) => tx.type === "lent" || tx.type === "collection");
-  const spending = transactions.filter((tx) => tx.type === "expense" || tx.type === "borrowed_expense" || tx.type === "refund");
+  const spending = transactions.filter((tx) => tx.type === "expense" || tx.type === "borrowed_expense");
   return (
     <section className={ui.card}>
       <div className={ui.sectionHead}><div><span className={ui.sectionLabel}>LEDGER & HISTORY</span><h2 className={ui.h2Flush}>Transactions</h2></div></div>
