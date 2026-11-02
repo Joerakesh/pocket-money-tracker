@@ -16,6 +16,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -33,6 +34,7 @@ class MainActivity : Activity() {
     companion object {
         private const val GOOGLE_SIGN_IN = 7101
         private const val API_BASE = "https://money.joerakesh.tech/api"
+        private const val TAG = "PocketSyncAuth"
     }
     private val bg = Color.rgb(15, 20, 30)
     private val surface = Color.rgb(24, 30, 43)
@@ -46,6 +48,7 @@ class MainActivity : Activity() {
     private var tab = "home"
     private var summary: JSONObject? = null
     private var loading = false
+    private var authStatus = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,31 +131,90 @@ class MainActivity : Activity() {
         panel.addView(label("Firebase verifies your Google account. Pocket Sync uses a Firebase ID token to request your summary over HTTPS.", 13f, ink, false))
         content.addView(panel)
         space(content, 22)
-        content.addView(button("Continue with Google", true) { googleSignIn() }, match())
+        val signInButton = button("Continue with Google", true) { googleSignIn() }
+        signInButton.isEnabled = authStatus != "Opening Google sign-in…" && authStatus != "Connecting your Google account…"
+        content.addView(signInButton, match())
         space(content, 12)
+        if (authStatus.isNotBlank()) {
+            content.addView(label(authStatus, 12f, if (authStatus.contains("failed", true) || authStatus.contains("cancel", true)) Color.rgb(255, 130, 130) else lime, false))
+            space(content, 8)
+        }
         content.addView(label("Notification access enabled ✓", 12f, lime, true))
     }
 
     private fun googleSignIn() {
+        Log.i(TAG, "Google sign-in button tapped")
+        authStatus = "Opening Google sign-in…"
+        render()
         try {
+            val webClientId = getString(R.string.default_web_client_id)
+            Log.i(TAG, "Web OAuth client ID resource loaded")
             val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build()
-            startActivityForResult(GoogleSignIn.getClient(this, options).signInIntent, GOOGLE_SIGN_IN)
-        } catch (e: Exception) { toast("Google sign-in setup error: " + (e.localizedMessage ?: "unknown")) }
+                .requestIdToken(webClientId).requestEmail().build()
+            val client = GoogleSignIn.getClient(this, options)
+            Log.i(TAG, "Launching Google account chooser")
+            startActivityForResult(client.signInIntent, GOOGLE_SIGN_IN)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to launch Google sign-in", e)
+            authStatus = "Sign-in setup failed: " + (e.localizedMessage ?: e.javaClass.simpleName)
+            render()
+            toast(authStatus)
+        }
     }
 
     @Deprecated("Google Sign-In activity result")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != GOOGLE_SIGN_IN || resultCode != RESULT_OK || data == null) return
+        if (requestCode != GOOGLE_SIGN_IN) {
+            Log.d(TAG, "Ignoring unrelated activity result: " + requestCode)
+            return
+        }
+        Log.i(TAG, "Google chooser returned resultCode=" + resultCode + ", dataPresent=" + (data != null))
+        if (resultCode != RESULT_OK || data == null) {
+            authStatus = if (resultCode == RESULT_CANCELED) "Google sign-in was cancelled. Tap Continue with Google to try again." else "Google sign-in did not return an account (result " + resultCode + ")."
+            Log.w(TAG, authStatus)
+            render()
+            return
+        }
+        authStatus = "Connecting your Google account…"
+        render()
         try {
             val account = GoogleSignIn.getSignedInAccountFromIntent(data).getResult(ApiException::class.java)
-            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-            auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) { tab = "home"; render(); loadSummary() }
-                else toast(task.exception?.localizedMessage ?: "Google sign-in failed.")
+            Log.i(TAG, "Google account selected; emailPresent=" + (!account.email.isNullOrBlank()) + ", idTokenPresent=" + (!account.idToken.isNullOrBlank()))
+            val idToken = account.idToken
+            if (idToken.isNullOrBlank()) {
+                authStatus = "Google did not return an ID token. Check Firebase OAuth configuration."
+                Log.e(TAG, authStatus)
+                render()
+                return
             }
-        } catch (e: ApiException) { toast("Google sign-in failed (" + e.statusCode + ").") }
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Log.i(TAG, "Firebase sign-in succeeded; userPresent=" + (auth.currentUser != null))
+                    authStatus = ""
+                    tab = "home"
+                    render()
+                    loadSummary()
+                } else {
+                    val error = task.exception
+                    Log.e(TAG, "Firebase sign-in failed", error)
+                    authStatus = "Firebase sign-in failed: " + (error?.localizedMessage ?: "Unknown error")
+                    render()
+                    toast(authStatus)
+                }
+            }
+        } catch (e: ApiException) {
+            Log.e(TAG, "Google account result failed; statusCode=" + e.statusCode, e)
+            authStatus = "Google sign-in failed (code " + e.statusCode + "): " + (e.localizedMessage ?: "Check account and OAuth setup.")
+            render()
+            toast(authStatus)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error handling Google sign-in result", e)
+            authStatus = "Sign-in failed: " + (e.localizedMessage ?: e.javaClass.simpleName)
+            render()
+            toast(authStatus)
+        }
     }
 
     private fun header(): View {
