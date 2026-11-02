@@ -24,7 +24,7 @@ class MainActivity : Activity() {
     private val bg = Color.rgb(15, 20, 30)
     private val surface = Color.rgb(24, 30, 43)
     private val surfaceAlt = Color.rgb(34, 42, 56)
-    private val text = Color.rgb(245, 247, 251)
+    private val textColor = Color.rgb(245, 247, 251)
     private val muted = Color.rgb(146, 155, 173)
     private val lime = Color.rgb(184, 243, 107)
     private val red = Color.rgb(255, 120, 135)
@@ -59,7 +59,7 @@ class MainActivity : Activity() {
         }
         val brand = column().apply {
             addView(label("POCKET  /  COMPANION", 10f, lime, true))
-            addView(label("Pocket Sync", 27f, text, true).apply {
+            addView(label("Pocket Sync", 27f, textColor, true).apply {
                 setPadding(0, dp(4), 0, 0)
             })
         }
@@ -70,8 +70,8 @@ class MainActivity : Activity() {
 
         val hero = card()
         hero.addView(label("AUTOMATIC TRANSACTION DETECTION", 10f, muted, true))
-        hero.addView(label("Your money,\nmade clear.", 28f, text, true).apply {
-            setLineSpacing(dp(1), 1f)
+        hero.addView(label("Your money,\nmade clear.", 28f, textColor, true).apply {
+            setLineSpacing(dp(1).toFloat(), 1f)
             setPadding(0, dp(9), 0, dp(7))
         })
         hero.addView(label(
@@ -84,7 +84,7 @@ class MainActivity : Activity() {
             background = circle(muted)
         }
         statusRow.addView(statusDot, LinearLayout.LayoutParams(dp(9), dp(9)))
-        statusValue = label("Checking notification access…", 12f, text, true).apply {
+        statusValue = label("Checking notification access…", 12f, textColor, true).apply {
             setPadding(dp(9), 0, 0, 0)
         }
         statusRow.addView(statusValue)
@@ -100,7 +100,7 @@ class MainActivity : Activity() {
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val detectedCard = card()
         detectedCard.addView(label("DETECTED", 10f, muted, true))
-        countValue = label("0", 27f, text, true).apply { setPadding(0, dp(5), 0, 0) }
+        countValue = label("0", 27f, textColor, true).apply { setPadding(0, dp(5), 0, 0) }
         detectedCard.addView(countValue)
         detectedCard.addView(label("Saved locally", 11f, muted, false))
         val syncCard = card()
@@ -121,7 +121,7 @@ class MainActivity : Activity() {
         val section = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
         }
-        section.addView(label("Recent activity", 18f, text, true),
+        section.addView(label("Recent activity", 18f, textColor, true),
             LinearLayout.LayoutParams(0, -2, 1f))
         section.addView(actionButton("Refresh", false) { refreshData() })
         root.addView(section)
@@ -191,7 +191,7 @@ class MainActivity : Activity() {
             row.addView(icon, LinearLayout.LayoutParams(dp(42), dp(42)))
             val details = column().apply {
                 setPadding(dp(11), 0, dp(5), 0)
-                addView(label(item.counterparty ?: item.merchant ?: "UPI transaction", 13f, text, true))
+                addView(label(item.counterparty ?: item.merchant ?: "UPI transaction", 13f, textColor, true))
                 val meta = buildList {
                     add(item.sourcePackage.substringAfterLast('.'))
                     item.accountSuffix?.let { add("••$it") }
@@ -226,7 +226,7 @@ class MainActivity : Activity() {
             textSize = size
             setTextColor(color)
             if (bold) typeface = Typeface.create("sans-serif", Typeface.BOLD)
-            setLineSpacing(dp(3), 1f)
+            setLineSpacing(dp(3).toFloat(), 1f)
         }
 
     private fun pill(value: String, color: Int) = TextView(this).apply {
@@ -244,7 +244,7 @@ class MainActivity : Activity() {
             textSize = 12f
             isAllCaps = false
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(if (primary) Color.rgb(16, 22, 8) else text)
+            setTextColor(if (primary) Color.rgb(16, 22, 8) else textColor)
             background = rounded(if (primary) lime else surfaceAlt, 13)
             minHeight = dp(44)
             setPadding(dp(14), 0, dp(14), 0)
