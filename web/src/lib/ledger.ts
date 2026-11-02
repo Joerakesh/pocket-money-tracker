@@ -100,9 +100,11 @@ export function computeSummary(i: SummaryInput) {
   const days = daysUntilNextPayday(i.today, i.payday);
   const reserve = Number(i.reservePaise || 0);
   const ledgerSpendable = cash - owedToFriends - reserve;
-  // The ledger balance already reflects every recorded transaction. Allocate only
-  // the money that is still available; never subtract cycle spending a second time.
-  const allocationBase = Math.max(0, ledgerSpendable);
+  // The planner preview applies every percentage to the full current account
+  // balance. Keep that same base here, then enforce cash constraints separately:
+  // reserve and unpaid borrowed expenses must remain covered before spending.
+  // Balances already include recorded transactions, so do not subtract spending again.
+  const allocationBase = Math.max(0, cash);
   const protectedAllocations = i.allocation
     ? Math.round(allocationBase * (i.allocation.savingsPercent + i.allocation.futurePercent) / 100)
     : 0;
@@ -110,7 +112,7 @@ export function computeSummary(i: SummaryInput) {
     ? Math.round(allocationBase * (i.allocation.essentialsPercent + i.allocation.personalPercent) / 100)
     : Number.POSITIVE_INFINITY;
   const remainingAllocatedSpending = i.allocation
-    ? Math.max(0, Math.min(allocatedSpending, allocationBase - protectedAllocations))
+    ? Math.max(0, Math.min(allocatedSpending, ledgerSpendable - protectedAllocations))
     : Number.POSITIVE_INFINITY;
   const spendable = i.allocation
     ? remainingAllocatedSpending
