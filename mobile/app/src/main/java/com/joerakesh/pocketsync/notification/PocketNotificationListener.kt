@@ -5,6 +5,12 @@ import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 import com.joerakesh.pocketsync.data.DetectedTransactionStore
 
 class PocketNotificationListener : NotificationListenerService() {
@@ -57,9 +63,14 @@ class PocketNotificationListener : NotificationListenerService() {
         val body = bodyParts.joinToString(" ")
         Log.d(TAG, "Notification received: package=${sbn.packageName}, keys=${extras.keySet()}, titlePresent=${!title.isNullOrBlank()}, bodyFields=${bodyParts.size}")
 
+        val combined = listOfNotNull(title, body).joinToString(" ")
+        val looksFinancial = Regex("""(?:₹|Rs\\.?|INR)\\s*[0-9]""", RegexOption.IGNORE_CASE).containsMatchIn(combined) &&
+            Regex("""\\b(credited|debited|received|sent|paid|payment|UPI|transaction|withdrawn|transferred)\\b""", RegexOption.IGNORE_CASE).containsMatchIn(combined)
+        if (looksFinancial) uploadForServerParsing(sbn, title.orEmpty(), body)
+
         val parsed = TransactionParser.parse(title, body)
         if (parsed == null) {
-            Log.d(TAG, "No transaction parsed from notification")
+            Log.d(TAG, "Notification queued for backend parsing; local parser did not classify it")
             return
         }
 
@@ -75,6 +86,51 @@ class PocketNotificationListener : NotificationListenerService() {
                 counterparty = parsed.counterparty
             )
         }
-        Log.d(TAG, "Parsed transaction: direction=${parsed.direction}, amountPaise=${parsed.amountPaise}, referencePresent=${!parsed.reference.isNullOrBlank()}, inserted=$inserted")
+        Log.d(TAG, "Local fallback parsed transaction: direction=${parsed.direction}, amountPaise=${parsed.amountPaise}, referencePresent=${!parsed.reference.isNullOrBlank()}, inserted=$inserted")
+    }
+
+    private fun uploadForServerParsing(sbn: StatusBarNotification, title: String, text: String) {
+        Thread {
+            var connection: HttpURLConnection? = null
+            try {
+                val user = FirebaseAuth.getInstance().currentUser
+                if (user == null) {
+                    Log.w(TAG, "Skipped server sync: no signed-in Firebase user")
+                    return@Thread
+                }
+                val token = Tasks.await(user.getIdToken(false)).token
+                    ?: throw IllegalStateException("Firebase ID token unavailable")
+                val event = JSONObject()
+                    .put("sourcePackage", sbn.packageName)
+                    .put("title", title.take(180))
+                    .put("text", text.take(3000))
+                    .put("notificationKey", sbn.key.take(300))
+                    .put("postedAt", sbn.postTime)
+                val payload = JSONObject().put("events", JSONArray().put(event))
+                connection = URL("https://money.joerakesh.tech/api/sync/notifications")
+                    .openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.connectTimeout = 12000
+                connection.readTimeout = 12000
+                connection.doOutput = true
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                connection.setRequestProperty("Accept", "application/json")
+                connection.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                if (code in 200..299) {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val result = JSONObject(response)
+                    Log.i(TAG, "Backend notification parse complete: accepted=${result.optInt("accepted")}, duplicates=${result.optInt("duplicates")}, ignored=${result.optInt("ignored")}")
+                } else {
+                    Log.e(TAG, "Backend notification sync failed with HTTP $code")
+                    connection.errorStream?.close()
+                }
+            } catch (error: Exception) {
+                Log.e(TAG, "Backend notification sync failed", error)
+            } finally {
+                connection?.disconnect()
+            }
+        }.apply { name = "PocketNotificationUpload" }.start()
     }
 }
