@@ -13,12 +13,71 @@ const bodyJson=async(req:NextRequest)=>{if((req.headers.get("content-type")||"")
 const getSettings=async(c:any)=>await c.settings.findOne({_id:"main"})||{_id:"main",payday:endOfMonth(),reservePaise:50000,currency:"INR"};
 const csvLine=(line:string)=>{const out:string[]=[];let field="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&quoted&&line[i+1]==='"'){field+='"';i++;}else if(ch==='"')quoted=!quoted;else if(ch===","&&!quoted){out.push(field);field="";}else field+=ch;}out.push(field);return out;};
 
+
+function parseNotificationTransaction(title:string,text:string,postedAt:number){
+ const content=(title+" "+text).replace(/\\s+/g," ").trim();
+ if(!content || content.length>3500)return null;
+ if(/\\b(failed|failure|declined|pending|reversed|reversal)\\b/i.test(content))return null;
+ const amountMatch=content.match(/(?:₹|Rs\\.?|INR)\\s*([0-9][0-9,]*(?:\\.\\d{1,2})?)/i);
+ if(!amountMatch)return null;
+ const amount=Number(amountMatch[1].replace(/,/g,""));
+ if(!Number.isFinite(amount)||amount<=0||amount>100000000)return null;
+ const direction=/\\b(credited|received|money added|deposit successful)\\b/i.test(content)?"INCOME":
+  /\\b(debited|sent|paid|withdrawn|payment successful|transferred)\\b/i.test(content)?"EXPENSE":null;
+ if(!direction)return null;
+ const reference=content.match(/(?:UPI\\s*(?:Ref(?:erence)?(?:\\s*No\\.?)?|ID)|Txn\\s*(?:ID|Ref)|Transaction\\s*ID|RRN)\\s*[:#.-]?\\s*([A-Za-z0-9-]{8,})/i)?.[1]||null;
+ const accountSuffix=content.match(/(?:A\\/c|account|from)\\s*[*Xx-]*([0-9]{4})\\b/i)?.[1]||null;
+ const counterpartyPattern=direction==="EXPENSE"
+  ? /\\b(?:sent|paid|transferred)\\s+(?:Rs\\.?\\s*[0-9,.]+\\s+)?(?:from\\s+[*Xx0-9-]+\\s+)?to\\s+(.+?)(?=\\s+(?:on\\s+\\d|UPI\\s+ref|ref(?:erence)?\\s+no)|[,.]|$)/i
+  : /\\b(?:received\\s+from|credited\\s+(?:by|from))\\s+(.+?)(?=\\s+(?:on\\s+\\d|RRN|UPI\\s+ref|available\\s+balance)|[,.]|$)/i;
+ const counterparty=counterpartyPattern.exec(content)?.[1]?.trim().slice(0,100)||null;
+ const dateMatch=content.match(/\\bon\\s+(\\d{1,2})[-/](\\d{1,2})[-/](\\d{2,4})/i);
+ let date=new Date(postedAt||Date.now()).toISOString().slice(0,10);
+ if(dateMatch){const year=Number(dateMatch[3].length===2?"20"+dateMatch[3]:dateMatch[3]);date=year+"-"+String(Number(dateMatch[2])).padStart(2,"0")+"-"+String(Number(dateMatch[1])).padStart(2,"0");}
+ return {amountPaise:Math.round(amount*100),direction,reference,accountSuffix,counterparty,date};
+}
+
 async function dispatch(req:NextRequest,ctx:Ctx){
  const {path}=await ctx.params;const p="/"+path.join("/");const method=req.method;
  if(p==="/health"&&method==="GET"){const db=await getDatabase();await db.command({ping:1});return json({ok:true,status:"ok"});}
  const identity=await verifyFirebaseRequest(req);
  if(!identity)return json({error:"Authentication required. Sign in again."},401);
  const c=await collections(identity);const b=method==="GET"||method==="HEAD"?{}:await bodyJson(req);
+
+ if(p==="/sync/notifications"&&method==="POST"){
+  const events=Array.isArray(b.events)?b.events.slice(0,40):[];
+  if(!events.length)return json({accepted:0,duplicates:0,ignored:0});
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  await inbox.createIndex({fingerprint:1},{unique:true});
+  await inbox.createIndex({detectedAt:-1});
+  const allowed=new Set(["com.google.android.apps.nbu.paisa.user","com.phonepe.app","net.one97.paytm","in.org.npci.upiapp","com.kotak811mobilebankingapp.instantsavingsupiscanandpayrecharge","com.google.android.apps.messaging"]);
+  let accepted=0,duplicates=0,ignored=0;
+  for(const event of events){
+   const sourcePackage=clean(event?.sourcePackage,160),title=clean(event?.title,180),text=clean(event?.text,3000);
+   if(!allowed.has(sourcePackage)||!text){ignored++;continue;}
+   const parsed=parseNotificationTransaction(title,text,Number(event?.postedAt)||Date.now());
+   if(!parsed){ignored++;continue;}
+   const base=parsed.reference?("ref:"+parsed.reference+":"+parsed.amountPaise):("event:"+clean(event?.notificationKey,300)+":"+parsed.amountPaise+":"+parsed.direction);
+   const fingerprint=base+":"+parsed.direction;
+   const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,date:parsed.date,sourcePackage,detectedAt:new Date(Number(event?.postedAt)||Date.now()),status:"PENDING",reviewedAt:null};
+   try{
+    await inbox.insertOne(doc);accepted++;
+    if(parsed.reference){
+     const opposite=parsed.direction==="INCOME"?"EXPENSE":"INCOME";
+     const other=await inbox.findOne({fingerprint:base+":"+opposite});
+     if(other){
+      await inbox.updateMany({fingerprint:{$in:[fingerprint,base+":"+opposite]}},{$set:{direction:"TRANSFER",transferCandidate:true}});
+     }
+    }
+   }catch(error:any){if(error?.code===11000)duplicates++;else throw error;}
+  }
+  return json({accepted,duplicates,ignored});
+ }
+ if(p==="/sync/notifications"&&method==="GET"){
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  const rows=await inbox.find({}).sort({detectedAt:-1}).limit(100).toArray();
+  return json(rows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
+ }
  if(p==="/accounts"&&method==="GET")return json((await accountBalances(c)).map((a:any)=>({...a,id:String(a._id),_id:String(a._id),balance:paiseToRupees(a.balancePaise)})));
  if(p==="/accounts"&&method==="POST"){
   const institution=clean(b.institution,80),label=clean(b.name,60),kind=clean(b.kind||(institution==="Cash"?"cash":institution==="UPI"?"upi":"bank"),30);
