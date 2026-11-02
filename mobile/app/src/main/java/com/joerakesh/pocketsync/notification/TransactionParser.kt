@@ -28,6 +28,10 @@ object TransactionParser {
         """\b(?:sent|paid|transferred)\s+(?:Rs\.?\s*[0-9,.]+\s+)?(?:from\s+[*Xx0-9-]+\s+)?to\s+(.+?)(?=\s+(?:on\s+\d|UPI\s+ref|ref(?:erence)?\s+no)|[,.]|$)""",
         RegexOption.IGNORE_CASE
     )
+    private val autoDebitToRegex = Regex(
+        """\b(?:autopay|auto[ -]?debit|standing instruction)\b.*?\bto\s+(.+?)(?=\s+on\s+\d|[,.]|$)""",
+        RegexOption.IGNORE_CASE
+    )
     private val receivedFromRegex = Regex(
         """\b(?:received\s+from|credited\s+(?:by|from))\s+(.+?)(?=\s+(?:on\s+\d|RRN|UPI\s+ref|available\s+balance)|[,.]|$)""",
         RegexOption.IGNORE_CASE
@@ -48,7 +52,8 @@ object TransactionParser {
 
         val direction = when {
             Regex("""\b(credited|received|money added)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) -> "INCOME"
-            Regex("""\b(sent|debited|paid|payment successful|transferred)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) -> "EXPENSE"
+            Regex("""\b(sent|debited|paid|payment successful|transferred)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) ||
+                (Regex("""\b(autopay|auto[ -]?debit|standing instruction)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content) && Regex("""\b(successful|processed|executed|paid)\b""", RegexOption.IGNORE_CASE).containsMatchIn(content)) -> "EXPENSE"
             else -> return null
         }
 
@@ -59,8 +64,8 @@ object TransactionParser {
 
         val reference = referenceRegex.find(content)?.groupValues?.getOrNull(1)
         val accountSuffix = accountRegex.find(content)?.groupValues?.getOrNull(1)
-        val counterparty = (if (direction == "EXPENSE") sentToRegex else receivedFromRegex)
-            .find(content)?.groupValues?.getOrNull(1)
+        val counterparty = (if (direction == "EXPENSE") (sentToRegex.find(content) ?: autoDebitToRegex.find(content)) else receivedFromRegex.find(content))
+            ?.groupValues?.getOrNull(1)
             ?.replace(Regex("""\s+(?:UPI|RRN|Ref(?:erence)?|on\s+\d).*?$""", RegexOption.IGNORE_CASE), "")
             ?.trim(' ', '.', ',', ':', '-')
             ?.take(100)
