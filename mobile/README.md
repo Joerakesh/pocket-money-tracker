@@ -7,6 +7,7 @@ Pocket Sync is a native Kotlin Android companion for Pocket. It listens for noti
 - [x] Native Android project and notification-listener service
 - [x] Package allowlist for Google Pay, PhonePe, Paytm, BHIM, Kotak and Google Messages
 - [x] Extraction of visible notification title and text, including supported MessagingStyle message fields
+- [x] Recognition of successful recurring AutoPay / auto-debit alerts, including merchant and abbreviated-month date parsing
 - [x] Financial-content pre-filter before server upload
 - [x] Firebase Google sign-in and Firebase ID-token authentication
 - [x] Authenticated upload to `POST /api/sync/notifications`
@@ -137,6 +138,7 @@ Download the intended APK from the repository's Releases page. Check the release
 - Confirm approval creates exactly one transaction.
 - Test duplicate alerts from UPI and bank-message sources.
 - Test failed, pending, refunded and reversed alerts.
+- Test successful AutoPay / standing-instruction alerts from Google Messages, including `AUTOPAY of Rs.89.00 to Google Play on 02-Nov-26 was successful.`
 - Test paired transfers between two of the user's own accounts.
 - Reconcile the result against the bank statement.
 
