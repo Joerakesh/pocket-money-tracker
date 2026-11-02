@@ -1,6 +1,22 @@
-node_modules/
-.env
+# Web
+web/node_modules/
+web/.next/
+web/out/
+web/.env*
+!web/.env.example
+web/*.tsbuildinfo
+
+# Android / Gradle
+.gradle/
+.kotlin/
+**/build/
+**/.gradle/
+mobile/local.properties
+mobile/.idea/
+*.iml
+*.jks
+*.keystore
+
+# General
 .DS_Store
 *.log
-.next/
-*.tsbuildinfo

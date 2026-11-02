@@ -1,128 +1,54 @@
 # Pocket
 
-A private personal finance tracker for recording transactions, managing accounts, planning spending, and understanding how much money is safe to spend.
+A personal finance tracker with a web dashboard and an Android companion for detecting payment notifications.
 
-Built with **Next.js 16**, **React 19**, **TypeScript**, and **MongoDB**. The app is also installable as a Progressive Web App (PWA).
+## Repository layout
 
-## Features
+- **[web/](./web/)** — Next.js 16, React 19, TypeScript, Firebase Authentication and MongoDB Atlas application.
+- **[mobile/](./mobile/)** — Kotlin Android companion. The initial implementation detects supported UPI payment notifications and stores minimal parsed records locally.
+- **[mobile/README.md](./mobile/README.md)** — Android setup, JDK requirements, permissions and next steps.
 
-- **Dashboard:** total balance, safe-to-spend amount, daily allowance, monthly income and spending, and category summaries.
-- **Transaction ledger:** record income, expenses, transfers, loans, repayments, collections, and refunds.
-- **Multiple accounts:** track cash, bank accounts, and other accounts with ledger-derived balances.
-- **Activity:** search and filter transaction history, edit entries, and soft-delete records.
-- **Planning:** category budgets, savings goals, recurring payment reminders, payday settings, and financial allocation planning.
-- **Financial intelligence:** protected reserve, allocation-aware safe-to-spend calculations, payday planning, and financial health insights.
-- **Bank statement import:** preview CSV rows, choose an account, and import with duplicate detection and review flags.
-- **Data safety:** export an account and its linked transaction history before deleting it; transaction revisions and soft-deleted entries are retained.
-- **Installable PWA:** add Pocket to a supported browser or device home screen. The offline page is a fallback; live financial data requires an internet connection.
+## Web application
 
-MongoDB is the source of truth. No separate Express server is needed.
+Requirements: Node.js 20+ and npm.
 
-## Requirements
+```powershell
+cd web
+npm ci
+Copy-Item .env.example .env.local
+# Configure .env.local, then:
+npm run dev
+```
 
-- Node.js 20 or later
-- npm
-- A MongoDB database (MongoDB Atlas or a reachable self-hosted instance)
+Open http://localhost:3000.
 
-## Getting started
+See [web/README.md](./web/README.md) for the full web setup, environment variables, API overview, data integrity and deployment guidance.
 
-1. Clone the repository and enter the project directory.
-2. Install dependencies:
+### Vercel deployment
 
-   ```bash
-   npm install
-   ```
+After this repository restructure, set the Vercel project's **Root Directory** to `web`. Keep the existing environment variables configured in Vercel, then trigger a new deployment. Do not move secrets into the repository.
 
-3. Create a local environment file:
+## Android companion
 
-   ```bash
-   cp .env.example .env.local
-   ```
+The Android project lives in [mobile/](./mobile/). It uses Kotlin and native Android APIs; it is intentionally separate from the web app.
 
-4. Set your MongoDB connection string in `.env.local`:
+Start with [mobile/README.md](./mobile/README.md). The first milestone is local notification detection. Cloud synchronization is not enabled yet: it must be connected to an authenticated Pocket API endpoint and tested with duplicate/reversal handling before it can affect financial balances.
 
-   ```env
-   MONGODB_URI=mongodb+srv://YOUR_USER:YOUR_PASSWORD@YOUR_CLUSTER.mongodb.net/?retryWrites=true&w=majority
-   DB_NAME=pocket_money_tracker
-   ```
+## Important data-safety notes
 
-5. Start the development server:
+- MongoDB remains the source of truth for Pocket's financial records.
+- The companion stores detected notification metadata locally and does not change balances.
+- Notification text can be incomplete or misleading. Treat detections as candidates until reconciled.
+- Never collect UPI PINs, OTPs, passwords, or full notification/SMS contents.
+- Internal transfers, failed payments, reversals and duplicate notifications must be handled before automatic ledger posting.
 
-   ```bash
-   npm run dev
-   ```
+## Development checks
 
-6. Open [http://localhost:3000](http://localhost:3000).
+```powershell
+cd web
+npm run typecheck
+npm test
+npm run build
+```
 
-## Available commands
-
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the Next.js development server |
-| `npm run build` | Create a production build |
-| `npm run start` | Start the production server |
-| `npm run typecheck` | Run the TypeScript compiler without emitting files |
-| `npm test` | Run the ledger tests |
-
-## API overview
-
-The application uses Next.js Route Handlers:
-
-- `GET /api/health` — database connectivity check
-- `/api/accounts` — account listing and creation
-- `/api/accounts/:id/export` — export an account and related records
-- `/api/transactions` — transaction listing, creation, editing, and deletion
-- `/api/budgets`, `/api/goals`, `/api/recurring` — planning data
-- `/api/import/preview`, `/api/import/commit` — bank CSV import
-- `/api/settings`, `/api/financial-plan` — payday, reserve, and allocation settings
-- `/api/summary` — dashboard and safe-to-spend summary
-
-## Data integrity
-
-- Money is stored as integer paise; API and UI amounts are represented in rupees.
-- Account balances are derived from ledger transactions. Transfers move money between accounts and are not counted as income or spending.
-- CSV imports use a SHA-256 import key to avoid importing the same row twice.
-- Imported transactions are marked for review before being treated as fully categorized records.
-- Transactions support soft deletion and retain a limited revision history.
-- Loan and repayment records remain linked to their originating transactions.
-
-## PWA and offline behavior
-
-Pocket provides a web app manifest, install prompt, app icon, and service worker. The service worker keeps a small offline fallback available and does not cache API responses or private financial records. An internet connection is required to load and update live balances and transactions.
-
-## Privacy and deployment
-
-Keep `.env.local` out of version control. Use HTTPS in production, restrict access to the MongoDB database, and keep database credentials private. Back up MongoDB before production changes and test deployments against a non-production database where possible.
-
-## Authentication and private accounts
-
-Pocket uses **Firebase Authentication with Google sign-in** for identity and MongoDB Atlas for finance records. Firebase is not used as the finance database.
-
-### Firebase setup
-
-1. In Firebase Console, enable **Authentication → Sign-in method → Google**.
-2. Register the production domain under **Authentication → Settings → Authorized domains** (for example, `pocket-money-tracker-two.vercel.app`).
-3. Create a Firebase Web App and copy its configuration into the `NEXT_PUBLIC_FIREBASE_*` variables in Vercel.
-4. Create a dedicated Firebase service account for server-side ID-token verification. Add its project ID, client email, and private key to the server-only `FIREBASE_*` variables. Never expose the private key through a `NEXT_PUBLIC_*` variable or commit it.
-5. Set `OWNER_GOOGLE_EMAIL=rakeshjoe52@gmail.com` before the first owner login.
-
-### Required production environment variables
-
-- `NEXT_PUBLIC_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` (optional if not present in the Firebase web config)
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_CLIENT_EMAIL`
-- `FIREBASE_PRIVATE_KEY`
-- `OWNER_GOOGLE_EMAIL`
-- Existing `MONGODB_URI` and `DB_NAME`
-
-After changing production variables, redeploy the application.
-
-### Account isolation and existing records
-
-Every finance API request verifies a Firebase ID token on the server. Unauthenticated requests are rejected. The verified Firebase UID determines a separate MongoDB collection namespace for each non-owner account. The verified owner email continues to use the existing unscoped collections, preserving the current finance records without a rename or copy migration. Other Google accounts start with their own empty accounts and records.
-
-Take a MongoDB Atlas backup before enabling authentication in production. Keep the owner email exact and configure it before the first sign-in; do not change it casually after friends have begun using Pocket.
+Android build and device instructions are documented in [mobile/README.md](./mobile/README.md).
