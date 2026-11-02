@@ -49,6 +49,9 @@ class MainActivity : Activity() {
     private var summary: JSONObject? = null
     private var loading = false
     private var authStatus = ""
+    private var serverNotifications: org.json.JSONArray? = null
+    private var serverNotificationsLoading = false
+    private var serverNotificationsError: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -284,18 +287,80 @@ class MainActivity : Activity() {
 
     private fun activityScreen() {
         content.addView(label("Detected activity", 24f, ink, true))
-        content.addView(label("Payment notifications on this device. These are not automatically added to your Pocket ledger.", 12f, muted, false))
+        content.addView(label("Bank SMS and UPI app notifications parsed by your Pocket backend. These remain separate from your ledger until you review them.", 12f, muted, false))
         space(content, 12)
-        val items = DetectedTransactionStore(this).use { it.latest(50) }
         val panel = card()
-        if (items.isEmpty()) panel.addView(label("No detected notifications yet.", 13f, muted, false))
-        items.forEach { item ->
-            val sign = if (item.direction.equals("INCOME", true)) "+" else "−"
-            panel.addView(row(item.counterparty ?: item.merchant ?: "UPI transaction", sign + money(item.amountPaise / 100.0)))
-            val meta = item.sourcePackage.substringAfterLast('.') + (item.accountSuffix?.let { " · ••" + it } ?: "")
-            panel.addView(label(meta, 10f, muted, false))
+        val rows = serverNotifications
+        if (rows == null) {
+            panel.addView(label(if (serverNotificationsLoading) "Loading server-parsed notifications…" else "Server activity has not been loaded.", 13f, ink, false))
+            serverNotificationsError?.let { panel.addView(label(it, 11f, Color.rgb(255, 130, 130), false)) }
+            if (!serverNotificationsLoading) loadServerNotifications()
+        } else if (rows.length() == 0) {
+            panel.addView(label("No matching bank or UPI notifications received yet.", 13f, muted, false))
+        } else {
+            for (i in 0 until rows.length()) {
+                val item = rows.getJSONObject(i)
+                val direction = item.optString("direction").uppercase()
+                val amount = money(item.optDouble("amount"))
+                val displayAmount = when (direction) {
+                    "INCOME" -> "+ $amount"
+                    "EXPENSE" -> "− $amount"
+                    "TRANSFER" -> "↔ $amount"
+                    else -> "Review · $amount"
+                }
+                val name = item.optString("counterparty").takeIf { it.isNotBlank() }
+                    ?: item.optString("sourcePackage").substringAfterLast('.')
+                panel.addView(row(name, displayAmount))
+                val account = item.optString("accountSuffix").takeIf { it.isNotBlank() }?.let { " · ••$it" } ?: ""
+                val status = item.optString("status", "PENDING")
+                panel.addView(label("$direction · $status$account", 10f, muted, false))
+                if (i < rows.length() - 1) space(panel, 5)
+            }
         }
         content.addView(panel)
+        space(content, 10)
+        content.addView(button("Refresh detected activity", false) {
+            serverNotifications = null
+            serverNotificationsError = null
+            loadServerNotifications()
+        }, match())
+    }
+
+    private fun loadServerNotifications() {
+        if (serverNotificationsLoading || auth.currentUser == null) return
+        serverNotificationsLoading = true
+        Thread {
+            var result: org.json.JSONArray? = null
+            var problem: String? = null
+            var connection: HttpURLConnection? = null
+            try {
+                val token = com.google.android.gms.tasks.Tasks.await(auth.currentUser!!.getIdToken(false)).token
+                    ?: throw IllegalStateException("Firebase token unavailable.")
+                connection = URL(API_BASE + "/sync/notifications").openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.setRequestProperty("Authorization", "Bearer " + token)
+                connection.setRequestProperty("Accept", "application/json")
+                connection.setRequestProperty("Cache-Control", "no-store")
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val body = stream.bufferedReader().use { it.readText() }
+                if (code !in 200..299) throw IllegalStateException(JSONObject(body).optString("error", "Request failed: " + code))
+                result = org.json.JSONArray(body)
+            } catch (error: Exception) {
+                problem = error.localizedMessage ?: "Could not load detected activity."
+            } finally {
+                connection?.disconnect()
+            }
+            runOnUiThread {
+                serverNotificationsLoading = false
+                serverNotifications = result
+                serverNotificationsError = problem
+                if (tab == "activity") render()
+                if (problem != null) toast(problem!!)
+            }
+        }.apply { name = "PocketNotificationFetch" }.start()
     }
 
     private fun syncScreen() {
