@@ -6,6 +6,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.google.android.gms.tasks.Tasks
+import com.joerakesh.pocketsync.BuildConfig
 import com.google.firebase.auth.FirebaseAuth
 import org.json.JSONArray
 import org.json.JSONObject
@@ -107,7 +108,7 @@ class PocketNotificationListener : NotificationListenerService() {
                     .put("notificationKey", sbn.key.take(300))
                     .put("postedAt", sbn.postTime)
                 val payload = JSONObject().put("events", JSONArray().put(event))
-                connection = URL("https://money.joerakesh.tech/api/sync/notifications")
+                connection = URL(BuildConfig.API_BASE + "/sync/notifications")
                     .openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.connectTimeout = 12000
