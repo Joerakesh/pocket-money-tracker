@@ -79,6 +79,42 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const rows=await inbox.find({}).sort({detectedAt:-1}).limit(100).toArray();
   return json(rows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
  }
+ if(p==="/sync/notifications"&&method==="GET"){
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  const rows=await inbox.find({}).sort({detectedAt:-1}).limit(100).toArray();
+  return json(rows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
+ }
+ m=p.match(/^\\/sync\\/notifications\\/([^/]+)\\/review$/);
+ if(m&&method==="POST"){
+  const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
+  const id=parseId(m[1]),row=await inbox.findOne({_id:id});
+  if(!row)bad("Notification candidate not found.",404);
+  const action=clean(b.action,20);
+  if(action==="ignore"){
+   await inbox.updateOne({_id:id,status:"PENDING"},{$set:{status:"IGNORED",reviewedAt:new Date()}});
+   return json({ok:true,status:"IGNORED"});
+  }
+  if(action!=="approve")bad("Choose approve or ignore.");
+  if(row.status==="APPROVED")return json({ok:true,status:"APPROVED",alreadyApproved:true});
+  if(row.status!=="PENDING")bad("This notification has already been reviewed.",409);
+  const accountId=clean(b.accountId,40),toAccountId=clean(b.toAccountId,40);
+  const type=row.direction==="TRANSFER"?"transfer":row.direction==="INCOME"?"income":"expense";
+  if(!accountId)bad("Choose the account for this transaction.");
+  await accountById(c,accountId);
+  if(type==="transfer"){
+   if(!toAccountId||toAccountId===accountId)bad("Choose a different destination account for this transfer.");
+   await accountById(c,toAccountId);
+  }
+  const existing=await c.tx.findOne({notificationInboxId:String(id)});
+  let transactionId=existing?String(existing._id):null;
+  if(!existing){
+   const transaction:any={type,amountPaise:Number(row.amountPaise),date:clean(row.date,10),category:clean(b.category||(type==="transfer"?"Transfer":"Needs review"),50),note:clean(b.note||row.counterparty||"Imported from bank notification",200),accountId,notificationInboxId:String(id),notificationReference:row.reference||null,createdAt:new Date()};
+   if(type==="transfer")transaction.toAccountId=toAccountId;
+   const inserted=await c.tx.insertOne(transaction);transactionId=String(inserted.insertedId);
+  }
+  await inbox.updateOne({_id:id,status:"PENDING"},{$set:{status:"APPROVED",reviewedAt:new Date(),transactionId}});
+  return json({ok:true,status:"APPROVED",transactionId});
+ }
  if(p==="/accounts"&&method==="GET")return json((await accountBalances(c)).map((a:any)=>({...a,id:String(a._id),_id:String(a._id),balance:paiseToRupees(a.balancePaise)})));
  if(p==="/accounts"&&method==="POST"){
   const institution=clean(b.institution,80),label=clean(b.name,60),kind=clean(b.kind||(institution==="Cash"?"cash":institution==="UPI"?"upi":"bank"),30);
