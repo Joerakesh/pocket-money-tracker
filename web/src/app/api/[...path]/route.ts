@@ -287,8 +287,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    getSettings(c),c.tx.find({deletedAt:{$exists:false},date:{$gte:monthStart(t),$lte:endOfMonth(t)}},{projection:{date:1,type:1,amountPaise:1,category:1,settled:1}}).toArray(),
    c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c),
    c.tx.find({deletedAt:{$exists:false}},{projection:{type:1,amountPaise:1,date:1,category:1,note:1,person:1,accountId:1,settled:1}}).sort({date:-1,createdAt:-1}).limit(5).toArray(),
-   c.tx.findOne({deletedAt:{$exists:false},type:"income"},{sort:{date:-1,createdAt:-1},projection:{date:1,createdAt:1}})]);
-  const cycleRows=latestIncome?await c.tx.find({deletedAt:{$exists:false},$or:[{date:{$gt:latestIncome.date}},{date:latestIncome.date,createdAt:{$gt:latestIncome.createdAt||new Date(0)}}]},{projection:{type:1,amountPaise:1,allocationSource:1}}).toArray():[];
+   c.tx.findOne({deletedAt:{$exists:false},type:"income",category:{$ne:"Friends"},note:{$not:/^old balance$/i}},{sort:{date:-1,createdAt:-1},projection:{date:1,createdAt:1,category:1,note:1}})]);
+  const cycleRows=latestIncome?await c.tx.find({deletedAt:{$exists:false},date:{$gte:latestIncome.date},_id:{$ne:latestIncome._id}},{projection:{type:1,amountPaise:1,allocationSource:1}}).toArray():[];
   const cycleCashChange=cycleRows.reduce((sum:number,row:any)=>sum+(["expense","lent","repayment"].includes(row.type)?-Number(row.amountPaise||0):["income","collection","refund"].includes(row.type)?Number(row.amountPaise||0):0),0);
   const allocationCycleBasePaise=Math.max(0,balances.reduce((sum:number,a:any)=>sum+Number(a.balancePaise||0),0)-cycleCashChange);
   const allocationSpentPaise={essentials:0,savings:0,personal:0,future:0};
