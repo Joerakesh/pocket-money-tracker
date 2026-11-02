@@ -13,6 +13,7 @@ type Candidate = {
   reference?: string | null;
   accountSuffix?: string | null;
   counterparty?: string | null;
+  bankName?: string | null;
   date: string;
   sourcePackage: string;
   detectedAt: string;
@@ -45,6 +46,8 @@ export default function SyncSection({ accounts, onChanged }: {
   const [accountByItem, setAccountByItem] = useState<Record<string, string>>({});
   const [destinationByItem, setDestinationByItem] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState("");
+  const [categoryByItem, setCategoryByItem] = useState<Record<string, string>>({});
+  const [reasonByItem, setReasonByItem] = useState<Record<string, string>>({});
 
   const request = useCallback(async (url: string, init?: RequestInit) => {
     const token = await firebaseAuth?.currentUser?.getIdToken();
@@ -92,8 +95,8 @@ export default function SyncSection({ accounts, onChanged }: {
           action,
           accountId,
           toAccountId,
-          category: item.direction === "TRANSFER" ? "Transfer" : "Needs review",
-          note: item.counterparty || (item.direction === "TRANSFER" ? "Own-account transfer" : "Imported from bank notification"),
+          category: categoryByItem[item._id] || (item.direction === "TRANSFER" ? "Transfer" : item.direction === "INCOME" ? "Income" : "Other"),
+          note: reasonByItem[item._id]?.trim() || item.counterparty || (item.direction === "TRANSFER" ? "Own-account transfer" : "Bank notification"),
         }),
       });
       await refresh();
@@ -148,7 +151,7 @@ export default function SyncSection({ accounts, onChanged }: {
                   <div className={`grid size-10 shrink-0 place-items-center rounded-[13px] text-sm font-black ${item.direction === "INCOME" ? "bg-[#b8f36b]/12 text-[#b8f36b]" : isTransfer ? "bg-[#83b8ff]/12 text-[#83b8ff]" : "bg-[#ff7887]/10 text-[#ff9aa5]"}`}>{isTransfer ? "⇄" : item.direction === "INCOME" ? "↓" : "↑"}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <div><b className="block text-sm">{item.counterparty || (isTransfer ? "Possible own-account transfer" : sourceName(item.sourcePackage))}</b><span className="mt-1 block text-[10px] text-[#929bad]">{sourceName(item.sourcePackage)} · {item.date}</span></div>
+                      <div><b className="block text-sm">{item.counterparty || (isTransfer ? "Possible own-account transfer" : item.bankName || sourceName(item.sourcePackage))}</b><span className="mt-1 block text-[10px] text-[#929bad]">{item.bankName || sourceName(item.sourcePackage)} · {item.date}</span></div>
                       <b className="whitespace-nowrap text-sm">{money(item.amount)}</b>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -173,11 +176,19 @@ export default function SyncSection({ accounts, onChanged }: {
                       </select>
                     </label>}
                     {accounts.length === 0 && <p className="text-xs text-[#ff9aa5]">Create your bank accounts in Pocket before approving transactions.</p>}
+                    {!isTransfer && <label className={ui.label}>Category
+                      <select className={ui.field} value={categoryByItem[item._id] || (item.direction === "INCOME" ? "Income" : "Other")} onChange={e => setCategoryByItem(v => ({...v,[item._id]:e.target.value}))}>
+                        {(item.direction === "INCOME" ? ["Income","Salary","Allowance","Business","Refund","Other"] : ["Other","Food","Travel","Shopping","Bills","Education","Health","Entertainment","Personal"]).map(value => <option key={value} value={value}>{value}</option>)}
+                      </select>
+                    </label>}
+                    <label className={ui.label}>Reason / note <span className="font-normal text-[#929bad]">(optional)</span>
+                      <input className={ui.field} placeholder={item.counterparty || "What was this for?"} value={reasonByItem[item._id] || ""} onChange={e => setReasonByItem(v => ({...v,[item._id]:e.target.value}))}/>
+                    </label>
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button type="button" disabled={busyId === item._id || !accounts.length || (isTransfer && (!destination || destination === selectedAccount))} onClick={() => void review(item,"approve")} className={ui.primary}>{busyId === item._id ? "Saving…" : "Approve"}</button>
+                      <button type="button" disabled={busyId === item._id || !accounts.length || (isTransfer && (!destination || destination === selectedAccount))} onClick={() => void review(item,"approve")} className={ui.primary}>{busyId === item._id ? "Saving…" : "Add transaction"}</button>
                       <button type="button" disabled={busyId === item._id} onClick={() => void review(item,"ignore")} className={ui.ghost}>Ignore</button>
                     </div>
-                    <p className="text-[10px] leading-relaxed text-[#929bad]">Approval creates a ledger entry. Transfer candidates require two accounts and are recorded as transfers, not income or spending.</p>
+                    <p className="text-[10px] leading-relaxed text-[#929bad]">Check the account, choose a category and add a reason only if needed. Approval adds it to your Pocket ledger.</p>
                   </div>}
                 </div>}
                 {item.status === "APPROVED" && <p className="mt-2 text-[10px] font-semibold text-[#b8f36b]">✓ Added to Pocket ledger</p>}
