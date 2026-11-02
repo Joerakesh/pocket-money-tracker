@@ -31,10 +31,11 @@ function parseNotificationTransaction(title:string,text:string,postedAt:number){
   ? /\b(?:sent|paid|transferred)\s+(?:Rs\.?\s*[0-9,.]+\s+)?(?:from\s+[*Xx0-9-]+\s+)?to\s+(.+?)(?=\s+(?:on\s+\d|UPI\s+ref|ref(?:erence)?\s+no)|[,.]|$)/i
   : /\b(?:received\s+from|credited\s+(?:by|from))\s+(.+?)(?=\s+(?:on\s+\d|RRN|UPI\s+ref|available\s+balance)|[,.]|$)/i;
  const counterparty=counterpartyPattern.exec(content)?.[1]?.trim().slice(0,100)||null;
+ const bankName=content.match(/[-–]\s*([A-Za-z][A-Za-z &]{1,40})\s*$/)?.[1]?.trim()||title.trim().slice(0,80)||null;
  const dateMatch=content.match(/\bon\s+(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/i);
  let date=new Date(postedAt||Date.now()).toISOString().slice(0,10);
  if(dateMatch){const year=Number(dateMatch[3].length===2?"20"+dateMatch[3]:dateMatch[3]);date=year+"-"+String(Number(dateMatch[2])).padStart(2,"0")+"-"+String(Number(dateMatch[1])).padStart(2,"0");}
- return {amountPaise:Math.round(amount*100),direction,reference,accountSuffix,counterparty,date};
+ return {amountPaise:Math.round(amount*100),direction,reference,accountSuffix,counterparty,bankName,date};
 }
 
 async function dispatch(req:NextRequest,ctx:Ctx){
@@ -60,7 +61,7 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    const fallbackKey=createHash("sha256").update(sourcePackage+"|"+title+"|"+text).digest("hex");
    const base=parsed.reference?("ref:"+parsed.reference+":"+parsed.amountPaise):("event:"+fallbackKey+":"+parsed.date+":"+parsed.amountPaise);
    const fingerprint=base+":"+parsed.direction;
-   const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,date:parsed.date,sourcePackage,detectedAt:new Date(Number(event?.postedAt)||Date.now()),status:"PENDING",reviewedAt:null};
+   const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,bankName:parsed.bankName,date:parsed.date,sourcePackage,detectedAt:new Date(Number(event?.postedAt)||Date.now()),status:"PENDING",reviewedAt:null};
    try{
     await inbox.insertOne(doc);accepted++;
     if(parsed.reference){
@@ -230,25 +231,16 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   }return json({added,skipped,reviewRequired:added});
  }
  if(p==="/summary"&&method==="GET"){
-  const t=today(),[st,monthRows,unpaidRows,balances,latestIncome,recentRows]=await Promise.all([
+  const t=today(),[st,monthRows,unpaidRows,balances,recentRows]=await Promise.all([
    getSettings(c),c.tx.find({deletedAt:{$exists:false},date:{$gte:monthStart(t),$lte:endOfMonth(t)}},{projection:{date:1,type:1,amountPaise:1,category:1,settled:1}}).toArray(),
    c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c),
-   c.tx.findOne({deletedAt:{$exists:false},type:"income"},{sort:{date:-1,createdAt:-1},projection:{date:1,amountPaise:1,createdAt:1}}),
    c.tx.find({deletedAt:{$exists:false}},{projection:{type:1,amountPaise:1,date:1,category:1,note:1,person:1,accountId:1,settled:1}}).sort({date:-1,createdAt:-1}).limit(5).toArray()]);
-  let cycleSpendPaise=0;
-  if(latestIncome){
-   const cycleFilter:any={deletedAt:{$exists:false},$or:[{date:{$gt:latestIncome.date}},{date:latestIncome.date,...(latestIncome.createdAt?{createdAt:{$gte:latestIncome.createdAt}}:{})}]};
-   const cycleRows=await c.tx.find(cycleFilter,{projection:{type:1,amountPaise:1}}).toArray();
-   cycleSpendPaise=cycleRows.reduce((sum:number,row:any)=>sum+spendingEffect(row),0);
-  }
   const percentages=st.financialPlan?.allocationPercentages;
-  const allocation=latestIncome&&percentages?{
-   incomePaise:Number(latestIncome.amountPaise||0),
+  const allocation=percentages?{
    essentialsPercent:Number(percentages.essentials||0),
    savingsPercent:Number(percentages.savings||0),
    personalPercent:Number(percentages.personal||0),
    futurePercent:Number(percentages.future||0),
-   cycleSpendPaise,
   }:undefined;
   const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise),allocation});
   const {todaySpent,monthSpent,monthIncome,owedToFriends,owedByFriends,byCat,cash,days,reserve,spendable}=r;
