@@ -125,36 +125,33 @@ test("allocation-aware safe-to-spend protects reserve, savings and future alloca
     balancesPaise: [3000_00],
     reservePaise: 500_00,
     allocation: {
-      incomePaise: 3000_00,
       essentialsPercent: 0,
       savingsPercent: 33,
       personalPercent: 27,
       futurePercent: 40,
-      cycleSpendPaise: 0,
     },
   });
   assert.equal(s.ledgerSpendable, 2500_00);
-  assert.equal(s.protectedAllocations, 2190_00);
-  assert.equal(s.remainingAllocatedSpending, 810_00);
-  assert.equal(s.spendable, 310_00);
+  assert.equal(s.protectedAllocations, 1825_00);
+  assert.equal(s.remainingAllocatedSpending, 675_00);
+  assert.equal(s.spendable, 675_00);
   assert.equal(s.days, 11);
-  assert.equal(s.perDay, Math.floor(310_00 / 11));
+  assert.equal(s.perDay, Math.floor(675_00 / 11));
 });
 
-test("cycle spending reduces safe-to-spend and does not include transfers or income", () => {
+test("allocation uses the current ledger balance without subtracting recorded spending twice", () => {
   const s = computeSummary({
     ...base,
     balancesPaise: [2900_00],
     allocation: {
-      incomePaise: 3000_00,
       essentialsPercent: 0,
       savingsPercent: 33,
       personalPercent: 27,
       futurePercent: 40,
-      cycleSpendPaise: 100_00,
     },
   });
-  assert.equal(s.spendable, 210_00);
+  assert.equal(s.ledgerSpendable, 2400_00);
+  assert.equal(s.spendable, 648_00);
 });
 
 test("negative spendable yields a negative per-day allowance", () => {
