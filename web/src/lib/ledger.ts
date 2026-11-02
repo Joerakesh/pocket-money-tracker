@@ -57,6 +57,8 @@ export type SummaryInput = {
     personalPercent: number;
     futurePercent: number;
   };
+  allocationCycleBasePaise?: number;
+  allocationSpentPaise?: { essentials: number; savings: number; personal: number; future: number };
 };
 
 function daysUntilNextPayday(today: string, payday: string) {
@@ -104,12 +106,12 @@ export function computeSummary(i: SummaryInput) {
   // balance. Keep that same base here, then enforce cash constraints separately:
   // reserve and unpaid borrowed expenses must remain covered before spending.
   // Balances already include recorded transactions, so do not subtract spending again.
-  const allocationBase = Math.max(0, cash);
+  const allocationBase = Math.max(0, i.allocationCycleBasePaise ?? cash);
   const protectedAllocations = i.allocation
-    ? Math.round(allocationBase * (i.allocation.savingsPercent + i.allocation.futurePercent) / 100)
+    ? Math.max(0, Math.round(allocationBase * (i.allocation.savingsPercent + i.allocation.futurePercent) / 100) - Number(i.allocationSpentPaise?.savings || 0) - Number(i.allocationSpentPaise?.future || 0))
     : 0;
   const allocatedSpending = i.allocation
-    ? Math.round(allocationBase * (i.allocation.essentialsPercent + i.allocation.personalPercent) / 100)
+    ? Math.max(0, Math.round(allocationBase * (i.allocation.essentialsPercent + i.allocation.personalPercent) / 100) - Number(i.allocationSpentPaise?.essentials || 0) - Number(i.allocationSpentPaise?.personal || 0))
     : Number.POSITIVE_INFINITY;
   const remainingAllocatedSpending = i.allocation
     ? Math.max(0, Math.min(allocatedSpending, ledgerSpendable - protectedAllocations))
