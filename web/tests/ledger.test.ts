@@ -150,9 +150,9 @@ test("allocation-aware safe-to-spend protects reserve, savings and future alloca
     },
   });
   assert.equal(s.ledgerSpendable, 2500_00);
-  assert.equal(s.protectedAllocations, 1825_00);
-  assert.equal(s.remainingAllocatedSpending, 675_00);
-  assert.equal(s.spendable, 675_00);
+  assert.equal(s.protectedAllocations, 2190_00); // 73% of the full ₹3,000 balance
+  assert.equal(s.remainingAllocatedSpending, 310_00); // ₹2,500 after reserve, less protected allocations
+  assert.equal(s.spendable, 310_00);
   assert.equal(s.days, 11);
   assert.equal(s.perDay, Math.floor(675_00 / 11));
 });
@@ -169,12 +169,29 @@ test("allocation uses the current ledger balance without subtracting recorded sp
     },
   });
   assert.equal(s.ledgerSpendable, 2400_00);
-  assert.equal(s.spendable, 648_00);
+  assert.equal(s.protectedAllocations, 2117_00); // 73% of the full ₹2,900 balance
+  assert.equal(s.spendable, 283_00); // ₹2,400 after reserve, less protected allocations
 });
 
-test("negative spendable yields a negative per-day allowance", () => {
+test("allocation never makes safe-to-spend negative when reserve exceeds available cash", () => {
+  const s = computeSummary({
+    ...base,
+    balancesPaise: [100_00],
+    allocation: {
+      essentialsPercent: 0,
+      savingsPercent: 33,
+      personalPercent: 27,
+      futurePercent: 40,
+    },
+  });
+  assert.equal(s.spendable, 0);
+  assert.equal(s.perDay, 0);
+});
+
+test("unallocated safe-to-spend reports a shortfall when reserve exceeds cash", () => {
   const s = computeSummary({ ...base, balancesPaise: [100_00] });
-  assert.ok(s.spendable < 0 && s.perDay < 0);
+  assert.equal(s.spendable, -400_00);
+  assert.equal(s.perDay, Math.floor(-400_00 / s.days));
 });
 
 test("month totals: refunds reduce spend and category, income is separate, transfers are ignored", () => {
