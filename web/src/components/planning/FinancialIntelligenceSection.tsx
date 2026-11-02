@@ -95,15 +95,15 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
     <>
       <section className={ui.card}>
         <div className={ui.sectionHead}><div><span className={ui.sectionLabel}>PAYDAY ROUTINE</span><h2 className={ui.h2Flush}>Payday planner</h2></div><span className={ui.pill}>Virtual allocation</span></div>
-        <p className={ui.note}>Your saved percentages are applied to your current total account balance, so the amounts update as your balance changes. This is a planning view only; it does not move money or create ledger transactions.</p>
+        <p className={ui.note}>Your saved percentages are applied to the balance at the start of your latest income cycle. The virtual wallets stay fixed during that cycle and decrease only when you assign an expense to them.</p>
         <div className="mb-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3">
-          <span className={ui.metricLabel}>Current Pocket balance</span>
-          <strong className="mt-1 block text-2xl tracking-tight">{money(currentBalance)}</strong>
-          <span className={ui.rowSub}>Allocation preview is based on the balance across your Pocket accounts right now.</span>
+          <span className={ui.metricLabel}>Starting balance for this income cycle</span>
+          <strong className="mt-1 block text-2xl tracking-tight">{money(cycleStartingBalance)}</strong>
+          <span className={ui.rowSub}>{latestIncome ? `Latest income · ${latestIncome.date} · ${money(incomeAmount)}` : "No income recorded; current balance is used as the starting point."}</span>
         </div>
         <form onSubmit={submit} className="grid grid-cols-2 gap-3">
           {allocations.map(item => (
-            <label key={item.key} className="min-w-0"><span className={ui.label}>{item.label} (%)</span><input className={ui.field} type="number" min="0" max="100" step="1" value={item.value} onChange={e => updatePercent(item.key, Number(e.target.value))}/><span className={ui.rowSub}>{money(currentBalance*item.value/100)}</span></label>
+            <label key={item.key} className="min-w-0"><span className={ui.label}>{item.label} (%)</span><input className={ui.field} type="number" min="0" max="100" step="1" value={item.value} onChange={e => updatePercent(item.key, Number(e.target.value))}/><span className={ui.rowSub}>{money(cycleStartingBalance*item.value/100)}</span></label>
           ))}
           <div className="col-span-full flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2 text-xs"><span>Allocation total</span><strong className={percentageTotal===100 ? ui.green : ui.red}>{percentageTotal}%</strong></div>
           <button className={`${ui.primary} col-span-full`} disabled={saving || percentageTotal!==100}>{saving ? "Saving…" : "Save payday rules"}</button>
@@ -127,7 +127,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
           <strong className={`mt-1 block text-3xl tracking-tight ${(summary?.perDay || 0)>=0 ? ui.green : ui.red}`}>{money(summary?.perDay || 0)}</strong>
           <span className={ui.rowSub}>{money(summary?.spendable || 0)} spendable across {summary?.days || 0} day(s) until your next allowance.</span>
         </div>
-        <p className={`${ui.note} mt-3`}>Savings and future allocations use the same full account-balance base shown in the Payday Planner. Safe-to-spend then subtracts those protected allocations, your reserve, and unpaid borrowed expenses from actual cash remaining after recorded transactions. Money lent is excluded from spending reports, but it is not spendable cash until collected.</p>
+        <p className={`${ui.note} mt-3`}>Safe-to-spend protects the remaining Savings and Future wallets, your reserve, and unpaid borrowed expenses. Spending tagged to Future or Savings reduces that protected wallet instead of consuming your Personal spending allowance. Money lent is excluded from spending reports, but it is not spendable cash until collected.</p>
       </section>
 
       <section className={ui.card}>
