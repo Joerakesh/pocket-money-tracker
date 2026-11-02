@@ -4,9 +4,14 @@ import android.app.Notification
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.util.Log
 import com.joerakesh.pocketsync.data.DetectedTransactionStore
 
 class PocketNotificationListener : NotificationListenerService() {
+    companion object {
+        private const val TAG = "PocketNotificationListener"
+    }
+
     private val supportedPackages = setOf(
         "com.google.android.apps.nbu.paisa.user",
         "com.phonepe.app",
@@ -18,43 +23,47 @@ class PocketNotificationListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (sbn.packageName !in supportedPackages) return
-        if (sbn.isGroup) return
 
-        val extras = sbn.notification.extras ?: return
+        val notification = sbn.notification
+        val extras = notification.extras ?: return
         val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
-        val bodyParts = mutableListOf<String>()
+        val bodyParts = linkedSetOf<String>()
+
+        fun add(value: CharSequence?) {
+            value?.toString()?.trim()?.takeIf { it.isNotBlank() }?.let(bodyParts::add)
+        }
 
         listOf(
             Notification.EXTRA_TEXT,
             Notification.EXTRA_BIG_TEXT,
             Notification.EXTRA_SUB_TEXT,
-            Notification.EXTRA_INFO_TEXT
-        ).forEach { key ->
-            extras.getCharSequence(key)?.toString()?.takeIf { it.isNotBlank() }?.let(bodyParts::add)
-        }
+            Notification.EXTRA_INFO_TEXT,
+            Notification.EXTRA_SUMMARY_TEXT,
+            Notification.EXTRA_CONVERSATION_TITLE
+        ).forEach { key -> add(extras.getCharSequence(key)) }
 
-        // Some SMS apps put the real SMS body in MessagingStyle bundles instead
-        // of EXTRA_TEXT / EXTRA_BIG_TEXT.
+        // MessagingStyle notifications keep SMS text in a Parcelable array of Bundles.
         listOf(Notification.EXTRA_MESSAGES, Notification.EXTRA_HISTORIC_MESSAGES).forEach { key ->
             val messages = extras.getParcelableArray(key)
-            messages?.forEach { item ->
-                val messageBundle = item as? Bundle ?: return@forEach
-                messageBundle.getCharSequence("text")?.toString()
-                    ?.takeIf { it.isNotBlank() }?.let(bodyParts::add)
-                messageBundle.getCharSequence("sender")?.toString()
-                    ?.takeIf { it.isNotBlank() }?.let(bodyParts::add)
+            messages?.forEach messageLoop@{ item ->
+                val bundle = item as? Bundle ?: return@messageLoop
+                add(bundle.getCharSequence("text"))
+                add(bundle.getCharSequence("sender"))
             }
         }
 
-        // Also include expanded inbox lines used by some banking/SMS notification layouts.
-        extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)?.forEach { line ->
-            line?.toString()?.takeIf { it.isNotBlank() }?.let(bodyParts::add)
+        extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)?.forEach(::add)
+
+        val body = bodyParts.joinToString(" ")
+        Log.d(TAG, "Notification received: package=${sbn.packageName}, keys=${extras.keySet()}, titlePresent=${!title.isNullOrBlank()}, bodyFields=${bodyParts.size}")
+
+        val parsed = TransactionParser.parse(title, body)
+        if (parsed == null) {
+            Log.d(TAG, "No transaction parsed from notification")
+            return
         }
 
-        val body = bodyParts.distinct().joinToString(" ")
-        val parsed = TransactionParser.parse(title, body) ?: return
-
-        DetectedTransactionStore(applicationContext).use { store ->
+        val inserted = DetectedTransactionStore(applicationContext).use { store ->
             store.insertIfNew(
                 amountPaise = parsed.amountPaise,
                 direction = parsed.direction,
@@ -66,5 +75,6 @@ class PocketNotificationListener : NotificationListenerService() {
                 counterparty = parsed.counterparty
             )
         }
+        Log.d(TAG, "Parsed transaction: direction=${parsed.direction}, amountPaise=${parsed.amountPaise}, referencePresent=${!parsed.reference.isNullOrBlank()}, inserted=$inserted")
     }
 }
