@@ -24,7 +24,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const [message, setMessage] = useState("");
   const percentages = plan.allocationPercentages;
   const percentageTotal = percentages.essentials + percentages.savings + percentages.personal + percentages.future;
-  const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income").sort((a,b) => b.date.localeCompare(a.date))[0], [transactions]);
+  const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income").sort((a,b) => b.date.localeCompare(a.date) || Date.parse(b.createdAt || "") - Date.parse(a.createdAt || ""))[0], [transactions]);
   const incomeAmount = latestIncome?.amount || 0;
   const currentBalance = summary?.totalBalance ?? 0;
   // Reconstruct the balance immediately after the latest income. This keeps each
