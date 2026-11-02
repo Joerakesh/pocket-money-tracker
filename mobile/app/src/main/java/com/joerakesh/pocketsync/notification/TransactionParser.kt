@@ -25,7 +25,7 @@ object TransactionParser {
         RegexOption.IGNORE_CASE
     )
     private val sentToRegex = Regex(
-        """\b(?:sent|paid|transferred)\s+(?:Rs\.?\s*[0-9,.]+\s+)?to\s+(.+?)(?=\s+(?:on\s+\d|UPI\s+ref|ref(?:erence)?\s+no)|[,.]|$)""",
+        """\\b(?:sent|paid|transferred)\\s+(?:Rs\\.?\\s*[0-9,.]+\\s+)?(?:from\\s+[*Xx0-9-]+\\s+)?to\\s+(.+?)(?=\\s+(?:on\\s+\\d|UPI\\s+ref|ref(?:erence)?\\s+no)|[,.]|$)""",
         RegexOption.IGNORE_CASE
     )
     private val receivedFromRegex = Regex(
