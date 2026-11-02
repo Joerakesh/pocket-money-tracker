@@ -23,18 +23,19 @@ function parseNotificationTransaction(title:string,text:string,postedAt:number){
  const amount=Number(amountMatch[1].replace(/,/g,""));
  if(!Number.isFinite(amount)||amount<=0||amount>100000000)return null;
  const direction=/\b(credited|received|money added|deposit successful)\b/i.test(content)?"INCOME":
-  /\b(debited|sent|paid|withdrawn|payment successful|transferred)\b/i.test(content)?"EXPENSE":null;
+  (/\b(debited|sent|paid|withdrawn|payment successful|transferred)\b/i.test(content) || (/\b(autopay|auto[ -]?debit|standing instruction)\b/i.test(content)&&/\b(successful|processed|executed|paid)\b/i.test(content)))?"EXPENSE":null;
  if(!direction)return null;
  const reference=content.match(/(?:UPI\s*(?:Ref(?:erence)?(?:\s*No\.?)?|ID)|Txn\s*(?:ID|Ref)|Transaction\s*ID|RRN)\s*[:#.-]?\s*([A-Za-z0-9-]{8,})/i)?.[1]||null;
  const accountSuffix=content.match(/(?:A\/c|account|from)\s*[*Xx-]*([0-9]{4})\b/i)?.[1]||null;
  const counterpartyPattern=direction==="EXPENSE"
   ? /\b(?:sent|paid|transferred)\s+(?:Rs\.?\s*[0-9,.]+\s+)?(?:from\s+[*Xx0-9-]+\s+)?to\s+(.+?)(?=\s+(?:on\s+\d|UPI\s+ref|ref(?:erence)?\s+no)|[,.]|$)/i
   : /\b(?:received\s+from|credited\s+(?:by|from))\s+(.+?)(?=\s+(?:on\s+\d|RRN|UPI\s+ref|available\s+balance)|[,.]|$)/i;
- const counterparty=counterpartyPattern.exec(content)?.[1]?.trim().slice(0,100)||null;
+ const autoDebitParty=direction==="EXPENSE"?content.match(/\b(?:autopay|auto[ -]?debit|standing instruction)\b.*?\bto\s+(.+?)(?=\s+on\s+\d|[,.]|$)/i)?.[1]?.trim().slice(0,100)||null:null;
+ const counterparty=counterpartyPattern.exec(content)?.[1]?.trim().slice(0,100)||autoDebitParty;
  const bankName=content.match(/[-–]\s*([A-Za-z][A-Za-z &]{1,40})\s*$/)?.[1]?.trim()||title.trim().slice(0,80)||null;
- const dateMatch=content.match(/\bon\s+(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/i);
+ const dateMatch=content.match(/\bon\s+(\d{1,2})[-/ ]([A-Za-z]{3,9}|\d{1,2})[-/ ](\d{2,4})/i);
  let date=new Date(postedAt||Date.now()).toISOString().slice(0,10);
- if(dateMatch){const year=Number(dateMatch[3].length===2?"20"+dateMatch[3]:dateMatch[3]);date=year+"-"+String(Number(dateMatch[2])).padStart(2,"0")+"-"+String(Number(dateMatch[1])).padStart(2,"0");}
+ if(dateMatch){const monthNames=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];const monthToken=dateMatch[2].toLowerCase();const month=Number.isNaN(Number(monthToken))?monthNames.findIndex(name=>name===monthToken.slice(0,3))+1:Number(monthToken);const year=Number(dateMatch[3].length===2?"20"+dateMatch[3]:dateMatch[3]);if(month>=1&&month<=12)date=year+"-"+String(month).padStart(2,"0")+"-"+String(Number(dateMatch[1])).padStart(2,"0");}
  return {amountPaise:Math.round(amount*100),direction,reference,accountSuffix,counterparty,bankName,date};
 }
 
