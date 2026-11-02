@@ -173,6 +173,18 @@ test("allocation uses the current ledger balance without subtracting recorded sp
   assert.equal(s.spendable, 283_00); // ₹2,400 after reserve, less protected allocations
 });
 
+test("spending from Future Expenses reduces that wallet, not the personal safe-to-spend allowance", () => {
+  const s = computeSummary({ ...base, balancesPaise: [2700_00], reservePaise: 500_00, allocation: { essentialsPercent: 0, savingsPercent: 33, personalPercent: 27, futurePercent: 40 }, allocationCycleBasePaise: 3000_00, allocationSpentPaise: { essentials: 0, savings: 0, personal: 0, future: 300_00 } });
+  assert.equal(s.protectedAllocations, 1890_00);
+  assert.equal(s.allocatedSpending, 810_00);
+  assert.equal(s.spendable, 310_00);
+});
+
+test("spending from Personal Spending reduces safe-to-spend by the same amount", () => {
+  const s = computeSummary({ ...base, balancesPaise: [2900_00], reservePaise: 500_00, allocation: { essentialsPercent: 0, savingsPercent: 33, personalPercent: 27, futurePercent: 40 }, allocationCycleBasePaise: 3000_00, allocationSpentPaise: { essentials: 0, savings: 0, personal: 100_00, future: 0 } });
+  assert.equal(s.spendable, 210_00);
+});
+
 test("allocation never makes safe-to-spend negative when reserve exceeds available cash", () => {
   const s = computeSummary({
     ...base,
