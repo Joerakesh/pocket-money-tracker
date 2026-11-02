@@ -116,7 +116,7 @@ test("safe-to-spend = cash - unpaid borrowed expenses - reserve, spread over day
 test("money lent is a receivable, not spending, but is not safe-to-spend cash until collected", () => {
   const s = computeSummary({
     ...base,
-    balancesPaise: [1500_00],
+    balancesPaise: [1411_00], // ₹3,000 opening cash less ₹1,500 lent and ₹89 subscription
     reservePaise: 500_00,
     monthRows: [
       { type: "lent", amountPaise: 1500_00, date: "2026-10-10", category: "Friends" },
@@ -127,7 +127,7 @@ test("money lent is a receivable, not spending, but is not safe-to-spend cash un
   assert.equal(s.owedByFriends, 1500_00);
   assert.equal(s.owedToFriends, 0);
   assert.equal(s.monthSpent, 89_00);
-  assert.equal(s.spendable, 1000_00); // cash after the loan left the account and reserve
+  assert.equal(s.spendable, 911_00); // cash after lending + subscription, less reserve
   assert.equal(spendingEffect({ type: "lent", amountPaise: 1500_00 }), 0);
 });
 
