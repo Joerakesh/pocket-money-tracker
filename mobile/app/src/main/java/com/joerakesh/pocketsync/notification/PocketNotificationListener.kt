@@ -9,7 +9,9 @@ class PocketNotificationListener : NotificationListenerService() {
         "com.google.android.apps.nbu.paisa.user",
         "com.phonepe.app",
         "net.one97.paytm",
-        "in.org.npci.upiapp"
+        "in.org.npci.upiapp",
+        "com.kotak811mobilebankingapp.instantsavingsupiscanandpayrecharge",
+        "com.google.android.apps.messaging"
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
