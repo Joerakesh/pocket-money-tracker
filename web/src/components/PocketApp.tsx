@@ -40,6 +40,8 @@ type Tx = {
   accountId?: string;
   toAccountId?: string;
   settled?: boolean;
+  allocationSource?: "essentials" | "personal" | "future" | "savings";
+  createdAt?: string;
 };
 type Summary = {
   totalBalance: number;
@@ -202,6 +204,7 @@ export default function PocketApp() {
       accountId: String(f.get("accountId") || ""),
       toAccountId: String(f.get("toAccountId") || ""),
       person: String(f.get("person") || ""),
+      allocationSource: String(f.get("allocationSource") || "personal"),
     };
     try {
       if (editing)
