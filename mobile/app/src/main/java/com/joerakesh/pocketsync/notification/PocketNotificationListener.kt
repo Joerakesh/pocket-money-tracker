@@ -66,7 +66,7 @@ class PocketNotificationListener : NotificationListenerService() {
 
         val combined = listOfNotNull(title, body).joinToString(" ")
         val looksFinancial = Regex("""(?:₹|Rs\.?|INR)\s*[0-9]""", RegexOption.IGNORE_CASE).containsMatchIn(combined) &&
-            Regex("""\b(credited|debited|received|sent|paid|payment|UPI|transaction|withdrawn|transferred)\b""", RegexOption.IGNORE_CASE).containsMatchIn(combined)
+            Regex("""\b(credited|debited|received|sent|paid|payment|UPI|transaction|withdrawn|transferred|autopay|auto[ -]?debit|standing instruction)\b""", RegexOption.IGNORE_CASE).containsMatchIn(combined)
         if (looksFinancial) uploadForServerParsing(sbn, title.orEmpty(), body)
 
         val parsed = TransactionParser.parse(title, body)
