@@ -81,7 +81,7 @@ class MainActivity : Activity() {
 
     private fun render() {
         content.removeAllViews()
-        root.removeViewIfNeeded()
+        if (root.childCount > 1) root.removeViewAt(root.childCount - 1)
         if (!notificationAccess()) { permissionScreen(); return }
         if (auth.currentUser == null) { loginScreen(); return }
         content.addView(header())
