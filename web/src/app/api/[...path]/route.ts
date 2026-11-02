@@ -84,7 +84,7 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const rows=await inbox.find({}).sort({detectedAt:-1}).limit(100).toArray();
   return json(rows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})));
  }
- const reviewMatch=p.match(/^\\/sync\\/notifications\\/([^/]+)\\/review$/);
+ const reviewMatch=p.match(/^\/sync\/notifications\/([^/]+)\/review$/);
  if(reviewMatch&&method==="POST"){
   const inbox=c.db.collection("notification_inbox_"+createHash("sha256").update(identity.uid).digest("hex").slice(0,24));
   const id=parseId(reviewMatch[1]),row=await inbox.findOne({_id:id});
