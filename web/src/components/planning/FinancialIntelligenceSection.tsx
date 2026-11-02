@@ -105,7 +105,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
           <strong className={`mt-1 block text-3xl tracking-tight ${(summary?.perDay || 0)>=0 ? ui.green : ui.red}`}>{money(summary?.perDay || 0)}</strong>
           <span className={ui.rowSub}>{money(summary?.spendable || 0)} spendable across {summary?.days || 0} day(s) until your next allowance.</span>
         </div>
-        <p className={`${ui.note} mt-3`}>This now protects your savings and future-expense allocations, subtracts spending since your latest income, and never exceeds the actual ledger balance after reserve and unpaid borrowed expenses.</p>
+        <p className={`${ui.note} mt-3`}>This uses the cash still in your accounts after recorded transactions, protects your reserve and savings/future allocations, and subtracts unpaid borrowed expenses. Money lent is excluded from spending reports, but it is not spendable cash until it is collected.</p>
       </section>
 
       <section className={ui.card}>
