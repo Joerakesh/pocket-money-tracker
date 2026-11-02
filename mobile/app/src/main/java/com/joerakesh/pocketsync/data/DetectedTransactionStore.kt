@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
 class DetectedTransactionStore(context: Context) :
-    SQLiteOpenHelper(context, "pocket_sync.db", null, 1) {
+    SQLiteOpenHelper(context, "pocket_sync.db", null, 2) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
@@ -19,14 +19,19 @@ class DetectedTransactionStore(context: Context) :
                 merchant TEXT,
                 source_package TEXT NOT NULL,
                 reference TEXT,
-                detected_at INTEGER NOT NULL
+                detected_at INTEGER NOT NULL,
+                account_suffix TEXT,
+                counterparty TEXT
             )
             """.trimIndent()
         )
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Use explicit migrations when the local schema changes.
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE detected_transactions ADD COLUMN account_suffix TEXT")
+            db.execSQL("ALTER TABLE detected_transactions ADD COLUMN counterparty TEXT")
+        }
     }
 
     fun insertIfNew(
@@ -35,11 +40,16 @@ class DetectedTransactionStore(context: Context) :
         merchant: String?,
         sourcePackage: String,
         reference: String?,
-        detectedAt: Long
+        detectedAt: Long,
+        accountSuffix: String? = null,
+        counterparty: String? = null
     ): Boolean {
-        val fingerprint = reference?.let { "ref:$it" }
+        // Same reference from the same source/direction is a duplicate alert.
+        // Different banks/sources can still create the opposite side of a transfer.
+        val fingerprint = reference?.let { "ref:$it:$sourcePackage:$direction" }
             ?: "$sourcePackage:$amountPaise:$direction:${merchant.orEmpty()}:${detectedAt / 120_000L}"
 
+        val db = writableDatabase
         val values = ContentValues().apply {
             put("fingerprint", fingerprint)
             put("amount_paise", amountPaise)
@@ -48,23 +58,46 @@ class DetectedTransactionStore(context: Context) :
             put("source_package", sourcePackage)
             put("reference", reference)
             put("detected_at", detectedAt)
+            put("account_suffix", accountSuffix)
+            put("counterparty", counterparty)
         }
-        return writableDatabase.insertWithOnConflict(
-            "detected_transactions",
-            null,
-            values,
-            SQLiteDatabase.CONFLICT_IGNORE
-        ) != -1L
+        val insertedId = db.insertWithOnConflict(
+            "detected_transactions", null, values, SQLiteDatabase.CONFLICT_IGNORE
+        )
+        if (insertedId == -1L) return false
+
+        if (!reference.isNullOrBlank()) {
+            val opposite = if (direction == "INCOME") "EXPENSE" else "INCOME"
+            val match = db.query(
+                "detected_transactions",
+                arrayOf("id"),
+                "reference = ? AND amount_paise = ? AND direction = ? AND id != ?",
+                arrayOf(reference, amountPaise.toString(), opposite, insertedId.toString()),
+                null, null, null, "1"
+            ).use { it.moveToFirst() }
+
+            if (match) {
+                val transfer = ContentValues().apply { put("direction", "TRANSFER") }
+                db.update("detected_transactions", transfer, "id = ?", arrayOf(insertedId.toString()))
+                db.update(
+                    "detected_transactions", transfer,
+                    "reference = ? AND amount_paise = ? AND direction = ? AND id != ?",
+                    arrayOf(reference, amountPaise.toString(), opposite, insertedId.toString())
+                )
+            }
+        }
+        return true
     }
 
     fun latest(limit: Int): List<DetectedTransaction> {
         val items = mutableListOf<DetectedTransaction>()
         readableDatabase.query(
             "detected_transactions",
-            arrayOf("id", "amount_paise", "direction", "merchant", "source_package", "reference", "detected_at"),
-            null, null, null, null,
-            "detected_at DESC",
-            limit.toString()
+            arrayOf(
+                "id", "amount_paise", "direction", "merchant", "source_package",
+                "reference", "detected_at", "account_suffix", "counterparty"
+            ),
+            null, null, null, null, "detected_at DESC", limit.toString()
         ).use { cursor ->
             while (cursor.moveToNext()) {
                 items += DetectedTransaction(
@@ -74,7 +107,9 @@ class DetectedTransactionStore(context: Context) :
                     merchant = cursor.getString(3),
                     sourcePackage = cursor.getString(4),
                     reference = cursor.getString(5),
-                    detectedAt = cursor.getLong(6)
+                    detectedAt = cursor.getLong(6),
+                    accountSuffix = cursor.getString(7),
+                    counterparty = cursor.getString(8)
                 )
             }
         }
