@@ -113,6 +113,24 @@ test("safe-to-spend = cash - unpaid borrowed expenses - reserve, spread over day
   assert.equal(s.perDay, Math.floor(2300_00 / 11));
 });
 
+test("money lent is a receivable, not spending, but is not safe-to-spend cash until collected", () => {
+  const s = computeSummary({
+    ...base,
+    balancesPaise: [1500_00],
+    reservePaise: 500_00,
+    monthRows: [
+      { type: "lent", amountPaise: 1500_00, date: "2026-10-10", category: "Friends" },
+      { type: "expense", amountPaise: 89_00, date: "2026-10-10", category: "Subscriptions" },
+    ],
+    unpaidRows: [{ type: "lent", amountPaise: 1500_00 }],
+  });
+  assert.equal(s.owedByFriends, 1500_00);
+  assert.equal(s.owedToFriends, 0);
+  assert.equal(s.monthSpent, 89_00);
+  assert.equal(s.spendable, 1000_00); // cash after the loan left the account and reserve
+  assert.equal(spendingEffect({ type: "lent", amountPaise: 1500_00 }), 0);
+});
+
 test("payday rolls forward to the next monthly date after the configured date passes", () => {
   assert.equal(computeSummary({ ...base, payday: "2026-10-10" }).days, 1);
   assert.equal(computeSummary({ ...base, payday: "2026-09-01" }).days, 23);
