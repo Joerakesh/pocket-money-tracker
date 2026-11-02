@@ -26,6 +26,7 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const percentageTotal = percentages.essentials + percentages.savings + percentages.personal + percentages.future;
   const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income").sort((a,b) => b.date.localeCompare(a.date))[0], [transactions]);
   const incomeAmount = latestIncome?.amount || 0;
+  const currentBalance = summary?.totalBalance ?? 0;
   const allocations = [
     { key: "essentials" as const, label: "Essentials", value: percentages.essentials },
     { key: "savings" as const, label: "Savings", value: percentages.savings },
@@ -80,21 +81,21 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
     <>
       <section className={ui.card}>
         <div className={ui.sectionHead}><div><span className={ui.sectionLabel}>PAYDAY ROUTINE</span><h2 className={ui.h2Flush}>Payday planner</h2></div><span className={ui.pill}>Virtual allocation</span></div>
-        <p className={ui.note}>Set how each new income should be divided. This is a planning view only; it does not move money or create ledger transactions.</p>
+        <p className={ui.note}>Your saved percentages are applied to your current total account balance, so the amounts update as your balance changes. This is a planning view only; it does not move money or create ledger transactions.</p>
         <div className="mb-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3">
-          <span className={ui.metricLabel}>Latest recorded income</span>
-          <strong className="mt-1 block text-2xl tracking-tight">{money(incomeAmount)}</strong>
-          <span className={ui.rowSub}>{latestIncome ? `Recorded on ${latestIncome.date}` : "Record an income transaction to preview allocations."}</span>
+          <span className={ui.metricLabel}>Current Pocket balance</span>
+          <strong className="mt-1 block text-2xl tracking-tight">{money(currentBalance)}</strong>
+          <span className={ui.rowSub}>Allocation preview is based on the balance across your Pocket accounts right now.</span>
         </div>
         <form onSubmit={submit} className="grid grid-cols-2 gap-3">
           {allocations.map(item => (
-            <label key={item.key} className="min-w-0"><span className={ui.label}>{item.label} (%)</span><input className={ui.field} type="number" min="0" max="100" step="1" value={item.value} onChange={e => updatePercent(item.key, Number(e.target.value))}/><span className={ui.rowSub}>{money(incomeAmount*item.value/100)}</span></label>
+            <label key={item.key} className="min-w-0"><span className={ui.label}>{item.label} (%)</span><input className={ui.field} type="number" min="0" max="100" step="1" value={item.value} onChange={e => updatePercent(item.key, Number(e.target.value))}/><span className={ui.rowSub}>{money(currentBalance*item.value/100)}</span></label>
           ))}
           <div className="col-span-full flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2 text-xs"><span>Allocation total</span><strong className={percentageTotal===100 ? ui.green : ui.red}>{percentageTotal}%</strong></div>
           <button className={`${ui.primary} col-span-full`} disabled={saving || percentageTotal!==100}>{saving ? "Saving…" : "Save payday rules"}</button>
         </form>
         {message && <p className={`${ui.note} mt-2`} role="status">{message}</p>}
-        {latestIncome && percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(incomeAmount*item.value/100)}</b></div>)}</div>}
+        {percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(currentBalance*item.value/100)}</b></div>)}</div>}
       </section>
 
       <section className={ui.card}>
