@@ -57,7 +57,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    if(!allowed.has(sourcePackage)||!text){ignored++;continue;}
    const parsed=parseNotificationTransaction(title,text,Number(event?.postedAt)||Date.now());
    if(!parsed){ignored++;continue;}
-   const base=parsed.reference?("ref:"+parsed.reference+":"+parsed.amountPaise):("event:"+clean(event?.notificationKey,300)+":"+parsed.amountPaise+":"+parsed.direction);
+   const fallbackKey=createHash("sha256").update(sourcePackage+"|"+title+"|"+text).digest("hex");
+   const base=parsed.reference?("ref:"+parsed.reference+":"+parsed.amountPaise):("event:"+fallbackKey+":"+parsed.date+":"+parsed.amountPaise);
    const fingerprint=base+":"+parsed.direction;
    const doc={fingerprint,amountPaise:parsed.amountPaise,direction:parsed.direction,reference:parsed.reference,accountSuffix:parsed.accountSuffix,counterparty:parsed.counterparty,date:parsed.date,sourcePackage,detectedAt:new Date(Number(event?.postedAt)||Date.now()),status:"PENDING",reviewedAt:null};
    try{
