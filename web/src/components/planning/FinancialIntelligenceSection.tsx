@@ -3,7 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { ui } from "../ui";
 
-type Tx = { _id: string; type: string; amount: number; date: string; category?: string; note?: string };
+type Tx = { _id: string; type: string; amount: number; date: string; category?: string; note?: string; allocationSource?: "essentials" | "personal" | "future" | "savings"; createdAt?: string };
 type Budget = { category: string; amount: number };
 type Summary = { totalBalance: number; spendable: number; days: number; perDay: number; monthSpent: number; monthIncome: number; byCat: Record<string, number> };
 type FinancialPlan = { allocationPercentages: { essentials: number; savings: number; personal: number; future: number }; financialFloor: number; emergencyTarget: number };
@@ -27,6 +27,20 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income").sort((a,b) => b.date.localeCompare(a.date))[0], [transactions]);
   const incomeAmount = latestIncome?.amount || 0;
   const currentBalance = summary?.totalBalance ?? 0;
+  // Reconstruct the balance immediately after the latest income. This keeps each
+  // virtual wallet fixed for the current income cycle instead of shrinking its
+  // starting allocation every time an expense is recorded.
+  const cycleRows = latestIncome ? transactions.filter(t => t._id !== latestIncome._id && (t.date > latestIncome.date || (t.date === latestIncome.date && (!latestIncome.createdAt || !t.createdAt || Date.parse(t.createdAt) > Date.parse(latestIncome.createdAt))))) : [];
+  const cycleCashChange = cycleRows.reduce((total, tx) => total + (["expense", "lent", "repayment"].includes(tx.type) ? -tx.amount : ["income", "collection", "refund"].includes(tx.type) ? tx.amount : 0), 0);
+  const cycleStartingBalance = latestIncome ? Math.max(0, currentBalance - cycleCashChange) : currentBalance;
+  const walletSpent = (key: "essentials" | "personal" | "future" | "savings") => cycleRows.reduce((total, tx) => {
+    if (tx.type === "expense" && (tx.allocationSource || "personal") === key) return total + tx.amount;
+    if (tx.type === "refund" && (tx.allocationSource || "personal") === key) return total - tx.amount;
+    return total;
+  }, 0);
+  const walletAmounts = { essentials: percentages.essentials, savings: percentages.savings, personal: percentages.personal, future: percentages.future };
+  const walletLabels = { essentials: "Essentials", savings: "Savings", personal: "Personal spending", future: "Future expenses" };
+  const walletKeys = ["essentials", "personal", "future", "savings"] as const;
   const allocations = [
     { key: "essentials" as const, label: "Essentials", value: percentages.essentials },
     { key: "savings" as const, label: "Savings", value: percentages.savings },
@@ -96,6 +110,14 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
         </form>
         {message && <p className={`${ui.note} mt-2`} role="status">{message}</p>}
         {percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(currentBalance*item.value/100)}</b></div>)}</div>}
+      </section>
+
+      <section className={ui.card}>
+        <span className={ui.sectionLabel}>VIRTUAL ALLOCATION WALLETS</span><h2 className={ui.h2Flush}>Spend from an allocation</h2>
+        <p className={ui.note}>Your latest income starts this cycle. Each wallet keeps its starting allocation fixed; when you record an expense, choose its funding source in the transaction form and that wallet’s remaining amount decreases. These are planning envelopes, not separate bank accounts.</p>
+        <div className="mt-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3"><span className={ui.metricLabel}>Starting balance for this cycle</span><strong className="mt-1 block text-xl">{money(cycleStartingBalance)}</strong><span className={ui.rowSub}>{latestIncome ? `Since ${latestIncome.date} · latest income ${money(incomeAmount)}` : "No income recorded yet; using current Pocket balance."}</span></div>
+        <div className={`${ui.list} mt-3`}>{walletKeys.map(key => { const allocated = cycleStartingBalance * walletAmounts[key] / 100; const spent = walletSpent(key); const remaining = allocated - spent; return <div className={ui.row} key={key}><span className={ui.rowMain}><b className={ui.rowTitle}>{walletLabels[key]}</b><small className={ui.rowSub}>{walletAmounts[key]}% · Used {money(spent)}</small></span><span className="text-right"><b className={remaining < 0 ? ui.red : ui.green}>{money(remaining)}</b><small className={`${ui.rowSub} block`}>remaining</small></span></div>; })}</div>
+        <p className={`${ui.note} mt-2`}>Expenses saved before this feature are treated as Personal spending unless edited. To use Future Expenses, select it under “Fund this expense from” when adding or editing an expense.</p>
       </section>
 
       <section className={ui.card}>
