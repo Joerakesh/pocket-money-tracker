@@ -7,5 +7,7 @@ data class DetectedTransaction(
     val merchant: String?,
     val sourcePackage: String,
     val reference: String?,
-    val detectedAt: Long
+    val detectedAt: Long,
+    val accountSuffix: String? = null,
+    val counterparty: String? = null
 )
