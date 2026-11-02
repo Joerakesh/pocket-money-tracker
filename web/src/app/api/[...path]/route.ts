@@ -282,10 +282,17 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   }return json({added,skipped,reviewRequired:added});
  }
  if(p==="/summary"&&method==="GET"){
-  const t=today(),[st,monthRows,unpaidRows,balances,recentRows]=await Promise.all([
+  const t=today(),[st,monthRows,unpaidRows,balances,recentRows,latestIncome]=await Promise.all([
    getSettings(c),c.tx.find({deletedAt:{$exists:false},date:{$gte:monthStart(t),$lte:endOfMonth(t)}},{projection:{date:1,type:1,amountPaise:1,category:1,settled:1}}).toArray(),
    c.tx.find({deletedAt:{$exists:false},type:{$in:["borrowed_expense","lent"]},settled:{$ne:true}},{projection:{type:1,amountPaise:1}}).toArray(),accountBalances(c),
-   c.tx.find({deletedAt:{$exists:false}},{projection:{type:1,amountPaise:1,date:1,category:1,note:1,person:1,accountId:1,settled:1}}).sort({date:-1,createdAt:-1}).limit(5).toArray()]);
+   c.tx.find({deletedAt:{$exists:false}},{projection:{type:1,amountPaise:1,date:1,category:1,note:1,person:1,accountId:1,settled:1}}).sort({date:-1,createdAt:-1}).limit(5).toArray(),
+   c.tx.findOne({deletedAt:{$exists:false},type:"income"},{sort:{date:-1,createdAt:-1},projection:{date:1,createdAt:1}})]);
+  const cycleRows=latestIncome?await c.tx.find({deletedAt:{$exists:false},$or:[{date:{$gt:latestIncome.date}},{date:latestIncome.date,createdAt:{$gt:latestIncome.createdAt||new Date(0)}}]},{projection:{type:1,amountPaise:1,allocationSource:1}}).toArray():[];
+  const cycleCashChange=cycleRows.reduce((sum:number,row:any)=>sum+(["expense","lent","repayment"].includes(row.type)?-Number(row.amountPaise||0):["income","collection","refund"].includes(row.type)?Number(row.amountPaise||0):0),0);
+  const allocationCycleBasePaise=Math.max(0,balances.reduce((sum:number,a:any)=>sum+Number(a.balancePaise||0),0)-cycleCashChange);
+  const allocationSpentPaise={essentials:0,savings:0,personal:0,future:0};
+  for(const row of cycleRows){if(row.type!=="expense"&&row.type!=="refund")continue;const source=["essentials","savings","personal","future"].includes(row.allocationSource)?row.allocationSource:"personal";allocationSpentPaise[source]+=Number(row.amountPaise||0)*(row.type==="refund"?-1:1);}
+
   const percentages=st.financialPlan?.allocationPercentages;
   const allocation=percentages?{
    essentialsPercent:Number(percentages.essentials||0),
@@ -293,7 +300,7 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    personalPercent:Number(percentages.personal||0),
    futurePercent:Number(percentages.future||0),
   }:undefined;
-  const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise),allocation});
+  const r=computeSummary({today:t,payday:st.payday,reservePaise:Number(st.reservePaise||0),monthRows:monthRows as any,unpaidRows:unpaidRows as any,balancesPaise:balances.map((a:any)=>a.balancePaise),allocation,allocationCycleBasePaise,allocationSpentPaise});
   const {todaySpent,monthSpent,monthIncome,owedToFriends,owedByFriends,byCat,cash,days,reserve,spendable}=r;
   return json({settings:{...st,reserve:paiseToRupees(reserve)},accounts:balances.map((a:any)=>({id:String(a._id),_id:String(a._id),name:a.name,institution:a.institution||"",kind:a.kind,balance:paiseToRupees(a.balancePaise)})),recentTransactions:recentRows.map((row:any)=>({...row,_id:String(row._id),amount:paiseToRupees(row.amountPaise)})),totalBalance:paiseToRupees(cash),spendable:paiseToRupees(spendable),ledgerSpendable:paiseToRupees(r.ledgerSpendable),protectedAllocations:paiseToRupees(r.protectedAllocations),remainingAllocatedSpending:Number.isFinite(r.remainingAllocatedSpending)?paiseToRupees(r.remainingAllocatedSpending):null,owedToFriends:paiseToRupees(owedToFriends),owedByFriends:paiseToRupees(owedByFriends),days,perDay:paiseToRupees(r.perDay),todaySpent:paiseToRupees(todaySpent),monthSpent:paiseToRupees(monthSpent),monthIncome:paiseToRupees(monthIncome),byCat:Object.fromEntries(Object.entries(byCat).map(([k,v])=>[k,paiseToRupees(v)]))});
  }
