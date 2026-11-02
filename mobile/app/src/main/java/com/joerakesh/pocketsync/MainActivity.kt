@@ -33,7 +33,7 @@ import java.util.Locale
 class MainActivity : Activity() {
     companion object {
         private const val GOOGLE_SIGN_IN = 7101
-        private const val API_BASE = "https://money.joerakesh.tech/api"
+        private const val API_BASE = BuildConfig.API_BASE
         private const val TAG = "PocketSyncAuth"
     }
     private val bg = Color.rgb(15, 20, 30)
