@@ -202,7 +202,7 @@ class MainActivity : Activity() {
             row.addView(details, LinearLayout.LayoutParams(0, -2, 1f))
             val amount = label(
                 (if (incoming) "+" else "−") + "₹" + "%.2f".format(item.amountPaise / 100.0),
-                13f, if (incoming) lime else text, true
+                13f, if (incoming) lime else textColor, true
             )
             row.addView(amount)
             transactionList.addView(row)
