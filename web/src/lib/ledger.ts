@@ -112,9 +112,10 @@ export function computeSummary(i: SummaryInput) {
       const explicit = payment.relatedTransactionId
         ? ordered.filter((loan) => loan._id === payment.relatedTransactionId)
         : [];
-      const samePerson = ordered.filter((loan) =>
-        String(loan.person || "").trim().toLowerCase() === String(payment.person || "").trim().toLowerCase()
-      );
+      const paymentPerson = String(payment.person || "").trim().toLowerCase();
+      const samePerson = paymentPerson ? ordered.filter((loan) =>
+        String(loan.person || "").trim().toLowerCase() === paymentPerson
+      ) : [];
       for (const loan of [...explicit, ...samePerson.filter((x) => !explicit.includes(x))]) {
         if (remaining <= 0) break;
         const applied = Math.min(loan.remaining, remaining);
