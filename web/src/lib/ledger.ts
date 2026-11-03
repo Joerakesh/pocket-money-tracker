@@ -53,7 +53,7 @@ export type SummaryInput = {
   payday: string;
   reservePaise: number;
   monthRows: TxRow[];
-  unpaidRows: { type: string; amountPaise: number }[];
+  unpaidRows: TxRow[];
   balancesPaise: number[];
   allocation?: {
     essentialsPercent: number;
