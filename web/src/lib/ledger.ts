@@ -6,6 +6,10 @@ export type TxRow = {
   amountPaise: number;
   date?: string;
   category?: string;
+  _id?: string;
+  relatedTransactionId?: string;
+  person?: string;
+  settled?: boolean;
 };
 export type OutgoingRow = {
   _id: { accountId: string; type: string };
@@ -49,7 +53,7 @@ export type SummaryInput = {
   payday: string;
   reservePaise: number;
   monthRows: TxRow[];
-  unpaidRows: { type: string; amountPaise: number }[];
+  unpaidRows: TxRow[];
   balancesPaise: number[];
   allocation?: {
     essentialsPercent: number;
@@ -94,10 +98,35 @@ export function computeSummary(i: SummaryInput) {
     if (item.type === "refund")
       byCat[cat] = (byCat[cat] || 0) - item.amountPaise;
   }
-  for (const item of i.unpaidRows) {
-    if (item.type === "borrowed_expense") owedToFriends += item.amountPaise;
-    if (item.type === "lent") owedByFriends += item.amountPaise;
-  }
+  // Calculate outstanding loan balances from the original lending entries and
+  // their collections/repayments. Explicit links take priority; legacy
+  // unlinked repayments are matched to the oldest open loan for that person.
+  const loans = i.unpaidRows.filter((row) => row.type === "lent" && !row.settled)
+    .map((row) => ({ ...row, remaining: Math.max(0, row.amountPaise) }));
+  const debts = i.unpaidRows.filter((row) => row.type === "borrowed_expense" && !row.settled)
+    .map((row) => ({ ...row, remaining: Math.max(0, row.amountPaise) }));
+  const allocate = (entries: typeof loans, payments: TxRow[], paymentType: string) => {
+    const ordered = [...entries];
+    for (const payment of payments.filter((row) => row.type === paymentType)) {
+      let remaining = Math.max(0, payment.amountPaise);
+      const explicit = payment.relatedTransactionId
+        ? ordered.filter((loan) => loan._id === payment.relatedTransactionId)
+        : [];
+      const paymentPerson = String(payment.person || "").trim().toLowerCase();
+      const samePerson = paymentPerson ? ordered.filter((loan) =>
+        String(loan.person || "").trim().toLowerCase() === paymentPerson
+      ) : [];
+      for (const loan of [...explicit, ...samePerson.filter((x) => !explicit.includes(x))]) {
+        if (remaining <= 0) break;
+        const applied = Math.min(loan.remaining, remaining);
+        loan.remaining -= applied;
+        remaining -= applied;
+      }
+    }
+    return ordered.reduce((sum, loan) => sum + loan.remaining, 0);
+  };
+  owedByFriends = allocate(loans, i.unpaidRows, "collection");
+  owedToFriends = allocate(debts, i.unpaidRows, "repayment");
   const cash = i.balancesPaise.reduce((s, n) => s + n, 0);
   const days = daysUntilNextPayday(i.today, i.payday);
   const reserve = Number(i.reservePaise || 0);

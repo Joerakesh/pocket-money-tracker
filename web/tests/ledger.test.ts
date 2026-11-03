@@ -131,6 +131,42 @@ test("money lent is a receivable, not spending, but is not safe-to-spend cash un
   assert.equal(spendingEffect({ type: "lent", amountPaise: 1500_00 }), 0);
 });
 
+test("loan collections reduce the original receivable, including legacy unlinked repayments", () => {
+  const s = computeSummary({
+    ...base,
+    unpaidRows: [
+      { _id: "mary-loan", type: "lent", amountPaise: 500_00, person: "Mary" },
+      { type: "collection", amountPaise: 500_00, person: "Mary" },
+    ],
+  });
+  assert.equal(s.owedByFriends, 0);
+});
+
+test("partial and linked loan repayments leave only the unpaid amount", () => {
+  const s = computeSummary({
+    ...base,
+    unpaidRows: [
+      { _id: "loan-1", type: "lent", amountPaise: 1000_00, person: "Thenmozhi" },
+      { _id: "loan-2", type: "lent", amountPaise: 500_00, person: "Mary" },
+      { type: "collection", amountPaise: 300_00, person: "Thenmozhi", relatedTransactionId: "loan-1" },
+      { type: "collection", amountPaise: 500_00, person: "Mary", relatedTransactionId: "loan-2" },
+    ],
+  });
+  assert.equal(s.owedByFriends, 700_00);
+});
+
+test("unlinked repayments are allocated oldest-first and cannot create a negative receivable", () => {
+  const s = computeSummary({
+    ...base,
+    unpaidRows: [
+      { _id: "loan-1", type: "lent", amountPaise: 300_00, person: "Alex" },
+      { _id: "loan-2", type: "lent", amountPaise: 500_00, person: "Alex" },
+      { type: "collection", amountPaise: 400_00, person: "Alex" },
+    ],
+  });
+  assert.equal(s.owedByFriends, 400_00);
+});
+
 test("payday rolls forward to the next monthly date after the configured date passes", () => {
   assert.equal(computeSummary({ ...base, payday: "2026-10-10" }).days, 1);
   assert.equal(computeSummary({ ...base, payday: "2026-09-01" }).days, 23);
