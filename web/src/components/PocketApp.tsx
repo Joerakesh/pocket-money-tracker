@@ -73,6 +73,7 @@ type Settings = {
   reserve?: number;
   reservePaise?: number;
   financialPlan?: {
+    paydayAmount: number;
     allocationPercentages: {
       essentials: number;
       savings: number;
