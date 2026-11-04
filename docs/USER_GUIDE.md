@@ -194,7 +194,7 @@ Add a name, amount, due day (1-31) and category for recurring commitments such a
 
 The Plan area also includes financial planning tools:
 
-- **Payday planner:** assign percentages of your current Pocket balance to Essentials, Savings, Personal spending and Future expenses. The allocation percentages must total exactly 100% before saving. The figures are a virtual allocation preview; they do not move money or create transactions.
+- **Payday planner:** enter the amount you want to plan for this payday, then assign percentages to Essentials, Savings, Personal spending and Future expenses. The allocation percentages must total exactly 100% before saving. The entered amount is used for the virtual allocation preview and safe-to-spend planning; it does not add income, move money or create transactions.
 - **Next payday survival:** estimates a safe daily spending guide using spendable funds and days until the next allowance.
 - **Emergency fund & financial floor:** set an essential-expense target and emergency-fund target, and track the reserve progress.
 - **Payday history:** reviews income cycles and spending between recorded income events.
