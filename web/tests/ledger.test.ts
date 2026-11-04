@@ -113,6 +113,22 @@ test("safe-to-spend = cash - unpaid borrowed expenses - reserve, spread over day
   assert.equal(s.perDay, Math.floor(2300_00 / 11));
 });
 
+test("manual payday planner amount is the base for protected and spendable allocations", () => {
+  const s = computeSummary({
+    ...base,
+    allocation: {
+      essentialsPercent: 50,
+      savingsPercent: 20,
+      personalPercent: 20,
+      futurePercent: 10,
+    },
+    allocationCycleBasePaise: 1000_00,
+  });
+  assert.equal(s.protectedAllocations, 300_00);
+  assert.equal(s.allocatedSpending, 700_00);
+  assert.equal(s.spendable, 700_00);
+});
+
 test("money lent is a receivable, not spending, but is not safe-to-spend cash until collected", () => {
   const s = computeSummary({
     ...base,
