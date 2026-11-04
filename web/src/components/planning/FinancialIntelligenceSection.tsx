@@ -6,9 +6,9 @@ import { ui } from "../ui";
 type Tx = { _id: string; type: string; amount: number; date: string; category?: string; note?: string; allocationSource?: "essentials" | "personal" | "future" | "savings"; createdAt?: string };
 type Budget = { category: string; amount: number };
 type Summary = { totalBalance: number; spendable: number; days: number; perDay: number; monthSpent: number; monthIncome: number; byCat: Record<string, number> };
-type FinancialPlan = { allocationPercentages: { essentials: number; savings: number; personal: number; future: number }; financialFloor: number; emergencyTarget: number };
+type FinancialPlan = { paydayAmount: number; allocationPercentages: { essentials: number; savings: number; personal: number; future: number }; financialFloor: number; emergencyTarget: number };
 type Settings = { reserve?: number; reservePaise?: number; financialPlan?: FinancialPlan };
-const defaults: FinancialPlan = { allocationPercentages: { essentials: 50, savings: 10, personal: 25, future: 15 }, financialFloor: 0, emergencyTarget: 0 };
+const defaults: FinancialPlan = { paydayAmount: 0, allocationPercentages: { essentials: 50, savings: 10, personal: 25, future: 15 }, financialFloor: 0, emergencyTarget: 0 };
 const money = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0);
 const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 const spendEffect = (tx: Tx) => tx.type === "expense" || tx.type === "borrowed_expense" ? tx.amount : tx.type === "refund" ? -tx.amount : 0;
@@ -26,13 +26,10 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const percentageTotal = percentages.essentials + percentages.savings + percentages.personal + percentages.future;
   const latestIncome = useMemo(() => [...transactions].filter(t => t.type === "income" && t.category !== "Friends" && !/^old balance$/i.test(t.note || "")).sort((a,b) => b.date.localeCompare(a.date) || Date.parse(b.createdAt || "") - Date.parse(a.createdAt || ""))[0], [transactions]);
   const incomeAmount = latestIncome?.amount || 0;
-  const currentBalance = summary?.totalBalance ?? 0;
-  // Reconstruct the balance immediately after the latest income. This keeps each
-  // virtual wallet fixed for the current income cycle instead of shrinking its
-  // starting allocation every time an expense is recorded.
+  const plannerAmount = Math.max(0, Number(plan.paydayAmount) || 0);
+  // Track wallet spending within the latest income cycle, but use the amount
+  // explicitly entered in Payday Planner as the allocation base.
   const cycleRows = latestIncome ? transactions.filter(t => t._id !== latestIncome._id && t.date >= latestIncome.date) : [];
-  const cycleCashChange = cycleRows.reduce((total, tx) => total + (["expense", "lent", "repayment"].includes(tx.type) ? -tx.amount : ["income", "collection", "refund"].includes(tx.type) ? tx.amount : 0), 0);
-  const cycleStartingBalance = latestIncome ? Math.max(0, currentBalance - cycleCashChange) : currentBalance;
   const walletSpent = (key: "essentials" | "personal" | "future" | "savings") => cycleRows.reduce((total, tx) => {
     if (tx.type === "expense" && (tx.allocationSource || "personal") === key) return total + tx.amount;
     if (tx.type === "refund" && (tx.allocationSource || "personal") === key) return total - tx.amount;
@@ -82,8 +79,9 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
   const updatePercent = (key: keyof FinancialPlan["allocationPercentages"], value: number) => {
     setPlan(p => ({ ...p, allocationPercentages: { ...p.allocationPercentages, [key]: Math.max(0, Math.min(100, value || 0)) } }));
   };
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>, requirePlannerAmount = false) => {
     event.preventDefault();
+    if (requirePlannerAmount && !(plan.paydayAmount > 0)) { setMessage("Enter a payday planner amount greater than ₹0."); return; }
     if (percentageTotal !== 100) { setMessage("Allocation percentages must add up to 100%."); return; }
     setSaving(true); setMessage("");
     try { await onSave(plan); setMessage("Financial plan saved."); }
@@ -95,28 +93,24 @@ export default function FinancialIntelligenceSection({ summary, transactions, bu
     <>
       <section className={ui.card}>
         <div className={ui.sectionHead}><div><span className={ui.sectionLabel}>PAYDAY ROUTINE</span><h2 className={ui.h2Flush}>Payday planner</h2></div><span className={ui.pill}>Virtual allocation</span></div>
-        <p className={ui.note}>Your saved percentages are applied to the balance at the start of your latest income cycle. The virtual wallets stay fixed during that cycle and decrease only when you assign an expense to them.</p>
-        <div className="mb-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3">
-          <span className={ui.metricLabel}>Starting balance for this income cycle</span>
-          <strong className="mt-1 block text-2xl tracking-tight">{money(cycleStartingBalance)}</strong>
-          <span className={ui.rowSub}>{latestIncome ? `Latest income · ${latestIncome.date} · ${money(incomeAmount)}` : "No income recorded; current balance is used as the starting point."}</span>
-        </div>
-        <form onSubmit={submit} className="grid grid-cols-2 gap-3">
+        <p className={ui.note}>Enter the amount you received or want to plan for this payday. Pocket applies your saved percentages only to this amount; it never substitutes your account balance.</p>
+        <form onSubmit={(event) => submit(event, true)} className="grid grid-cols-2 gap-3">
+          <label className="col-span-full"><span className={ui.label}>Payday planner amount (₹)</span><input className={ui.field} type="number" min="0.01" step="0.01" inputMode="decimal" placeholder="Enter your payday amount" value={plan.paydayAmount || ""} onChange={e => setPlan(p => ({ ...p, paydayAmount: Math.max(0, Number(e.target.value) || 0) }))}/><span className={ui.rowSub}>This is a planning amount only. It does not add income or change account balances.</span></label>
           {allocations.map(item => (
-            <label key={item.key} className="min-w-0"><span className={ui.label}>{item.label} (%)</span><input className={ui.field} type="number" min="0" max="100" step="1" value={item.value} onChange={e => updatePercent(item.key, Number(e.target.value))}/><span className={ui.rowSub}>{money(cycleStartingBalance*item.value/100)}</span></label>
+            <label key={item.key} className="min-w-0"><span className={ui.label}>{item.label} (%)</span><input className={ui.field} type="number" min="0" max="100" step="1" value={item.value} onChange={e => updatePercent(item.key, Number(e.target.value))}/><span className={ui.rowSub}>{money(plannerAmount*item.value/100)}</span></label>
           ))}
           <div className="col-span-full flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2 text-xs"><span>Allocation total</span><strong className={percentageTotal===100 ? ui.green : ui.red}>{percentageTotal}%</strong></div>
           <button className={`${ui.primary} col-span-full`} disabled={saving || percentageTotal!==100}>{saving ? "Saving…" : "Save payday rules"}</button>
         </form>
         {message && <p className={`${ui.note} mt-2`} role="status">{message}</p>}
-        {percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(cycleStartingBalance*item.value/100)}</b></div>)}</div>}
+        {percentageTotal===100 && <div className={`${ui.list} mt-3`}>{allocations.map(item => <div className={ui.row} key={item.key}><span>{item.label} · {item.value}%</span><b>{money(plannerAmount*item.value/100)}</b></div>)}</div>}
       </section>
 
       <section className={ui.card}>
         <span className={ui.sectionLabel}>VIRTUAL ALLOCATION WALLETS</span><h2 className={ui.h2Flush}>Spend from an allocation</h2>
         <p className={ui.note}>Your latest income starts this cycle. Each wallet keeps its starting allocation fixed; when you record an expense, choose its funding source in the transaction form and that wallet’s remaining amount decreases. These are planning envelopes, not separate bank accounts.</p>
-        <div className="mt-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3"><span className={ui.metricLabel}>Starting balance for this cycle</span><strong className="mt-1 block text-xl">{money(cycleStartingBalance)}</strong><span className={ui.rowSub}>{latestIncome ? `Since ${latestIncome.date} · latest income ${money(incomeAmount)}` : "No income recorded yet; using current Pocket balance."}</span></div>
-        <div className={`${ui.list} mt-3`}>{walletKeys.map(key => { const allocated = cycleStartingBalance * walletAmounts[key] / 100; const spent = walletSpent(key); const remaining = allocated - spent; return <div className={ui.row} key={key}><span className={ui.rowMain}><b className={ui.rowTitle}>{walletLabels[key]}</b><small className={ui.rowSub}>{walletAmounts[key]}% · Used {money(spent)}</small></span><span className="text-right"><b className={remaining < 0 ? ui.red : ui.green}>{money(remaining)}</b><small className={`${ui.rowSub} block`}>remaining</small></span></div>; })}</div>
+        <div className="mt-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3"><span className={ui.metricLabel}>Payday amount entered</span><strong className="mt-1 block text-xl">{money(plannerAmount)}</strong><span className={ui.rowSub}>{latestIncome ? `Latest recorded income · ${latestIncome.date} · ${money(incomeAmount)}` : "Enter your payday amount above to preview wallet allocations."}</span></div>
+        <div className={`${ui.list} mt-3`}>{walletKeys.map(key => { const allocated = plannerAmount * walletAmounts[key] / 100; const spent = walletSpent(key); const remaining = allocated - spent; return <div className={ui.row} key={key}><span className={ui.rowMain}><b className={ui.rowTitle}>{walletLabels[key]}</b><small className={ui.rowSub}>{walletAmounts[key]}% · Used {money(spent)}</small></span><span className="text-right"><b className={remaining < 0 ? ui.red : ui.green}>{money(remaining)}</b><small className={`${ui.rowSub} block`}>remaining</small></span></div>; })}</div>
         <p className={`${ui.note} mt-2`}>Expenses saved before this feature are treated as Personal spending unless edited. To use Future Expenses, select it under “Fund this expense from” when adding or editing an expense.</p>
       </section>
 
