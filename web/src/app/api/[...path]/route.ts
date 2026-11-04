@@ -168,8 +168,8 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   const ids=exported.map(parseId);if(ids.length)await c.tx.deleteMany({_id:{$in:ids}});await c.accounts.deleteOne({_id:id});return json({ok:true,deletedTransactions:ids.length,deletedAccount:data.account.name});
  }
  if(p==="/financial-plan"&&method==="GET"){
-  const st=await getSettings(c),plan=st.financialPlan||{allocationPercentages:{essentials:50,savings:10,personal:25,future:15},financialFloorPaise:0,emergencyTargetPaise:0};
-  return json({allocationPercentages:plan.allocationPercentages,financialFloor:paiseToRupees(Number(plan.financialFloorPaise||0)),emergencyTarget:paiseToRupees(Number(plan.emergencyTargetPaise||0))});
+  const st=await getSettings(c),plan=st.financialPlan||{plannerAmountPaise:0,allocationPercentages:{essentials:50,savings:10,personal:25,future:15},financialFloorPaise:0,emergencyTargetPaise:0};
+  return json({paydayAmount:paiseToRupees(Number(plan.plannerAmountPaise||0)),allocationPercentages:plan.allocationPercentages,financialFloor:paiseToRupees(Number(plan.financialFloorPaise||0)),emergencyTarget:paiseToRupees(Number(plan.emergencyTargetPaise||0))});
  }
  if(p==="/financial-plan"&&method==="PUT"){
   const allocation=b.allocationPercentages||{},keys=["essentials","savings","personal","future"];
@@ -177,13 +177,14 @@ async function dispatch(req:NextRequest,ctx:Ctx){
   for(const key of keys){const value=Number(allocation[key]);if(!Number.isFinite(value)||value<0||value>100)bad("Allocation percentages must be between 0 and 100.");percentages[key]=value;total+=value;}
   if(Math.abs(total-100)>0.001)bad("Allocation percentages must add up to 100%.");
   const toPaise=(value:unknown,label:string)=>{const n=Number(value);if(!Number.isFinite(n)||n<0||!Number.isSafeInteger(Math.round(n*100)))bad(label+" must be a valid non-negative amount.");return Math.round(n*100);};
+  const plannerAmountPaise=toPaise(b.paydayAmount,"Payday planner amount");if(plannerAmountPaise<=0)bad("Payday planner amount must be greater than zero.");
   const financialFloorPaise=toPaise(b.financialFloor,"Financial floor"),emergencyTargetPaise=toPaise(b.emergencyTarget,"Emergency target");
-  await c.settings.updateOne({_id:"main"},{$set:{financialPlan:{allocationPercentages:percentages,financialFloorPaise,emergencyTargetPaise},updatedAt:new Date()}},{upsert:true});
+  await c.settings.updateOne({_id:"main"},{$set:{financialPlan:{plannerAmountPaise,allocationPercentages:percentages,financialFloorPaise,emergencyTargetPaise},updatedAt:new Date()}},{upsert:true});
   return json({ok:true});
  }
  if(p==="/settings"&&method==="GET"){
   const st=await getSettings(c),plan=st.financialPlan;
-  return json({...st,financialPlan:plan?{allocationPercentages:plan.allocationPercentages,financialFloor:paiseToRupees(Number(plan.financialFloorPaise||0)),emergencyTarget:paiseToRupees(Number(plan.emergencyTargetPaise||0))}:undefined});
+  return json({...st,financialPlan:plan?{paydayAmount:paiseToRupees(Number(plan.plannerAmountPaise||0)),allocationPercentages:plan.allocationPercentages,financialFloor:paiseToRupees(Number(plan.financialFloorPaise||0)),emergencyTarget:paiseToRupees(Number(plan.emergencyTargetPaise||0))}:undefined});
  }
  if(p==="/settings"&&method==="PUT"){
   const payday=clean(b.payday||endOfMonth(),10);if(!/^\d{4}-\d{2}-\d{2}$/.test(payday))bad("Payday must use YYYY-MM-DD.");
@@ -289,8 +290,9 @@ async function dispatch(req:NextRequest,ctx:Ctx){
    c.tx.find({deletedAt:{$exists:false}},{projection:{type:1,amountPaise:1,date:1,category:1,note:1,person:1,accountId:1,settled:1}}).sort({date:-1,createdAt:-1}).limit(5).toArray(),
    c.tx.findOne({deletedAt:{$exists:false},type:"income",category:{$ne:"Friends"},note:{$not:/^old balance$/i}},{sort:{date:-1,createdAt:-1},projection:{date:1,createdAt:1,category:1,note:1}})]);
   const cycleRows=latestIncome?await c.tx.find({deletedAt:{$exists:false},date:{$gte:latestIncome.date},_id:{$ne:latestIncome._id}},{projection:{type:1,amountPaise:1,allocationSource:1}}).toArray():[];
-  const cycleCashChange=cycleRows.reduce((sum:number,row:any)=>sum+(["expense","lent","repayment"].includes(row.type)?-Number(row.amountPaise||0):["income","collection","refund"].includes(row.type)?Number(row.amountPaise||0):0),0);
-  const allocationCycleBasePaise=Math.max(0,balances.reduce((sum:number,a:any)=>sum+Number(a.balancePaise||0),0)-cycleCashChange);
+  // Payday allocations and safe-to-spend use the amount explicitly entered
+  // in the planner, never a derived account or latest-income balance.
+  const allocationCycleBasePaise=Math.max(0,Number(st.financialPlan?.plannerAmountPaise||0));
   const allocationSpentPaise={essentials:0,savings:0,personal:0,future:0};
   const allocationSources=new Set<keyof typeof allocationSpentPaise>(["essentials","savings","personal","future"]);
   for(const row of cycleRows){if(row.type!=="expense"&&row.type!=="refund")continue;const rawSource=String(row.allocationSource||"personal");const source:keyof typeof allocationSpentPaise=allocationSources.has(rawSource as keyof typeof allocationSpentPaise)?rawSource as keyof typeof allocationSpentPaise:"personal";allocationSpentPaise[source]+=Number(row.amountPaise||0)*(row.type==="refund"?-1:1);}
