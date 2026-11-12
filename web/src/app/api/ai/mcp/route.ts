@@ -23,7 +23,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function validArgs(name: string, args: unknown): args is Record<string, unknown> {
+export function validArgs(name: string, args: unknown): args is Record<string, unknown> {
   if (!isRecord(args)) return false;
   const allowed: Record<string, string[]> = {
     pocket_get_overview: ["month"],
