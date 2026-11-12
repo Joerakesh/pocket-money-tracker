@@ -37,7 +37,12 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const label = String(body?.label || "ChatGPT").trim().slice(0, 60) || "ChatGPT";
   const db = await getDatabase();
-  const activeCount = await db.collection("pocket_ai_tokens").countDocuments({
+  const tokenCollection = db.collection("pocket_ai_tokens");
+  await Promise.all([
+    tokenCollection.createIndex({ tokenHash: 1 }, { unique: true }),
+    tokenCollection.createIndex({ uid: 1, createdAt: -1 }),
+  ]);
+  const activeCount = await tokenCollection.countDocuments({
     uid: identity.uid,
     revokedAt: null,
     expiresAt: { $gt: new Date() },
@@ -48,7 +53,7 @@ export async function POST(request: NextRequest) {
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-  const result = await db.collection("pocket_ai_tokens").insertOne({
+  const result = await tokenCollection.insertOne({
     tokenHash,
     uid: identity.uid,
     email: identity.email,
