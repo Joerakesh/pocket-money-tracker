@@ -2,6 +2,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import * as route from "../src/app/api/ai/mcp/route";
+import * as authorizationMetadata from "../src/app/.well-known/oauth-authorization-server/route";
+import * as resourceMetadata from "../src/app/.well-known/oauth-protected-resource/route";
 
 process.env.POCKET_PUBLIC_BASE_URL = "https://money.joerakesh.tech";
 
@@ -61,6 +63,27 @@ describe("Pocket OAuth-protected MCP endpoint", () => {
     assert.equal(route.validArgs("pocket_list_transactions", { from: "yesterday" }), false);
     assert.equal(route.validArgs("pocket_list_transactions", { limit: 201 }), false);
     assert.equal(route.validArgs("pocket_list_budgets", { uid: "another-user" }), false);
+  });
+
+  it("publishes OAuth authorization metadata with PKCE S256, CIMD and public-client auth", async () => {
+    const response = await authorizationMetadata.GET();
+    const body = await response.json();
+    assert.equal(body.issuer, "https://money.joerakesh.tech");
+    assert.equal(body.authorization_endpoint, "https://money.joerakesh.tech/api/ai/oauth/authorize");
+    assert.equal(body.token_endpoint, "https://money.joerakesh.tech/api/ai/oauth/token");
+    assert.deepEqual(body.code_challenge_methods_supported, ["S256"]);
+    assert.deepEqual(body.token_endpoint_auth_methods_supported, ["none"]);
+    assert.equal(body.client_id_metadata_document_supported, true);
+    assert.equal(body.authorization_response_iss_parameter_supported, true);
+    assert.deepEqual(body.scopes_supported, ["finance:read"]);
+  });
+
+  it("publishes protected-resource metadata for the exact MCP endpoint", async () => {
+    const response = await resourceMetadata.GET();
+    const body = await response.json();
+    assert.equal(body.resource, "https://money.joerakesh.tech/api/ai/mcp");
+    assert.deepEqual(body.authorization_servers, ["https://money.joerakesh.tech"]);
+    assert.deepEqual(body.scopes_supported, ["finance:read"]);
   });
 
 });
