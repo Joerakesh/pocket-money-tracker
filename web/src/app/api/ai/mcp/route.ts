@@ -19,7 +19,12 @@ const json = (body: unknown, status = 200, headers?: HeadersInit) => NextRespons
 const rpcError = (id: string | number | null, code: number, message: string) => ({ jsonrpc: "2.0", id, error: { code, message } });
 const resourceMetadataUrl = () => `${new URL(oauthResource()).origin}/.well-known/oauth-protected-resource/api/ai/mcp`;
 
-export function bearerToken(header: string | null) {\n  const match = header?.match(/^Bearer\s+(.+)$/i);\n  return match?.[1]?.trim() || null;\n}\n\nfunction isRecord(value: unknown): value is Record<string, unknown> {
+export function bearerToken(header: string | null) {
+  const match = header?.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
