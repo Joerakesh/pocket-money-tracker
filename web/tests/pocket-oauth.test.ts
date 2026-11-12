@@ -58,4 +58,37 @@ describe("Pocket OAuth 2.1 token primitives", () => {
     assert.equal(await oauth.loadOpenAIClient("http://chatgpt.com/oauth/client.json"), null);
     assert.equal(await oauth.loadOpenAIClient("https://attacker.example/oauth/client.json"), null);
   });
+  it("rejects tokens with the wrong resource audience or a broader scope", () => {
+    const wrongAudience = oauth.signAccessToken({
+      uid: "firebase-user-1",
+      email: "user@example.com",
+      scope: "finance:read",
+      audience: "https://money.joerakesh.tech/api/other",
+    });
+    const wrongScope = oauth.signAccessToken({
+      uid: "firebase-user-1",
+      email: "user@example.com",
+      scope: "finance:write",
+      audience: oauth.oauthResource(),
+    });
+    assert.equal(oauth.verifyAccessJwt(wrongAudience.token), null);
+    assert.equal(oauth.verifyAccessJwt(wrongScope.token), null);
+  });
+
+  it("rejects expired access tokens", () => {
+    const issued = oauth.signAccessToken({
+      uid: "firebase-user-1",
+      email: "user@example.com",
+      scope: "finance:read",
+      audience: oauth.oauthResource(),
+    });
+    const originalNow = Date.now;
+    try {
+      Date.now = () => (issued.payload.exp + 1) * 1000;
+      assert.equal(oauth.verifyAccessJwt(issued.token), null);
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
 });
