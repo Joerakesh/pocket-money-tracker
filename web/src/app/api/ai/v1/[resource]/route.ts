@@ -52,7 +52,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
   const params = request.nextUrl.searchParams;
   const now = new Date();
   const month = params.get("month") || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) return json({ error: "month must use YYYY-MM." }, 400);
+  if (!/^[0-9]{4}-[0-9]{2}$/.test(month) || Number(month.slice(5, 7)) < 1 || Number(month.slice(5, 7)) > 12) {
+    return json({ error: "month must use a valid YYYY-MM value." }, 400);
+  }
 
   if (resource === "overview") {
     const currentDay = today();
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
         { deletedAt: { $exists: false }, date: { $gte: selectedStart, $lte: selectedEnd } },
         { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } },
       ).toArray(),
-      c.settings.findOne({ _id: "main" }),
+      c.settings.findOne({ _id: "main" }) as Promise<any>,
       c.tx.find(
         { deletedAt: { $exists: false }, date: { $gte: monthStart(currentDay), $lte: endOfMonth(currentDay) } },
         { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } },
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
     const currentSummary = computeSummary({
       today: currentDay,
       payday: settings?.payday || endOfMonth(currentDay),
-      reservePaise: Number(settings?.reservePaise || 0),
+      reservePaise: Number(settings?.reservePaise ?? 50000),
       monthRows: currentMonthRows as any,
       unpaidRows: unpaidRows.map((row: any) => ({
         ...row,
@@ -174,7 +176,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
     }
     if (params.has("type")) filter.type = params.get("type");
     if (params.has("category")) filter.category = params.get("category");
-    const limit = Math.min(200, Math.max(1, Number(params.get("limit") || 50)));
+    const requestedLimit = Number(params.get("limit") || 50);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(200, Math.max(1, Math.trunc(requestedLimit)))
+      : 50;
     const rows = await c.tx.find(filter).sort({ date: -1, createdAt: -1 }).limit(limit).toArray();
     return json({ count: rows.length, limit, transactions: rows.map(publicTransaction) });
   }
