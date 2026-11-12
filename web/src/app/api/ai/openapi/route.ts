@@ -9,7 +9,7 @@ const spec = {
     version: "1.0.0",
     description: "Read-only API for querying the authenticated user's Pocket finance data. All amounts are in INR. Transactions are returned in rupees; Pocket stores money internally as integer paise.",
   },
-  servers: [{ url: "/api/ai/v1" }],
+  servers: [{ url: "https://money.joerakesh.tech/api/ai/v1" }],
   components: {
     securitySchemes: {
       PocketBearer: { type: "http", scheme: "bearer", bearerFormat: "Pocket API key" },
