@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
   const params = request.nextUrl.searchParams;
   const now = new Date();
   const month = params.get("month") || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  if (!/^\\d{4}-\\d{2}$/.test(month)) return json({ error: "month must use YYYY-MM." }, 400);
+  if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) return json({ error: "month must use YYYY-MM." }, 400);
 
   if (resource === "overview") {
     const [accounts, rows] = await Promise.all([
