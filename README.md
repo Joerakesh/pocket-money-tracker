@@ -6,7 +6,7 @@ A personal finance tracker with a web dashboard and an Android companion for det
 
 - **[web/](./web/)** — Next.js 16, React 19, TypeScript, Firebase Authentication and MongoDB Atlas application.
 - **[mobile/](./mobile/)** — Kotlin Android companion that reads notifications from an allowlist of UPI apps and Google Messages, submits eligible payment alerts to the authenticated Pocket API, and keeps a local parsed fallback.
-- **[mobile/README.md](./mobile/README.md)** — Android setup, build instructions, notification access, sync flow and privacy details.
+- **[mobile/README.md](./mobile/README.md)** — Android setup, build instructions, notification access, sync flow and privacy details.\n- **[web/AI-API.md](./web/AI-API.md)** — Read-only Pocket API, API-key setup, OpenAPI specification and AI client integration.
 - **[web/README.md](./web/README.md)** — Web setup, API overview, data integrity and deployment guidance.
 
 ## Web application
