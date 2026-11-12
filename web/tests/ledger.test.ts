@@ -206,7 +206,7 @@ test("allocation-aware safe-to-spend protects reserve, savings and future alloca
   assert.equal(s.remainingAllocatedSpending, 310_00); // ₹2,500 after reserve, less protected allocations
   assert.equal(s.spendable, 310_00);
   assert.equal(s.days, 11);
-  assert.equal(s.perDay, Math.floor(675_00 / 11));
+  assert.equal(s.perDay, Math.floor(310_00 / 11)); // Spendable ₹310 spread across 11 days.
 });
 
 test("allocation uses the current ledger balance without subtracting recorded spending twice", () => {
