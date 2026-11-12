@@ -19,7 +19,7 @@ const json = (body: unknown, status = 200, headers?: HeadersInit) => NextRespons
 const rpcError = (id: string | number | null, code: number, message: string) => ({ jsonrpc: "2.0", id, error: { code, message } });
 const resourceMetadataUrl = () => `${new URL(oauthResource()).origin}/.well-known/oauth-protected-resource/api/ai/mcp`;
 
-export function bearerToken(header: string | null) {\n  const match = header?.match(/^Bearer\\s+(.+)$/i);\n  return match?.[1]?.trim() || null;\n}\n\nfunction isRecord(value: unknown): value is Record<string, unknown> {
+export function bearerToken(header: string | null) {\n  const match = header?.match(/^Bearer\s+(.+)$/i);\n  return match?.[1]?.trim() || null;\n}\n\nfunction isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
@@ -33,10 +33,10 @@ export function validArgs(name: string, args: unknown): args is Record<string, u
     pocket_list_recurring_expenses: [],
   };
   if (!allowed[name] || Object.keys(args).some((key) => !allowed[name].includes(key))) return false;
-  if (args.month !== undefined && (typeof args.month !== "string" || !/^\\d{4}-(0[1-9]|1[0-2])$/.test(args.month))) return false;
+  if (args.month !== undefined && (typeof args.month !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(args.month))) return false;
   if (args.limit !== undefined && (!Number.isInteger(args.limit) || Number(args.limit) < 1 || Number(args.limit) > 200)) return false;
   for (const key of ["type", "category", "from", "to"]) if (args[key] !== undefined && typeof args[key] !== "string") return false;
-  for (const key of ["from", "to"]) if (args[key] !== undefined && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(args[key]))) return false;
+  for (const key of ["from", "to"]) if (args[key] !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(args[key]))) return false;
   return true;
 }
 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
   if (rpc.method === "tools/call") {
     if (id === null) return json(rpcError(null, -32600, "tools/call requires a request id."), 400);
     const authorization = request.headers.get("authorization") || "";
-    const match = authorization.match(/^Bearer\\s+(.+)$/i);
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
     const identity = match ? await verifyPocketOAuthAccessToken(match[1]) : null;
     if (!identity) return authenticationRequired(id);
 
