@@ -47,4 +47,20 @@ describe("Pocket OAuth-protected MCP endpoint", () => {
     assert.ok(body.result._meta["mcp/www_authenticate"][0].includes("error_description="));
     assert.ok(response.headers.get("www-authenticate"));
   });
+  it("parses Bearer authorization headers case-insensitively and rejects other schemes", () => {
+    assert.equal(route.bearerToken("Bearer abc.def"), "abc.def");
+    assert.equal(route.bearerToken("bearer   token-value "), "token-value");
+    assert.equal(route.bearerToken("Basic abc"), null);
+    assert.equal(route.bearerToken(null), null);
+  });
+
+  it("validates supported month and date filters without accepting malformed values", () => {
+    assert.equal(route.validArgs("pocket_get_overview", { month: "2026-11" }), true);
+    assert.equal(route.validArgs("pocket_get_overview", { month: "2026-13" }), false);
+    assert.equal(route.validArgs("pocket_list_transactions", { from: "2026-11-01", to: "2026-11-30" }), true);
+    assert.equal(route.validArgs("pocket_list_transactions", { from: "yesterday" }), false);
+    assert.equal(route.validArgs("pocket_list_transactions", { limit: 201 }), false);
+    assert.equal(route.validArgs("pocket_list_budgets", { uid: "another-user" }), false);
+  });
+
 });
