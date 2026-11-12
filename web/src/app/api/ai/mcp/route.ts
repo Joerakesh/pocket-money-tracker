@@ -17,7 +17,7 @@ const MCP_TOOLS = [
 type JsonRpcRequest = { jsonrpc: "2.0"; id?: string | number; method: string; params?: Record<string, unknown> };
 const json = (body: unknown, status = 200, headers?: HeadersInit) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
 const rpcError = (id: string | number | null, code: number, message: string) => ({ jsonrpc: "2.0", id, error: { code, message } });
-const resourceMetadataUrl = () => `${new URL(oauthResource()).origin}/.well-known/oauth-protected-resource`;
+const resourceMetadataUrl = () => `${new URL(oauthResource()).origin}/.well-known/oauth-protected-resource/api/ai/mcp`;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
