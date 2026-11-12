@@ -11,12 +11,13 @@ const json = (body: unknown, status = 200) => NextResponse.json(body, { status, 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const requestId = typeof body?.requestId === "string" ? body.requestId : "";
-  const firebaseIdToken = typeof body?.firebaseIdToken === "string" ? body.firebaseIdToken : "";
   const approved = body?.approved === true;
-  if (!requestId || !firebaseIdToken || typeof body?.approved !== "boolean") return json({ error: "Invalid consent request." }, 400);
+  if (!requestId || typeof body?.approved !== "boolean") return json({ error: "Invalid consent request." }, 400);
 
-  const identity = await verifyFirebaseIdToken(firebaseIdToken);
-  if (!identity) return json({ error: "Sign in with a verified Google account to continue." }, 401);
+  const identity = approved
+    ? await verifyFirebaseIdToken(typeof body?.firebaseIdToken === "string" ? body.firebaseIdToken : "")
+    : null;
+  if (approved && !identity) return json({ error: "Sign in with a verified Google account to continue." }, 401);
 
   const db = await getDatabase();
   const authRequest = await db.collection("pocket_oauth_requests").findOneAndDelete({
@@ -39,8 +40,8 @@ export async function POST(request: NextRequest) {
   const now = new Date();
   await db.collection("pocket_oauth_codes").insertOne({
     codeHash: sha256(code),
-    uid: identity.uid,
-    email: identity.email,
+    uid: identity!.uid,
+    email: identity!.email,
     clientId: saved.clientId,
     redirectUri: saved.redirectUri,
     audience: saved.resource,
