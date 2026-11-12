@@ -131,7 +131,12 @@ export function verifyAccessJwt(token: string) {
 }
 
 export async function verifyPocketOAuthAccessToken(token: string) {
-  const payload = verifyAccessJwt(token);
+  let payload: ReturnType<typeof verifyAccessJwt>;
+  try {
+    payload = verifyAccessJwt(token);
+  } catch {
+    return null;
+  }
   if (!payload) return null;
   const db = await getDatabase();
   const record = await db.collection("pocket_oauth_access_tokens").findOne({
