@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { accountBalances, collections, endOfMonth, monthStart, paiseToRupees, spendingEffect, today } from "@/lib/finance";
 import { computeSummary } from "@/lib/ledger";
 import { getDatabase } from "@/lib/mongodb";
+import { verifyPocketOAuthAccessToken } from "@/lib/pocket-oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,17 +14,23 @@ const json = (data: unknown, status = 200) =>
 async function authenticate(request: NextRequest) {
   const header = request.headers.get("authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (!token || !token.startsWith("pocket_live_")) return null;
-
-  const tokenHash = createHash("sha256").update(token).digest("hex");
-  const db = await getDatabase();
-  const record = await db.collection("pocket_ai_tokens").findOne({
-    tokenHash,
-    revokedAt: null,
-    expiresAt: { $gt: new Date() },
-  });
-  if (!record || !record.uid || !record.email || !record.scopes?.includes("finance:read")) return null;
-  return { uid: String(record.uid), email: String(record.email) };
+  if (!token) return null;
+  if (token.startsWith("pocket_live_")) {
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const db = await getDatabase();
+    const record = await db.collection("pocket_ai_tokens").findOne({
+      tokenHash,
+      revokedAt: null,
+      expiresAt: { $gt: new Date() },
+    });
+    if (!record || !record.uid || !record.email || !record.scopes?.includes("finance:read")) return null;
+    return { uid: String(record.uid), email: String(record.email) };
+  }
+  try {
+    return await verifyPocketOAuthAccessToken(token);
+  } catch {
+    return null;
+  }
 }
 
 function publicTransaction(row: any) {
