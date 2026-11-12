@@ -15,15 +15,19 @@ function getFirebaseAdminAuth() {
   return getAuth(app);
 }
 
-export async function verifyFirebaseRequest(request: Request) {
-  const header = request.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+export async function verifyFirebaseIdToken(token: string) {
   if (!token) return null;
   try {
-    const decoded = await getFirebaseAdminAuth().verifyIdToken(token);
+    const decoded = await getFirebaseAdminAuth().verifyIdToken(token, true);
     if (!decoded.uid || !decoded.email || decoded.email_verified !== true) return null;
     return { uid: decoded.uid, email: decoded.email.toLowerCase() };
   } catch {
     return null;
   }
+}
+
+export async function verifyFirebaseRequest(request: Request) {
+  const header = request.headers.get("authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  return verifyFirebaseIdToken(token);
 }
