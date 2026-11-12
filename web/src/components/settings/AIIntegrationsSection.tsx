@@ -141,8 +141,8 @@ export default function AIIntegrationsSection() {
 
       <div className="mt-4 rounded-xl bg-white/[0.035] p-3">
         <p className="text-xs font-semibold">API base URL</p>
-        <code className="mt-1 block break-all text-xs text-[#b8f36b]">https://money.joerakesh.tech/api/ai/v1</code>
-        <p className={`${ui.note} mt-2`}>OpenAPI specification: <code>/api/ai/openapi</code>. Add it to a GPT Action and select Bearer authentication.</p>
+        <code className="mt-1 block break-all text-xs text-[#b8f36b]">/api/ai/v1</code>
+        <p className={`${ui.note} mt-2`}>OpenAPI specification: <code>/api/ai/openapi</code>. Import the full URL from your deployed Pocket host into a GPT Action and select Bearer authentication.</p>
       </div>
     </section>
   );
