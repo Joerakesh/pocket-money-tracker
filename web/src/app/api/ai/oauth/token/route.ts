@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { issueOAuthTokens, loadOpenAIClient, oauthResource, randomSecret, REFRESH_TOKEN_TTL_SECONDS, safeEqual, sha256 } from "@/lib/pocket-oauth";
+import { issueOAuthTokens, loadOpenAIClient, oauthResource, OAUTH_SCOPE, safeEqual, sha256 } from "@/lib/pocket-oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     });
     const saved = record && "value" in record ? record.value : record;
     if (!saved) return oauthError("invalid_grant", "The authorization code is invalid, expired or already used.");
+    if (saved.scope !== OAUTH_SCOPE || saved.codeChallengeMethod !== "S256") return oauthError("invalid_grant", "The authorization grant has an unsupported scope or PKCE method.");
     const challenge = Buffer.from(sha256(verifier), "hex").toString("base64url");
     if (saved.codeChallengeMethod !== "S256" || !safeEqual(challenge, saved.codeChallenge)) return oauthError("invalid_grant", "PKCE verification failed.");
     const tokens = await issueOAuthTokens({ uid: saved.uid, email: saved.email, clientId, audience: resource });
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       tokenHash: sha256(refreshToken),
       clientId,
       audience: resource,
-      scope: "finance:read",
+      scope: OAUTH_SCOPE,
       expiresAt: { $gt: new Date() },
       revokedAt: null,
     });
