@@ -10,13 +10,16 @@ describe("Pocket MCP Streamable HTTP route", () => {
     assert.equal(typeof route.DELETE, "function");
   });
 
-  it("rejects requests without a Pocket bearer key before contacting finance services", async () => {
-    const response = await route.POST(new NextRequest("https://example.test/api/ai/mcp", {
+  it("allows unauthenticated tool discovery and advertises OAuth security requirements", async () => {
+    process.env.POCKET_PUBLIC_BASE_URL = "https://money.joerakesh.tech";
+    const response = await route.POST(new NextRequest("https://money.joerakesh.tech/api/ai/mcp", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
     }));
-    assert.equal(response.status, 401);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.result.tools[0].securitySchemes[0].type, "oauth2");
   });
 
   it("rejects GET and DELETE because this stateless endpoint uses POST only", async () => {
