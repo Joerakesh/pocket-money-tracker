@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { ui } from "../ui";
 import PWAInstallPrompt from "../layout/PWAInstallPrompt";
+import AIIntegrationsSection from "./AIIntegrationsSection";
 
 type Account = { id: string; name: string };
 
@@ -24,6 +25,7 @@ export default function DataManagementSection({
   return (
     <>
       <PWAInstallPrompt />
+      <AIIntegrationsSection />
 
       <section className={ui.card}>
         <h2 className={ui.h2}>Allowance settings</h2>
