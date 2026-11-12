@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { accountBalances, collections, paiseToRupees } from "@/lib/finance";
+import { accountBalances, collections, endOfMonth, monthStart, paiseToRupees, spendingEffect, today } from "@/lib/finance";
+import { computeSummary } from "@/lib/ledger";
 import { getDatabase } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
@@ -54,29 +55,100 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
   if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) return json({ error: "month must use YYYY-MM." }, 400);
 
   if (resource === "overview") {
-    const [accounts, rows] = await Promise.all([
+    const currentDay = today();
+    const selectedStart = `${month}-01`;
+    const selectedEndDate = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
+    const selectedEnd = `${month}-${String(selectedEndDate).padStart(2, "0")}`;
+    const [accounts, selectedMonthRows, settings, currentMonthRows, unpaidRows, latestIncome] = await Promise.all([
       accountBalances(c),
       c.tx.find(
-        { deletedAt: { $exists: false }, date: { $regex: `^${month}` } },
-        { projection: { type: 1, amountPaise: 1, category: 1, date: 1 } },
+        { deletedAt: { $exists: false }, date: { $gte: selectedStart, $lte: selectedEnd } },
+        { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } },
       ).toArray(),
+      c.settings.findOne({ _id: "main" }),
+      c.tx.find(
+        { deletedAt: { $exists: false }, date: { $gte: monthStart(currentDay), $lte: endOfMonth(currentDay) } },
+        { projection: { date: 1, type: 1, amountPaise: 1, category: 1, settled: 1 } },
+      ).toArray(),
+      c.tx.find(
+        { deletedAt: { $exists: false }, type: { $in: ["borrowed_expense", "lent", "repayment", "collection"] } },
+        { projection: { _id: 1, type: 1, amountPaise: 1, relatedTransactionId: 1, person: 1, settled: 1, date: 1 } },
+      ).sort({ date: 1, createdAt: 1 }).toArray(),
+      c.tx.findOne(
+        { deletedAt: { $exists: false }, type: "income", category: { $ne: "Friends" }, note: { $not: /^old balance$/i } },
+        { sort: { date: -1, createdAt: -1 }, projection: { date: 1, _id: 1 } },
+      ),
     ]);
-    let incomePaise = 0;
-    let expensePaise = 0;
-    const byCategory: Record<string, number> = {};
-    for (const row of rows) {
+
+    let monthIncomePaise = 0;
+    let monthSpentPaise = 0;
+    const byCategoryPaise: Record<string, number> = {};
+    for (const row of selectedMonthRows) {
       const amount = Number(row.amountPaise || 0);
-      if (row.type === "income") incomePaise += amount;
-      if (row.type === "expense" || row.type === "borrowed_expense") {
-        expensePaise += amount;
-        const category = String(row.category || "Uncategorised");
-        byCategory[category] = (byCategory[category] || 0) + amount;
+      if (row.type === "income") monthIncomePaise += amount;
+      monthSpentPaise += spendingEffect({ type: String(row.type), amountPaise: amount });
+      if (row.type === "expense" || row.type === "borrowed_expense" || row.type === "refund") {
+        const category = String(row.category || "Other");
+        byCategoryPaise[category] = (byCategoryPaise[category] || 0) +
+          (row.type === "refund" ? -amount : amount);
       }
     }
+
+    const cycleRows = latestIncome
+      ? await c.tx.find(
+          { deletedAt: { $exists: false }, date: { $gte: latestIncome.date }, _id: { $ne: latestIncome._id } },
+          { projection: { type: 1, amountPaise: 1, allocationSource: 1 } },
+        ).toArray()
+      : [];
+    const allocationSpentPaise = { essentials: 0, savings: 0, personal: 0, future: 0 };
+    const allocationSources = new Set(["essentials", "savings", "personal", "future"]);
+    for (const row of cycleRows) {
+      if (row.type !== "expense" && row.type !== "refund") continue;
+      const rawSource = String(row.allocationSource || "personal");
+      const source = allocationSources.has(rawSource) ? rawSource as keyof typeof allocationSpentPaise : "personal";
+      allocationSpentPaise[source] += Number(row.amountPaise || 0) * (row.type === "refund" ? -1 : 1);
+    }
+
+    const percentages = settings?.financialPlan?.allocationPercentages;
+    const allocation = percentages ? {
+      essentialsPercent: Number(percentages.essentials || 0),
+      savingsPercent: Number(percentages.savings || 0),
+      personalPercent: Number(percentages.personal || 0),
+      futurePercent: Number(percentages.future || 0),
+    } : undefined;
+    const currentSummary = computeSummary({
+      today: currentDay,
+      payday: settings?.payday || endOfMonth(currentDay),
+      reservePaise: Number(settings?.reservePaise || 0),
+      monthRows: currentMonthRows as any,
+      unpaidRows: unpaidRows.map((row: any) => ({
+        ...row,
+        _id: String(row._id),
+        relatedTransactionId: row.relatedTransactionId ? String(row.relatedTransactionId) : undefined,
+      })) as any,
+      balancesPaise: accounts.map((account: any) => Number(account.balancePaise || 0)),
+      allocation,
+      allocationCycleBasePaise: Math.max(0, Number(settings?.financialPlan?.plannerAmountPaise || 0)),
+      allocationSpentPaise,
+    });
+
     return json({
       currency: "INR",
       month,
-      totalBalance: paiseToRupees(accounts.reduce((sum, account) => sum + Number(account.balancePaise || 0), 0)),
+      totalBalance: paiseToRupees(accounts.reduce((sum, account: any) => sum + Number(account.balancePaise || 0), 0)),
+      spendable: paiseToRupees(currentSummary.spendable),
+      ledgerSpendable: paiseToRupees(currentSummary.ledgerSpendable),
+      perDayAllowance: paiseToRupees(currentSummary.perDay),
+      daysUntilPayday: currentSummary.days,
+      reserve: paiseToRupees(currentSummary.reserve),
+      owedToFriends: paiseToRupees(currentSummary.owedToFriends),
+      owedByFriends: paiseToRupees(currentSummary.owedByFriends),
+      protectedAllocations: paiseToRupees(currentSummary.protectedAllocations),
+      todaySpent: paiseToRupees(currentSummary.todaySpent),
+      currentMonthSpent: paiseToRupees(currentSummary.monthSpent),
+      monthIncome: paiseToRupees(monthIncomePaise),
+      monthExpenses: paiseToRupees(monthSpentPaise),
+      netFlow: paiseToRupees(monthIncomePaise - monthSpentPaise),
       accounts: accounts.map((account: any) => ({
         id: String(account._id),
         name: account.name,
@@ -84,14 +156,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
         kind: account.kind || "other",
         balance: paiseToRupees(Number(account.balancePaise || 0)),
       })),
-      monthIncome: paiseToRupees(incomePaise),
-      monthExpenses: paiseToRupees(expensePaise),
-      netFlow: paiseToRupees(incomePaise - expensePaise),
       spendingByCategory: Object.fromEntries(
-        Object.entries(byCategory).map(([key, value]) => [key, paiseToRupees(value)]),
+        Object.entries(byCategoryPaise).map(([key, value]) => [key, paiseToRupees(value)]),
       ),
-      transactionCount: rows.length,
-      note: "Transfers are excluded from income and expenses. This endpoint reports ledger account balance, not a bank-verified balance.",
+      transactionCount: selectedMonthRows.length,
+      note: "Spendable is calculated using Pocket's existing payday, reserve, allocation and outstanding-debt rules. Transfers are excluded from income and spending. Balances are ledger-derived, not bank-verified.",
     });
   }
 
