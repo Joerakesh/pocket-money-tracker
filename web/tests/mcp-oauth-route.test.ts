@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import * as route from "../src/app/api/ai/mcp/route";
 
+process.env.POCKET_PUBLIC_BASE_URL = "https://money.joerakesh.tech";
+
 describe("Pocket OAuth-protected MCP endpoint", () => {
   it("exports Streamable HTTP handlers", () => {
     assert.equal(typeof route.POST, "function");
