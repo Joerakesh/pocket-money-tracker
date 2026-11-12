@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 const spec = {
   openapi: "3.1.0",
@@ -48,7 +48,10 @@ const spec = {
   },
 };
 
-export async function GET() {
+export async function GET(request: Request) {
+  const configuredBase = process.env.POCKET_PUBLIC_BASE_URL?.replace(/\\/$/, "");
+  const origin = configuredBase || new URL(request.url).origin;
+  spec.servers = [{ url: `${origin}/api/ai/v1` }];
   return NextResponse.json(spec, {
     headers: { "Cache-Control": "public, max-age=3600" },
   });
