@@ -49,7 +49,7 @@ const spec = {
 };
 
 export async function GET(request: Request) {
-  const configuredBase = process.env.POCKET_PUBLIC_BASE_URL?.replace(/\\/$/, "");
+  const configuredBase = process.env.POCKET_PUBLIC_BASE_URL?.replace(/\/+$/, "");
   const origin = configuredBase || new URL(request.url).origin;
   spec.servers = [{ url: `${origin}/api/ai/v1` }];
   return NextResponse.json(spec, {
