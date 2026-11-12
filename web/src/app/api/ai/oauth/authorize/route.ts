@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     codeChallenge: challenge,
     codeChallengeMethod: "S256",
     createdAt: now,
-    expiresAt: new Date(now.getTime() + AUTH_CODE_TTL_SECONDS * 1000),
+    expiresAt: new Date(now.getTime() + 10 * 60 * 1000),
   });
   const consent = new URL("/oauth/consent", request.url);
   consent.searchParams.set("request_id", requestId);
