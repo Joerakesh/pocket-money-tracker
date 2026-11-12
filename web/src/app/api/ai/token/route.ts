@@ -9,17 +9,45 @@ export const dynamic = "force-dynamic";
 const json = (data: unknown, status = 200) =>
   NextResponse.json(data, { status, headers: { "Cache-Control": "no-store" } });
 
+export async function GET(request: NextRequest) {
+  const identity = await verifyFirebaseRequest(request);
+  if (!identity) return json({ error: "Authentication required." }, 401);
+  const db = await getDatabase();
+  const rows = await db.collection("pocket_ai_tokens")
+    .find({ uid: identity.uid })
+    .sort({ createdAt: -1 })
+    .project({ tokenHash: 0 })
+    .limit(25)
+    .toArray();
+  return json(rows.map((row: any) => ({
+    id: String(row._id),
+    label: row.label || "AI client",
+    scopes: row.scopes || [],
+    createdAt: row.createdAt,
+    expiresAt: row.expiresAt,
+    revokedAt: row.revokedAt || null,
+    status: row.revokedAt ? "revoked" : new Date(row.expiresAt).getTime() <= Date.now() ? "expired" : "active",
+  })));
+}
+
 export async function POST(request: NextRequest) {
   const identity = await verifyFirebaseRequest(request);
   if (!identity) return json({ error: "Sign in with Google to create an AI access key." }, 401);
 
   const body = await request.json().catch(() => ({}));
   const label = String(body?.label || "ChatGPT").trim().slice(0, 60) || "ChatGPT";
+  const db = await getDatabase();
+  const activeCount = await db.collection("pocket_ai_tokens").countDocuments({
+    uid: identity.uid,
+    revokedAt: null,
+    expiresAt: { $gt: new Date() },
+  });
+  if (activeCount >= 5) return json({ error: "You can have up to 5 active AI keys. Revoke an unused key first." }, 429);
+
   const token = `pocket_live_${randomBytes(32).toString("base64url")}`;
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-  const db = await getDatabase();
   const result = await db.collection("pocket_ai_tokens").insertOne({
     tokenHash,
     uid: identity.uid,
